@@ -93,7 +93,7 @@ const baseURL = import.meta.env.VITE_API_URL;
 > **ЗАКРЫТО** commit `6a8adb6` (31.05.2026)
 
 - **Файл:** `infra/compose/docker-compose.yml:38,58,78`
-- **Проблема:** `ghcr.io/artsoftmuzaffarkhon/linguolab-api:latest` — нет version pinning
+- **Проблема:** `ghcr.io/muzaffarbahodir/linguolab-api:latest` — нет version pinning
 - **Импакт:** Supply chain attack risk, нет rollback на конкретную версию, kubelets reuse не работает корректно
 - **Фикс:**
   - CI пушит две метки: `:latest` И `:${{ github.sha }}` (короткий SHA)

@@ -40,7 +40,7 @@
     "server_ip": "79.143.176.220",
     "server_user": "root",
     "ssh_key": "~/.ssh/linguolab_deploy",
-    "repo": "https://github.com/artsoftmuzaffarkhon/linguolab"
+    "repo": "https://github.com/muzaffarbahodir/linguolab"
   },
   "critical_rules": [
     "Все ответы на русском языке.",

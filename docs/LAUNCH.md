@@ -84,7 +84,7 @@ CORS_ALLOWED_ORIGINS=https://app-linguolab.muzaffarbahodir.uz,https://admin-ling
 
 ```bash
 # On server — clone repo (infra only needed)
-git clone https://github.com/artsoftmuzaffarkhon/linguolab.git /opt/linguolab/repo
+git clone https://github.com/muzaffarbahodir/linguolab.git /opt/linguolab/repo
 cd /opt/linguolab/repo/infra/compose
 
 # Fill .env
@@ -252,7 +252,7 @@ docker compose rm -f linguolab_api
 
 # Edit docker-compose.yml image tag to previous version
 # OR pull specific tag:
-docker pull ghcr.io/artsoftmuzaffarkhon/linguolab-api:sha-<previous-sha>
+docker pull ghcr.io/muzaffarbahodir/linguolab-api:sha-<previous-sha>
 
 docker compose up -d linguolab_api
 ```
@@ -280,5 +280,5 @@ docker compose up -d linguolab_api
 | Role           | Contact                                  |
 | -------------- | ---------------------------------------- |
 | Lead Developer | artsoftmuzaffarkhon@gmail.com            |
-| Repository     | github.com/artsoftmuzaffarkhon/linguolab |
+| Repository     | github.com/muzaffarbahodir/linguolab |
 | Sentry Org     | linguolab                                |

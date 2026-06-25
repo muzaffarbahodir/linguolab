@@ -162,8 +162,8 @@
 | -------------------- | ---------------------------------------------------- | --------------------------------- |
 | `linguolab_postgres` | `postgres:16-alpine`                                 | DB `linguolab`, owner `linguolab` |
 | `linguolab_redis`    | `redis:7-alpine`                                     | requirepass, appendonly           |
-| `linguolab_api`      | `ghcr.io/artsoftmuzaffarkhon/linguolab-api:latest`   | NestJS, port 3000                 |
-| `linguolab_admin`    | `ghcr.io/artsoftmuzaffarkhon/linguolab-admin:latest` | Next.js standalone, port 3001     |
+| `linguolab_api`      | `ghcr.io/muzaffarbahodir/linguolab-api:latest`   | NestJS, port 3000                 |
+| `linguolab_admin`    | `ghcr.io/muzaffarbahodir/linguolab-admin:latest` | Next.js standalone, port 3001     |
 
 **Чужие — НЕ трогать:** `main_nginx`, `linkbetter_bot`, `flowershop_*`.
 
@@ -189,7 +189,7 @@
 
 ## 4. Структура репозитория
 
-**URL:** https://github.com/artsoftmuzaffarkhon/linguolab (public)
+**URL:** https://github.com/muzaffarbahodir/linguolab (public)
 **Ветки:** `main` (protected, PR-only) + `develop` (push разрешён)
 
 **Conventional Commits обязательны** (enforced via commitlint, max body line 100 chars):

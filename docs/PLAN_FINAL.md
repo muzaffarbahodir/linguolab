@@ -488,7 +488,7 @@ REFRESH: каждые 15 мин (CONCURRENTLY где возможно), тяжё
 7. Добавить `include` в `/opt/nginx/nginx.conf`, добавить mount в compose `main_nginx`
 8. Проверить `nginx -t` внутри контейнера, reload
 9. Поднять `linguolab_postgres`, `linguolab_redis` в новой compose-сети
-10. GitHub repo `artsoftmuzaffarkhon/linguolab` (public), ветки `main` + `develop`
+10. GitHub repo `muzaffarbahodir/linguolab` (public), ветки `main` + `develop`
 11. Workflow `.github/workflows/{ci,deploy-web,deploy-api,deploy-admin}.yml`
 12. Secrets в GitHub: `SSH_HOST`, `SSH_USER`, `SSH_PASSWORD`, `GHCR_TOKEN`, `R2_*`, `JWT_*`, `TELEGRAM_BOT_TOKEN`, и т.д.
 
@@ -746,7 +746,7 @@ REFRESH: каждые 15 мин (CONCURRENTLY где возможно), тяжё
 ```
 services:
   linguolab_api:
-    image: ghcr.io/artsoftmuzaffarkhon/linguolab-api:latest
+    image: ghcr.io/muzaffarbahodir/linguolab-api:latest
     container_name: linguolab_api
     restart: unless-stopped
     networks: [shared_web, linguolab_internal]
@@ -756,7 +756,7 @@ services:
       - linguolab_api_logs:/app/logs
 
   linguolab_admin:
-    image: ghcr.io/artsoftmuzaffarkhon/linguolab-admin:latest
+    image: ghcr.io/muzaffarbahodir/linguolab-admin:latest
     container_name: linguolab_admin
     restart: unless-stopped
     networks: [shared_web, linguolab_internal]
@@ -1246,8 +1246,8 @@ LOG_LEVEL=info
 ## 14. ИНФРА — ФАКТЫ
 
 ### GitHub
-- Username: `artsoftmuzaffarkhon`
-- Repo: `artsoftmuzaffarkhon/linguolab` — public, новый, создаётся в Этапе 0.5
+- Username: `muzaffarbahodir`
+- Repo: `muzaffarbahodir/linguolab` — public, новый, создаётся в Этапе 0.5
 - Ветки: `main`, `develop`
 - Branch protection на `main`: PR-only, status checks (CI ci.yml), 0 approvals (solo dev)
 
@@ -1285,7 +1285,7 @@ LOG_LEVEL=info
 ## 15. БЛИЖАЙШИЕ ШАГИ (после подтверждения этого файла)
 
 1. Revoke TG-токен у `@BotFather` → новый токен сохранить локально
-2. Создать GitHub repo `artsoftmuzaffarkhon/linguolab` (public)
+2. Создать GitHub repo `muzaffarbahodir/linguolab` (public)
 3. Локально: `pnpm init` + Turborepo + три app'а скелет
 4. Этап 0.5 — серверная инфраструктура + первый CI/CD деплой пустой заглушки
 5. Этап 1 — скелет приложений + первый коммит с Husky/commitlint

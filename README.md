@@ -61,7 +61,7 @@ linguolab/
 - Аккаунт в Telegram + бот (`@BotFather`)
 
 ```bash
-git clone https://github.com/artsoftmuzaffarkhon/linguolab.git
+git clone https://github.com/muzaffarbahodir/linguolab.git
 cd linguolab
 pnpm install
 cp .env.example .env

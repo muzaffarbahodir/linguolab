@@ -96,7 +96,7 @@ git push origin develop
 
 **GitHub:**
 
-- Создан публичный репо `artsoftmuzaffarkhon/linguolab`
+- Создан публичный репо `muzaffarbahodir/linguolab`
 - Ветки: `main` (защищена), `develop` (для интеграции)
 - Branch protection на `main`: PR-only, required status check `Lint, Format, Typecheck, Test`, no force push
 - `gh auth login` через браузер (ключи в Windows Credential Manager)
