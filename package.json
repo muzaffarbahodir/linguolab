@@ -1,0 +1,55 @@
+{
+  "name": "linguolab",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LinguoLab — language center as Telegram Web App",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "packageManager": "pnpm@11.0.9",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "@swc/core",
+      "bcrypt",
+      "sharp",
+      "@nestjs/core",
+      "@sentry-internal/node-cpu-profiler",
+      "msgpackr-extract",
+      "unrs-resolver"
+    ]
+  }
+}

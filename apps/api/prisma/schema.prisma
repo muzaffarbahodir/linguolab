@@ -1,0 +1,1075 @@
+// Prisma schema — LinguoLab API
+//
+// Этап 1: базовые сущности (User, Language).
+// Этап 4: Teacher, Class, Enrollment.
+// Остальные (bookings, payments, fiscal, analytics) — последующие этапы.
+//
+// Документация: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  // engineType binary — стабильнее на Alpine Linux в Docker
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+//  ENUMS
+// =====================
+
+enum Role {
+  STUDENT
+  TEACHER
+  MANAGER
+  PARENT
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum CEFR {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+enum EnrollmentStatus {
+  PENDING
+  ACTIVE
+  DROPPED
+  WAITLIST  // в очереди ожидания (класс полный)
+}
+
+enum TransferStatus {
+  PENDING    // ожидает рассмотрения менеджером
+  APPROVED   // одобрен, студент переведён
+  REJECTED   // отклонён менеджером
+  CANCELLED  // отменён студентом
+}
+
+enum ClassStatus {
+  DRAFT           // создан учителем/менеджером, ещё не виден студентам
+  ENROLLMENT_OPEN // запись открыта (обычно 20–31 числа пред. месяца)
+  ACTIVE          // семестр идёт (1–24 числа)
+  EXAM            // период экзаменов (25–31 числа)
+  COMPLETED       // семестр завершён
+  CANCELLED       // отменён
+}
+
+enum ClassRequestStatus {
+  PENDING   // ожидает рассмотрения менеджером/админом
+  APPROVED  // одобрен, класс создан (см. approved_class_id)
+  REJECTED  // отклонён с комментарием
+}
+
+enum TrialStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+/// Тип пробного урока: онлайн (бесплатный, авто) или очный (платный, возврат)
+enum TrialType {
+  ONLINE
+  OFFLINE
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum HomeworkSubmissionStatus {
+  SUBMITTED  // сдано, ждёт проверки
+  GRADED     // проверено, есть оценка
+  LATE       // сдано после дедлайна
+}
+
+enum AchievementTrigger {
+  FIRST_ENROLLMENT   // первая запись в класс
+  FIRST_HOMEWORK     // первое сданное ДЗ
+  HOMEWORK_STREAK_5  // 5 ДЗ подряд без пропуска
+  HOMEWORK_STREAK_10 // 10 ДЗ подряд
+  PERFECT_GRADE      // 100 баллов за ДЗ
+  TRIAL_COMPLETED    // завершён пробный урок
+  REFERRAL_1         // пригласил 1 друга
+}
+
+// =====================
+//  USERS
+// =====================
+
+/// Пользователь системы.
+enum Gender {
+  MALE
+  FEMALE
+}
+
+/// Первичный идентификатор — telegram_user_id (TWA авторизация).
+/// email/phone/password — опциональны, нужны только для админ-логина.
+model User {
+  id                  String    @id @default(cuid())
+  telegram_user_id    BigInt    @unique
+  telegram_username   String?
+  telegram_linked_at  DateTime  @default(now())
+
+  // Опциональные поля (только для ADMIN/SUPER_ADMIN/MANAGER)
+  email               String?   @unique
+  phone               String?   @unique
+  password_hash       String?
+
+  first_name          String
+  last_name           String?
+  avatar_url          String?
+
+  role                Role      @default(STUDENT)
+  locale              String    @default("ru")
+  preferred_currency  String    @default("UZS")
+  timezone            String    @default("Asia/Tashkent")
+  country             String    @default("UZ")
+  tin                 String?   // ИНН для юрлиц
+
+  // Профиль студента (опционально, из настроек)
+  gender              Gender?
+  birth_date          DateTime?
+
+  /// Активирован ли аккаунт менеджером/админом.
+  /// Новые юзеры — false, доступ к данным ограничен до активации.
+  is_active           Boolean   @default(false)
+
+  /// Версия токена — инкрементируется при смене роли,
+  /// JWT с tv != users.token_version → 401, форс-релогин
+  token_version       Int       @default(0)
+
+  /// Telegram заблокировал бота — больше не шлём уведомления
+  tg_blocked          Boolean   @default(false)
+
+  last_active_at      DateTime  @default(now())
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+
+  teacher              Teacher?
+  enrollments          Enrollment[]
+  trial_requests       TrialLessonRequest[]
+  support_tickets      SupportTicket[]
+  referral             Referral?              @relation("ReferralReferrer")
+  referral_used        Referral[]             @relation("ReferralInvitee")
+  homework_submissions HomeworkSubmission[]
+  achievements         UserAchievement[]
+  certificates         Certificate[]
+  notifications        Notification[]
+  placement_tests      PlacementTest[]
+  lesson_attendances   LessonAttendance[]
+  payments             Payment[]  @relation("PaymentUser")
+  payments_as_payer    Payment[]  @relation("PaymentPayer")
+  parent_links         ParentChildLink[] @relation("ParentLinks")
+  child_links          ParentChildLink[] @relation("ChildLinks")
+  parent_invites       ParentLinkInvite[] @relation("ParentInvites")
+  audit_logs           AuditLog[]         @relation("AuditActor")
+  given_ratings        TeacherRating[]    @relation("StudentRatings")
+  transfer_requests    ClassTransferRequest[]
+  analytics_events     AnalyticsEvent[]
+  employee             Employee?          @relation("EmployeeUser")
+
+  @@index([role])
+  @@index([last_active_at])
+}
+
+// =====================
+//  LANGUAGES (справочник)
+// =====================
+
+/// Языки которым обучаем (en/es/fr/zh/uz...)
+model Language {
+  id          String  @id @default(cuid())
+  code        String  @unique // ISO 639-1: en, es, fr, zh, uz
+  name_ru     String          // "Английский", "Испанский"
+  flag_emoji  String          // 🇬🇧 🇪🇸 🇫🇷
+  color       String?         // hex цвет для UI (брендирование курса)
+  image_url   String?         // картинка-баннер вместо цвета (задаёт супер-админ / учитель)
+  description String?         // описание курса
+  /// Продолжительность курса: "3 месяца · 36 уроков"
+  duration_label String?
+  /// Что входит в курс (список пунктов)
+  includes     String[] @default([])
+  /// Что нужно иметь: ноут, бюджет на практику, начальные знания
+  requirements String[] @default([])
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  classes          Class[]
+  trial_requests   TrialLessonRequest[]
+  placement_tests  PlacementTest[]
+  class_requests   ClassRequest[]
+}
+
+// =====================
+//  ANNOUNCEMENTS (бегущая строка)
+// =====================
+
+/// Стиль баннера-маркизы. Каждый имеет вид для тёмной и светлой темы (CSS).
+enum AnnouncementStyle {
+  CAUTION // жёлто-чёрная лента (как caution tape)
+  INFO    // синий
+  PROMO   // фиолетовый
+}
+
+/// Где показывать бегущую строку.
+enum AnnouncementPosition {
+  TOP    // вверху приложения
+  BOTTOM // внизу, как новостная лента
+}
+
+/// Регулярность авто-повтора объявления.
+enum AnnouncementRecurrence {
+  NONE
+  DAILY
+  WEEKLY  // recurrence_day = 0-6 (вс-сб)
+  MONTHLY // recurrence_day = день месяца 1-31
+}
+
+/// Бегущая строка приложения + рассылка. Создаёт SUPER_ADMIN.
+/// Несколько активных → крутятся по очереди в маркизе.
+/// expires_at — до какого момента показывать (длительность). null = бессрочно.
+/// audience_roles — кому видно/кому рассылка (пусто = все роли).
+/// target_user_id — конкретный пользователь (приоритет над ролями).
+/// recurrence — авто-повтор (напр. MONTHLY day=25 → напоминание об оплате).
+model Announcement {
+  id               String                 @id @default(cuid())
+  text             String
+  style            AnnouncementStyle      @default(CAUTION)
+  position         AnnouncementPosition   @default(TOP)
+  is_active        Boolean                @default(true)
+  sort_order       Int                    @default(0)
+  expires_at       DateTime?
+  audience_roles   Role[]
+  target_user_id   String?
+  recurrence       AnnouncementRecurrence @default(NONE)
+  recurrence_day   Int?
+  duration_minutes Int?
+  created_at       DateTime               @default(now())
+  updated_at       DateTime               @updatedAt
+}
+
+// =====================
+//  TEACHERS
+// =====================
+
+/// Профиль преподавателя (1:1 с User, role=TEACHER)
+model Teacher {
+  id            String   @id @default(cuid())
+  user_id       String   @unique
+  bio           String?
+  photo_url     String?
+  website_url   String?                    // личный сайт / портфолио
+  instagram_url String?
+  telegram_url  String?                    // @username или ссылка
+  created_at    DateTime @default(now())
+
+  user     User           @relation(fields: [user_id], references: [id])
+  classes  Class[]
+  ratings  TeacherRating[]
+  badges   TeacherBadge[]
+  class_requests ClassRequest[]
+}
+
+// =====================
+//  CLASSES
+// =====================
+
+/// Учебная группа (язык + уровень + учитель + цена)
+model Class {
+  id                String      @id @default(cuid())
+  language_id       String
+  teacher_id        String
+  title             String                    // "Английский A1 — Утренняя группа"
+  level             CEFR
+  price_uzs         Int                       // фиксированная цена в сумах (UZS)
+  price_usd         Int                       // фиксированная цена в долларах (USD)
+  max_students      Int         @default(10)
+  description       String?
+  is_active         Boolean     @default(true)
+  status            ClassStatus @default(ACTIVE) // жизненный цикл семестра
+  /// Метка семестра: "2026-07" — месяц которому принадлежит класс
+  semester_label    String?
+  /// Окно записи студентов
+  enrollment_opens_at  DateTime?
+  enrollment_closes_at DateTime?
+  /// Фактические даты семестра
+  starts_at         DateTime?
+  ends_at           DateTime?
+  telegram_chat_id  BigInt?                   // ID Telegram-группы класса
+  /// Ссылка на онлайн-урок (Zoom/Google Meet) — учитель задаёт при открытии курса.
+  /// Авто-отправляется студенту после оплаты.
+  meeting_url       String?
+  schedule_days     String[]                  // ["MON","WED","FRI"] — дни занятий
+  schedule_time     String?                   // "10:00" — время начала (HH:MM, UTC+5)
+  schedule_duration Int?                      // длительность в минутах (60, 90, 120)
+  created_at        DateTime    @default(now())
+
+  language    Language     @relation(fields: [language_id], references: [id])
+  teacher     Teacher      @relation(fields: [teacher_id], references: [id])
+  enrollments  Enrollment[]
+  homeworks    Homework[]
+  certificates Certificate[]
+  lessons      Lesson[]
+  payments     Payment[]
+  ratings      TeacherRating[]
+  transfers_from ClassTransferRequest[] @relation("TransferFrom")
+  transfers_to   ClassTransferRequest[] @relation("TransferTo")
+  class_requests ClassRequest[]
+  trial_requests TrialLessonRequest[]
+
+  @@index([language_id])
+  @@index([teacher_id])
+  @@index([level])
+  @@index([status])
+  @@index([semester_label])
+}
+
+// =====================
+//  ENROLLMENTS
+// =====================
+
+/// Запись студента в класс
+model Enrollment {
+  id          String           @id @default(cuid())
+  student_id  String
+  class_id    String
+  status      EnrollmentStatus @default(PENDING)
+  /// Пробный — не требует оплаты
+  is_trial    Boolean          @default(false)
+  /// Дата истечения пробного периода (cron проверяет ежедневно)
+  trial_expires_at DateTime?
+  enrolled_at      DateTime   @default(now())
+
+  student  User      @relation(fields: [student_id], references: [id])
+  class    Class     @relation(fields: [class_id], references: [id])
+  payments Payment[]
+
+  @@unique([student_id, class_id])
+  @@index([student_id])
+  @@index([class_id])
+  @@index([status])
+  @@index([trial_expires_at])
+}
+
+// =====================
+//  TRIAL LESSONS
+// =====================
+
+/// Заявка на пробный урок
+model TrialLessonRequest {
+  id          String      @id @default(cuid())
+  student_id  String
+  language_id String
+  /// ONLINE = бесплатный, авто-привязка к открытому курсу.
+  /// OFFLINE = очный, требует оплаты (возврат если не понравилось).
+  type        TrialType   @default(ONLINE)
+  note        String?     // пожелания студента
+  status      TrialStatus @default(PENDING)
+  /// К какому классу привязан пробный (онлайн — для Zoom-ссылки, очный — для цены)
+  class_id    String?
+  /// Платёж для очного пробного (OFFLINE). PAID → status CONFIRMED.
+  payment_id  String?     @unique
+  created_at  DateTime    @default(now())
+
+  student  User     @relation(fields: [student_id], references: [id])
+  language Language @relation(fields: [language_id], references: [id])
+  class    Class?   @relation(fields: [class_id], references: [id])
+  payment  Payment? @relation(fields: [payment_id], references: [id])
+
+  @@index([student_id])
+  @@index([status])
+  @@index([class_id])
+}
+
+// =====================
+//  SUPPORT TICKETS
+// =====================
+
+/// Тикет поддержки от студента
+model SupportTicket {
+  id         String       @id @default(cuid())
+  student_id String
+  subject    String
+  message    String
+  status     TicketStatus @default(OPEN)
+  created_at DateTime     @default(now())
+
+  student User @relation(fields: [student_id], references: [id])
+
+  @@index([student_id])
+  @@index([status])
+}
+
+// =====================
+//  REFERRALS
+// =====================
+
+/// Реферальный код пользователя (1:1 с User)
+model Referral {
+  id                 String    @id @default(cuid())
+  referrer_id        String    @unique
+  code               String    @unique  // короткий код: XXXXXX (base36)
+  used_count         Int       @default(0)
+  /// Кто воспользовался кодом последним (опционально — для упрощённой схемы)
+  invitee_id         String?
+  /// Когда код был активирован (первый раз)
+  redeemed_at        DateTime?
+  /// Начислено бонусных дней за реферал
+  bonus_days_granted Int       @default(0)
+  created_at         DateTime  @default(now())
+
+  referrer User  @relation("ReferralReferrer", fields: [referrer_id], references: [id])
+  invitee  User? @relation("ReferralInvitee", fields: [invitee_id], references: [id])
+
+  @@index([invitee_id])
+}
+
+// =====================
+//  NOTIFICATIONS
+// =====================
+
+enum NotificationChannel {
+  TELEGRAM
+  EMAIL
+}
+
+/// Уведомление пользователю (лог отправленных сообщений)
+model Notification {
+  id         String              @id @default(cuid())
+  user_id    String
+  type       String              // "homework_new" | "lesson_reminder" | "grade_received" | ...
+  title      String
+  body       String
+  payload    Json?               // доп. данные (deep-link, class_id и т.п.)
+  channel    NotificationChannel @default(TELEGRAM)
+  read_at    DateTime?           // когда прочитано (для in-app)
+  sent_at    DateTime?           // когда отправлено в Telegram/Email
+  created_at DateTime            @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at])
+  @@index([user_id, read_at])
+  @@map("notifications")
+}
+
+// =====================
+//  PLACEMENT TESTS
+// =====================
+
+enum PlacementTestStatus {
+  IN_PROGRESS  // начат, ещё не завершён
+  COMPLETED    // завершён, уровень определён
+  EXPIRED      // истёк (нет активности > 24ч)
+}
+
+/// Тест на определение уровня языка (placement test)
+/// 15 вопросов → скоринг → CEFR уровень
+model PlacementTest {
+  id             String              @id @default(cuid())
+  user_id        String
+  language_id    String
+  status         PlacementTestStatus @default(IN_PROGRESS)
+  /// JSON-массив ответов: [{question_id, answer, is_correct}]
+  answers        Json                @default("[]")
+  /// Финальный балл (0–100, заполняется при завершении)
+  score          Int?
+  /// Определённый уровень (заполняется при завершении)
+  level_assigned CEFR?
+  started_at     DateTime            @default(now())
+  completed_at   DateTime?
+  expires_at     DateTime            // время жизни сессии теста (now + 24h)
+
+  user     User     @relation(fields: [user_id], references: [id])
+  language Language @relation(fields: [language_id], references: [id])
+
+  @@index([user_id, status])
+  @@index([expires_at])
+  @@map("placement_tests")
+}
+
+// =====================
+//  PAYMENTS
+// =====================
+
+enum PaymentProvider {
+  PAYME
+  CLICK
+  UZUMBANK
+}
+
+enum PaymentStatus {
+  PENDING     // создан, ожидает оплаты
+  AUTHORIZED  // авторизован провайдером (pre-auth)
+  PAID        // оплачен
+  CANCELLED   // отменён
+  REFUNDED    // возврат
+  FAILED      // ошибка
+  EXPIRED     // истёк срок
+}
+
+enum FiscalStatus {
+  PENDING    // ожидает отправки в ОФД
+  SENT       // отправлен
+  CONFIRMED  // подтверждён ОФД
+  FAILED     // ошибка
+  REFUNDED   // чек возврата отправлен
+}
+
+enum ReceiptType {
+  SALE
+  REFUND
+}
+
+/// Платёж студента за класс/курс
+model Payment {
+  id                String          @id @default(cuid())
+  user_id           String                                // студент (бенефициар)
+  payer_user_id     String?                               // родитель-плательщик (если оплачивает за ребёнка)
+  class_id          String?                               // за какой класс
+  /// Привязка к конкретной записи — заполняется при checkout,
+  /// при PAID → enrollment.status меняется на ACTIVE автоматически
+  enrollment_id     String?
+  amount_tiyin      BigInt                                // сумма в тийинах (1 UZS = 100 tiyin)
+  vat_amount_tiyin  BigInt          @default(0)           // НДС в тийинах
+  vat_rate          Int             @default(12)          // ставка НДС %
+  currency          String          @default("UZS")
+  provider          PaymentProvider
+  provider_txn_id   String?                               // ID транзакции провайдера
+  provider_state    Int?                                  // внутренний статус провайдера (Payme: 1/2/-1/-2)
+  status            PaymentStatus   @default(PENDING)
+  idempotency_key   String          @unique               // клиентский ключ идемпотентности
+  payload_in        Json?                                 // входящий payload от провайдера
+  payload_out       Json?                                 // наш ответ провайдеру
+  paid_at           DateTime?
+  refunded_at       DateTime?                             // когда оформлен возврат
+  refund_reason     String?                               // причина возврата (админ)
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+
+  user         User          @relation("PaymentUser",  fields: [user_id],       references: [id])
+  payer        User?         @relation("PaymentPayer", fields: [payer_user_id], references: [id])
+  class        Class?        @relation(fields: [class_id], references: [id])
+  enrollment   Enrollment?   @relation(fields: [enrollment_id], references: [id])
+  fiscal_receipt FiscalReceipt?
+  webhook_events WebhookEvent[]
+  trial        TrialLessonRequest?
+
+  @@index([user_id, status])
+  @@index([provider, provider_txn_id])
+  @@index([status, created_at])
+  @@index([enrollment_id])
+  @@map("payments")
+}
+
+/// Фискальный чек (Soliq/OFD)
+model FiscalReceipt {
+  id               String       @id @default(cuid())
+  payment_id       String       @unique
+  status           FiscalStatus @default(PENDING)
+  receipt_type     ReceiptType  @default(SALE)
+  fiscal_sign      String?      // QR-код / подпись ОФД
+  fiscal_number    String?      // номер чека
+  receipt_url      String?      // URL чека
+  total_tiyin      BigInt
+  vat_tiyin        BigInt
+  items            Json         // [{name, quantity, price_tiyin, vat_percent}]
+  request_payload  Json?
+  response_payload Json?
+  attempts         Int          @default(0)
+  last_error       String?
+  sent_at          DateTime?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  payment Payment @relation(fields: [payment_id], references: [id])
+
+  @@index([status, attempts])
+  @@map("fiscal_receipts")
+}
+
+/// Входящие webhook-события от платёжных провайдеров (лог)
+model WebhookEvent {
+  id           String          @id @default(cuid())
+  provider     PaymentProvider
+  external_id  String          // ID события у провайдера
+  payment_id   String?
+  signature    String?
+  raw_body     Json
+  processed    Boolean         @default(false)
+  processed_at DateTime?
+  error        String?
+  created_at   DateTime        @default(now())
+
+  payment Payment? @relation(fields: [payment_id], references: [id])
+
+  @@unique([provider, external_id])
+  @@index([processed, created_at])
+  @@map("webhook_events")
+}
+
+/// Конфигурация платёжных провайдеров (включён/выключен, порядок отображения)
+model PaymentProviderConfig {
+  id            String          @id @default(cuid())
+  provider      PaymentProvider @unique
+  is_enabled    Boolean         @default(true)
+  display_order Int             @default(0)
+  config        Json            // {logo_url, display_name, ...}
+  updated_at    DateTime        @updatedAt
+
+  @@map("payment_providers_config")
+}
+
+// =====================
+//  LESSONS (занятия)
+// =====================
+
+enum LessonStatus {
+  SCHEDULED   // запланировано
+  COMPLETED   // проведено
+  CANCELLED   // отменено
+}
+
+/// Конкретное занятие класса (создаётся учителем/менеджером)
+model Lesson {
+  id           String       @id @default(cuid())
+  class_id     String
+  title        String?                       // тема урока (опционально)
+  scheduled_at DateTime                      // дата/время занятия (UTC)
+  duration_min Int          @default(60)
+  status       LessonStatus @default(SCHEDULED)
+  notes        String?                       // заметки учителя
+  created_at   DateTime     @default(now())
+
+  class       Class              @relation(fields: [class_id], references: [id])
+  attendances LessonAttendance[]
+
+  @@index([class_id, scheduled_at])
+  @@index([scheduled_at])
+  @@map("lessons")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+/// Посещаемость студента на конкретном уроке
+model LessonAttendance {
+  id        String           @id @default(cuid())
+  lesson_id String
+  student_id String
+  status    AttendanceStatus @default(PRESENT)
+  note      String?
+
+  lesson  Lesson @relation(fields: [lesson_id], references: [id])
+  student User   @relation(fields: [student_id], references: [id])
+
+  @@unique([lesson_id, student_id])
+  @@index([student_id])
+  @@index([lesson_id])
+  @@map("lesson_attendances")
+}
+
+// =====================
+//  HOMEWORK (ДЗ)
+// =====================
+
+/// Домашнее задание для класса (создаёт учитель/менеджер)
+model Homework {
+  id          String    @id @default(cuid())
+  class_id    String
+  title       String
+  description String?
+  due_date    DateTime?             // дедлайн сдачи
+  created_at  DateTime  @default(now())
+
+  class       Class                @relation(fields: [class_id], references: [id])
+  submissions HomeworkSubmission[]
+
+  @@index([class_id])
+  @@index([due_date])
+}
+
+/// Сдача ДЗ студентом — файл на R2 или текстовый ответ
+model HomeworkSubmission {
+  id          String                   @id @default(cuid())
+  homework_id String
+  student_id  String
+  file_key    String?                  // R2 object key (без CDN-хоста)
+  file_url    String?                  // публичный CDN URL (заполняется после confirm)
+  text_answer String?
+  status      HomeworkSubmissionStatus @default(SUBMITTED)
+  grade       Int?                     // 0–100
+  feedback    String?                  // комментарий учителя
+  submitted_at DateTime                @default(now())
+  graded_at   DateTime?
+
+  homework Homework @relation(fields: [homework_id], references: [id])
+  student  User     @relation(fields: [student_id], references: [id])
+
+  @@unique([homework_id, student_id])
+  @@index([student_id])
+  @@index([homework_id, status])
+}
+
+// =====================
+//  ACHIEVEMENTS (достижения)
+// =====================
+
+/// Шаблон достижения (seed-данные, не меняются в рантайме)
+model Achievement {
+  id             String             @id @default(cuid())
+  key            String             @unique  // машинный ключ: "first_enrollment"
+  title_ru       String
+  title_uz       String?
+  title_en       String?
+  description_ru String
+  description_uz String?
+  description_en String?
+  icon           String             // emoji: "🎓" или R2 URL иконки
+  trigger        AchievementTrigger
+  created_at     DateTime           @default(now())
+
+  user_achievements UserAchievement[]
+}
+
+/// Разблокированное достижение у пользователя
+model UserAchievement {
+  id             String   @id @default(cuid())
+  user_id        String
+  achievement_id String
+  unlocked_at    DateTime @default(now())
+
+  user        User        @relation(fields: [user_id], references: [id])
+  achievement Achievement @relation(fields: [achievement_id], references: [id])
+
+  @@unique([user_id, achievement_id])
+  @@index([user_id])
+}
+
+// =====================
+//  CERTIFICATES (сертификаты)
+// =====================
+
+/// PDF-сертификат об окончании курса — генерируется бэком, хранится в R2
+model Certificate {
+  id         String   @id @default(cuid())
+  student_id String
+  class_id   String
+  file_key   String             // R2 object key
+  file_url   String             // публичный CDN URL
+  issued_at  DateTime @default(now())
+
+  student User  @relation(fields: [student_id], references: [id])
+  class   Class @relation(fields: [class_id], references: [id])
+
+  @@unique([student_id, class_id])
+  @@index([student_id])
+}
+
+// =====================
+//  PARENTS (родители)
+// =====================
+
+/// Связь родитель → ребёнок.
+/// Создаётся когда ребёнок принимает invite от родителя.
+model ParentChildLink {
+  id         String   @id @default(cuid())
+  parent_id  String
+  child_id   String
+  created_at DateTime @default(now())
+
+  parent User @relation("ParentLinks", fields: [parent_id], references: [id], onDelete: Cascade)
+  child  User @relation("ChildLinks", fields: [child_id], references: [id], onDelete: Cascade)
+
+  @@unique([parent_id, child_id])
+  @@index([parent_id])
+  @@index([child_id])
+}
+
+/// Инвайт-код для привязки родителя.
+/// Родитель генерирует код → отправляет ребёнку (вне системы) →
+/// ребёнок вводит код в TWA → создаётся ParentChildLink.
+model ParentLinkInvite {
+  id         String    @id @default(cuid())
+  parent_id  String
+  /// UUID-код для принятия инвайта (отправляется ребёнку)
+  code       String    @unique @default(cuid())
+  expires_at DateTime  // 24ч с момента создания
+  used_at    DateTime?
+  child_id   String?   // заполняется после принятия
+
+  parent User @relation("ParentInvites", fields: [parent_id], references: [id], onDelete: Cascade)
+
+  @@index([parent_id])
+  @@index([expires_at])
+}
+
+// =====================
+//  AUDIT LOG (Этап 13)
+// =====================
+
+/// Журнал аудита административных действий.
+/// Логируется: смена роли, удаление пользователя/учителя/класса,
+/// возврат оплаты, создание учителя/класса, broadcast уведомления.
+model AuditLog {
+  id          String   @id @default(cuid())
+  /// Кто выполнил действие (User.id)
+  actor_id    String
+  /// Тип действия (snake_case)
+  action      String
+  /// Тип сущности над которой выполнено действие
+  entity_type String
+  /// ID сущности (опционально, если действие над конкретным объектом)
+  entity_id   String?
+  /// Дополнительные данные (старое значение, новое значение и т.д.)
+  meta        Json     @default("{}")
+  created_at  DateTime @default(now())
+
+  actor User @relation("AuditActor", fields: [actor_id], references: [id], onDelete: Cascade)
+
+  @@index([actor_id])
+  @@index([action])
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+}
+
+// =====================
+//  TEACHER RATINGS
+// =====================
+
+/// Оценка учителя студентом (1-5 звёзд)
+model TeacherRating {
+  id         String   @id @default(cuid())
+  student_id String
+  teacher_id String
+  class_id   String
+  rating     Int      // 1-5
+  comment    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  student User    @relation("StudentRatings", fields: [student_id], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  class   Class   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, class_id])
+  @@index([teacher_id])
+  @@map("teacher_ratings")
+}
+
+// =====================
+//  TEACHER BADGES
+// =====================
+
+/// Бейдж / сертификат учителя — выдаётся администратором/менеджером вручную
+model TeacherBadge {
+  id          String   @id @default(cuid())
+  teacher_id  String
+  title       String              // "Лучший учитель 2024", "Сертифицированный IELTS"
+  description String?
+  icon        String              // emoji или ключ иконки: "🏆", "📜", "⭐"
+  type        String   @default("badge")  // "badge" | "certificate" | "award"
+  awarded_at  DateTime @default(now())
+  awarded_by  String              // user_id администратора
+
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([teacher_id])
+  @@map("teacher_badges")
+}
+
+// =====================
+//  CLASS TRANSFER REQUESTS
+// =====================
+
+/// Запрос студента на перевод из одного класса в другой
+model ClassTransferRequest {
+  id            String         @id @default(cuid())
+  student_id    String
+  from_class_id String
+  to_class_id   String
+  status        TransferStatus @default(PENDING)
+  /// Стоимость перевода в сумах (0 = бесплатно)
+  fee_uzs       Int            @default(0)
+  reason        String?        // причина перевода (от студента)
+  admin_note    String?        // комментарий менеджера
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+
+  student    User  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  from_class Class @relation("TransferFrom", fields: [from_class_id], references: [id])
+  to_class   Class @relation("TransferTo",   fields: [to_class_id],   references: [id])
+
+  @@index([student_id, status])
+  @@index([status, created_at])
+  @@map("class_transfer_requests")
+}
+
+// =====================
+//  CLASS REQUESTS (заявки учителей на создание курса)
+// =====================
+
+/// Заявка учителя на открытие нового класса.
+/// Flow: Teacher → PENDING → Manager reviews → APPROVED (Class создаётся) | REJECTED
+model ClassRequest {
+  id                String             @id @default(cuid())
+  teacher_id        String                              // Teacher.id (не User.id)
+  language_id       String
+  title             String                              // предлагаемое название
+  level             CEFR
+  description       String?
+  schedule_days     String[]           @default([])    // ["MON","WED","FRI"]
+  schedule_time     String?                            // "10:00" HH:MM UTC+5
+  schedule_duration Int?                               // минуты: 60/90/120
+  max_students      Int                @default(10)
+  /// Ссылка на онлайн-урок (Zoom/Meet) — учитель задаёт при открытии курса
+  meeting_url       String?
+  /// Инфо о курсе (направлении), предлагается учителем; на апруве переносится
+  /// в Language, если там ещё пусто (первый учитель определяет направление).
+  course_duration     String?
+  course_includes     String[] @default([])
+  course_requirements String[] @default([])
+  /// Дополнительные пожелания от учителя (оборудование, время, студенты)
+  note              String?
+  status            ClassRequestStatus @default(PENDING)
+  /// Комментарий менеджера при апруве или отклонении
+  admin_note        String?
+  /// При APPROVED — ссылка на созданный класс
+  approved_class_id String?
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+
+  teacher        Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  language       Language @relation(fields: [language_id], references: [id])
+  approved_class Class?   @relation(fields: [approved_class_id], references: [id])
+
+  @@index([teacher_id, status])
+  @@index([status, created_at])
+  @@map("class_requests")
+}
+
+// =====================
+//  ANALYTICS EVENTS
+// =====================
+
+/// Поток событий пользователя для аналитики.
+/// Вставки только append-only — никогда не обновлять и не удалять.
+/// Партиционирование по месяцам через PostgreSQL RANGE на created_at
+/// настраивается вне Prisma через сырой SQL.
+/// Partitioned by created_at (RANGE monthly). PK is composite (id, created_at)
+/// so Prisma findUnique requires both fields — never use findUnique on this model.
+model AnalyticsEvent {
+  id          String   @default(cuid())
+  /// Тип события: page_view, enroll, payment_paid, homework_submit,
+  /// lesson_attend, trial_request, placement_complete
+  event_type  String
+  /// ID пользователя (null для анонимных событий)
+  user_id     String?
+  /// Роль пользователя в момент события
+  user_role   String?
+  /// ID связанной сущности (class_id, payment_id, etc.)
+  entity_id   String?
+  /// Тип связанной сущности
+  entity_type String?
+  /// Дополнительные метаданные (JSON)
+  properties  Json?
+  /// Время события — используется как ключ партиции
+  created_at  DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@id([id, created_at])
+  @@index([event_type, created_at])
+  @@index([user_id, created_at])
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+  @@map("analytics_events")
+}
+
+// =====================
+//  HR / PAYROLL
+// =====================
+
+/// Тип занятости. STAFF — трудовой договор (удерживаем НДФЛ + соцналог).
+/// SELF_EMPLOYED — самозанятый/договор услуг (налоги платит сам, удержаний нет).
+enum EmploymentType {
+  STAFF
+  SELF_EMPLOYED
+}
+
+/// База расчёта зарплаты.
+enum SalaryType {
+  FIXED         // фиксированный оклад в месяц (rate_uzs)
+  PER_LESSON    // за каждый проведённый урок (rate_uzs за урок)
+  REVENUE_SHARE // % от выручки (PAID) его групп (rate_percent)
+}
+
+enum PayrollStatus {
+  DRAFT
+  FINALIZED
+}
+
+/// Сотрудник центра (1:1 с User). Создаёт ADMIN/SUPER_ADMIN.
+model Employee {
+  id              String         @id @default(cuid())
+  user_id         String         @unique
+  employment_type EmploymentType @default(STAFF)
+  salary_type     SalaryType     @default(PER_LESSON)
+  rate_uzs        Int            @default(0) // FIXED: оклад/мес; PER_LESSON: за урок
+  rate_percent    Int            @default(0) // REVENUE_SHARE: % (0-100)
+  is_active       Boolean        @default(true)
+  note            String?
+  hired_at        DateTime       @default(now())
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  user     User      @relation("EmployeeUser", fields: [user_id], references: [id], onDelete: Cascade)
+  payslips Payslip[]
+}
+
+/// Прогон зарплаты за месяц (period = "YYYY-MM").
+model PayrollRun {
+  id              String        @id @default(cuid())
+  period          String        @unique
+  status          PayrollStatus @default(DRAFT)
+  total_gross_uzs Int           @default(0)
+  total_net_uzs   Int           @default(0)
+  created_at      DateTime      @default(now())
+  finalized_at    DateTime?
+
+  payslips Payslip[]
+}
+
+/// Расчётный листок сотрудника в рамках прогона.
+model Payslip {
+  id            String   @id @default(cuid())
+  run_id        String
+  employee_id   String
+  gross_uzs     Int
+  lessons_count Int      @default(0)
+  ndfl_uzs      Int      @default(0)
+  social_uzs    Int      @default(0)
+  net_uzs       Int
+  note          String?
+  created_at    DateTime @default(now())
+
+  run      PayrollRun @relation(fields: [run_id], references: [id], onDelete: Cascade)
+  employee Employee   @relation(fields: [employee_id], references: [id])
+
+  @@unique([run_id, employee_id])
+  @@index([employee_id])
+}

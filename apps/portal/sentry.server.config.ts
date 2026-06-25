@@ -1,0 +1,14 @@
+/**
+ * Sentry server-side config (runs in Node.js / Edge runtime).
+ * https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ */
+import * as Sentry from '@sentry/nextjs';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  enabled: !!process.env.SENTRY_DSN,
+
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
+
+  environment: process.env.NODE_ENV ?? 'development',
+});

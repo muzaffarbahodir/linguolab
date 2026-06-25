@@ -1,0 +1,200 @@
+{
+  "session_type": "audit-fix",
+  "project": "LinguoLab",
+  "language_of_responses": "ru",
+  "purpose": "Закрыть проблемы из docs/AUDIT_ISSUES.md по порядку приоритета.",
+  "context_files_to_read_first": [
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\docs\\AUDIT_ISSUES.md",
+      "why": "Полный список проблем с описанием, файлами, импактом и предлагаемым фиксом."
+    },
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\docs\\HANDOFF.md",
+      "why": "Контекст проекта (стек, конвенции, deploy)."
+    },
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\docs\\NEW_SESSION_PROMPT.json",
+      "why": "Базовые правила (critical_rules, deploy_commands, doc_maintenance_protocol)."
+    }
+  ],
+  "issues_to_fix": {
+    "critical": [
+      {
+        "id": "C1",
+        "title": "N+1 queries в getClassStudentStats",
+        "files": ["apps/api/src/modules/classes/classes.service.ts:174-201"],
+        "approach": "Replace nested async .map() with Promise.all() + prisma.groupBy() aggregations keyed by student_id. Merge results via Map.",
+        "test_after": "GET /classes/:id/student-stats — measure response time before/after. Should drop from ~500ms (30 students) to ~50ms."
+      },
+      {
+        "id": "C2",
+        "title": "Слабая валидация на presigned upload",
+        "files": ["apps/api/src/modules/storage/storage.controller.ts:26-32"],
+        "approach": "Add @Length(1,255) + @Matches(/^[\\w.\\-]+$/) on filename. @IsIn([allowed mimes]) on contentType. @IsNumber() @Min(1000) @Max(52428800) on size.",
+        "test_after": "POST /storage/presigned-upload with malformed filename → 400. With image/jpeg → 200."
+      },
+      {
+        "id": "C3",
+        "title": "Hardcoded localhost fallback в frontend client",
+        "files": ["apps/web/src/api/client.ts:34"],
+        "approach": "Throw error in build if VITE_API_URL is not set. Or use production fallback 'https://api-linguolab.muzaffarbahodir.uz/api/v1'.",
+        "test_after": "Build with empty VITE_API_URL → either build fails OR baseURL is HTTPS production URL."
+      },
+      {
+        "id": "C4",
+        "title": "Docker images используют :latest",
+        "files": [
+          "infra/compose/docker-compose.yml:38,58,78",
+          ".github/workflows/deploy-api.yml"
+        ],
+        "approach": "CI pushes both :latest AND :${SHA_SHORT} tags. docker-compose.yml uses ${API_TAG:-latest}. Deploy step updates .env with new SHA before docker compose up.",
+        "test_after": "Deploy on server checks `docker inspect linguolab_api | grep Image` — must show SHA digest, not just 'latest'."
+      }
+    ],
+    "high": [
+      {
+        "id": "H1",
+        "title": "Click webhook без DTO validation",
+        "files": ["apps/api/src/modules/payments/click/click.service.ts:33-56,110-135"],
+        "approach": "Create ClickPrepareDto + ClickCompleteDto with @IsString @IsNumber @Min @Matches. Apply ValidationPipe({transform:true}) on controller methods.",
+        "test_after": "POST webhook with malformed body → 400 BadRequest, не 500."
+      },
+      {
+        "id": "H2",
+        "title": "Future-dated auth_date не отклоняется",
+        "files": ["apps/api/src/modules/auth/telegram-init.validator.ts:97-109"],
+        "approach": "Add check: if (authDateSeconds > Date.now()/1000 + 60) throw new UnauthorizedException('auth_date в будущем').",
+        "test_after": "Mock initData с auth_date в будущем → 401."
+      },
+      {
+        "id": "H3",
+        "title": "SQL injection потенциал в admin analytics",
+        "files": ["apps/api/src/modules/admin/admin.service.ts:674,703,741"],
+        "approach": "Replace $queryRaw with prisma.X.groupBy() API. Or validate all UUIDs with regex /^[0-9a-f-]{36}$/ before passing to raw query.",
+        "test_after": "Pass invalid UUID to analytics endpoint → 400, не 500."
+      },
+      {
+        "id": "H4",
+        "title": "Payme auth header empty password",
+        "files": ["apps/api/src/modules/payments/payments.controller.ts:81-96"],
+        "approach": "Reject if password is empty. Verify merchantKey is set at startup (throw if missing in production).",
+        "test_after": "POST Payme webhook с пустым Basic auth → 401. Without auth header → 401."
+      },
+      {
+        "id": "H5",
+        "title": "N+1 в Teacher Rating computation",
+        "files": ["apps/api/src/modules/classes/classes.service.ts:461-468"],
+        "approach": "Pre-compute Map<student_id, AttendanceRecord[]> в одном проходе. Затем lookup O(1).",
+        "test_after": "Measure teacher rating endpoint with 100+ students — должно отвечать <200ms."
+      }
+    ],
+    "medium": [
+      {
+        "id": "M1",
+        "title": "Uzumbank endpoint stub",
+        "files": [
+          "apps/api/src/modules/payments/payments.controller.ts:122-128",
+          "apps/web/src/pages/Payment.tsx"
+        ],
+        "approach": "Либо вернуть HTTP 501 Not Implemented, либо убрать Uzumbank из PROVIDERS в Payment.tsx (feature flag через .env)."
+      },
+      {
+        "id": "M2",
+        "title": "DTO без @Length/@ArrayMaxSize",
+        "files": ["apps/api/src/modules/*/dto/*.ts"],
+        "approach": "Аудит каждого DTO: добавить @Length(1, 500) на короткие тексты, @Length(1, 5000) на длинные, @ArrayMaxSize(100) на массивы.",
+        "files_to_check": [
+          "CreateHomeworkDto",
+          "CreateSupportTicketDto",
+          "CreatePlacementTestDto",
+          "CreateClassDto",
+          "CreateTeacherDto"
+        ]
+      },
+      {
+        "id": "M3",
+        "title": "Race condition в payment idempotency",
+        "files": ["apps/api/src/modules/payments/payments.service.ts:33-42"],
+        "approach": "Заменить findUnique+create на prisma.payment.upsert({where:{idempotency_key}, create:..., update:{}}).",
+        "test_after": "Параллельный запрос с одним idempotency_key → возвращает одну запись без race."
+      },
+      {
+        "id": "M4",
+        "title": "Нет rate limiting на чувствительных public endpoints",
+        "files": ["apps/api/src/modules/auth/*.controller.ts", "apps/api/src/modules/support/*.controller.ts", "apps/api/src/modules/trial-lessons/*.controller.ts"],
+        "approach": "Добавить @Throttle({ default: { limit: 5, ttl: 60000 } }) на POST /auth/telegram/init, POST /support/tickets, POST /trial-lessons/request."
+      },
+      {
+        "id": "M5",
+        "title": "CORS fallback на localhost в продакшене",
+        "files": ["apps/api/src/main.ts:39-42"],
+        "approach": "if (process.env.NODE_ENV === 'production' && !process.env.CORS_ALLOWED_ORIGINS) throw new Error('CORS_ALLOWED_ORIGINS must be set in production')."
+      },
+      {
+        "id": "M6",
+        "title": "Fire-and-forget без guaranteed retry в Click webhook",
+        "files": ["apps/api/src/modules/payments/click/click.service.ts:191,194,197"],
+        "approach": "Заменить void handlePaymentPaid() на BullMQ job 'payment-paid' с attempts:5, backoff:exponential."
+      }
+    ],
+    "low": [
+      {
+        "id": "L1",
+        "title": "REDIS_PASSWORD через --requirepass",
+        "decision": "Принимаем как есть. Docker secrets — overkill для single-server. Не фиксим."
+      },
+      {
+        "id": "L2",
+        "title": "Missing Prisma indexes",
+        "files": ["apps/api/prisma/schema.prisma"],
+        "approach": "На сервере PG: EXPLAIN ANALYZE на slow queries. Добавить @@index([class_id]) на Enrollment, @@index([student_id]) на LessonAttendance. Создать миграцию.",
+        "post_task": "После добавления — pnpm prisma migrate dev --name add-indexes + push + CI запустит migrate deploy на сервере."
+      },
+      {
+        "id": "L3",
+        "title": "CI без coverage threshold",
+        "files": [".github/workflows/ci.yml"],
+        "approach": "Добавить --coverage --coverageThreshold='{\"global\":{\"lines\":70}}' в pnpm test."
+      },
+      {
+        "id": "L4",
+        "title": "Расхождение .env.example",
+        "files": [".env.example"],
+        "approach": "grep -rh 'process.env\\.\\w*' apps/api/src | sort -u → сравнить с .env.example → добавить недостающие ключи с примерами."
+      }
+    ]
+  },
+  "workflow_per_issue": [
+    "1. Прочитай описание issue в docs/AUDIT_ISSUES.md.",
+    "2. Прочитай указанные файлы. Найди точное место.",
+    "3. Внеси правку (минимально достаточный фикс — не рефактори всё).",
+    "4. Запусти локально pnpm build (api или web в зависимости).",
+    "5. Если есть тесты — pnpm test.",
+    "6. Commit: 'fix(security): C1 - resolve N+1 in getClassStudentStats' (формат: 'fix(area): ID - title').",
+    "7. Push origin main.",
+    "8. Если CI/CD — дождись прохождения. Если manual deploy — выполни.",
+    "9. Обнови docs/AUDIT_ISSUES.md: пометь issue как ✅ ЗАКРЫТО + ссылка на commit SHA.",
+    "10. Если все CRITICAL/HIGH/MEDIUM закрыты — обнови docs/SESSION_SUMMARY.md + docs/project_progress.md (новый этап 'Security & quality hardening')."
+  ],
+  "critical_rules": [
+    "Ничего не комментируй и не помечай TODO — фикси прямо.",
+    "Не меняй ничего за пределами scope конкретного issue.",
+    "Если фикс затрагивает несколько issues — закрывай по очереди, отдельными коммитами.",
+    "Если фикс ломает тесты — откатись, объясни почему, и предложи альтернативу.",
+    "После фикса CRITICAL — обязательно verify через ручной тест или E2E.",
+    "Не пропускай Pre-commit hooks. Conventional Commits обязательны.",
+    "Не пушь напрямую в production без локального build — обязательно pnpm build в apps/api или apps/web сначала."
+  ],
+  "first_action": [
+    "1. Прочитай AUDIT_ISSUES.md + HANDOFF.md + NEW_SESSION_PROMPT.json.",
+    "2. Спроси: 'С какого issue начать?' — предложи начать с C1 (самый высокий impact).",
+    "3. Жди подтверждения. НЕ начинай фикс самостоятельно — каждый CRITICAL/HIGH требует подтверждения от пользователя."
+  ],
+  "completion_criteria": {
+    "minimum_viable": "Закрыты все CRITICAL (C1-C4) — проект безопасен для prod traffic.",
+    "production_ready": "Закрыты CRITICAL + HIGH (C1-C4, H1-H5).",
+    "polished": "Закрыты CRITICAL + HIGH + MEDIUM.",
+    "after_each_severity_tier": "Обнови docs/AUDIT_ISSUES.md (статусы) + docs/SESSION_SUMMARY.md + commit + push."
+  },
+  "user_instruction_to_paste_as_first_message": "Прочитай этот JSON как контракт. Прочти AUDIT_ISSUES.md. Спроси с какого issue начать. НЕ фикси ничего самостоятельно без подтверждения по конкретному ID."
+}

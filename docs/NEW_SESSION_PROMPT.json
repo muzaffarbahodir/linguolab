@@ -1,0 +1,151 @@
+{
+  "project": "LinguoLab",
+  "type": "Telegram Web App (TWA) — языковой центр",
+  "language_of_responses": "ru",
+  "current_state": {
+    "stage": "26 завершён (30.05.2026)",
+    "branch": "main (прямые коммиты, без feature branches)",
+    "deploy": "CI/CD автомат через GitHub Actions"
+  },
+  "must_read_before_anything": [
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\docs\\HANDOFF.md",
+      "why": "Главный контекстный файл. Стек, роли, конвенции, deploy."
+    },
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\docs\\SESSION_SUMMARY.md",
+      "why": "Что сделано в последней большой сессии (этапы 23-26)."
+    },
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\docs\\project_progress.md",
+      "why": "Детальный дневник всех этапов 0.5 – 26."
+    },
+    {
+      "path": "C:\\Users\\Muzaffar\\Desktop\\EDU_CENTER\\linguolab\\README.md",
+      "why": "Чеклист этапов: [x] готово / [ ] осталось."
+    }
+  ],
+  "reference_files": {
+    "target_plan": "docs/PLAN_FINAL.md",
+    "production_runbook": "docs/LAUNCH.md",
+    "future_fiscal_spec": "docs/PAYMENT_FISCALIZATION_PROMPT.md",
+    "audit_issues": "docs/AUDIT_ISSUES.md (4 CRITICAL + 5 HIGH + 6 MEDIUM + 4 LOW)",
+    "fix_issues_prompt": "docs/FIX_ISSUES_PROMPT.json (отдельный контракт для аудит-фикс сессии)"
+  },
+  "infra": {
+    "twa_url": "https://app-linguolab.muzaffarbahodir.uz",
+    "api_url": "https://api-linguolab.muzaffarbahodir.uz",
+    "api_prefix": "/api/v1/*",
+    "health": "GET /health",
+    "server_ip": "79.143.176.220",
+    "server_user": "root",
+    "ssh_key": "~/.ssh/linguolab_deploy",
+    "repo": "https://github.com/artsoftmuzaffarkhon/linguolab"
+  },
+  "critical_rules": [
+    "Все ответы на русском языке.",
+    "После каждого изменения кода: git add → git commit → git push origin main.",
+    "Никаких feature branches. Никаких PR. Прямые коммиты в main.",
+    "CI/CD автоматически деплоит Web (через scp статики) и API (через GHCR Docker image).",
+    "Conventional Commits обязательны: feat: / fix: / docs: / chore: / refactor: / etc.",
+    "Каждая строка commit-сообщения ≤ 100 символов (commitlint enforces).",
+    "Pre-commit hooks (Husky + lint-staged + prettier) запускаются автоматически — не пропускать --no-verify.",
+    "PowerShell на Windows: НЕ используй && (bash-only), используй ; или раздельные команды.",
+    "scp создаёт assets/ с правами 0700 (root only) → nginx возвращает 403. После scp ВСЕГДА: chmod 755 на папку + 644 на файлы.",
+    "Не публиковать порты postgres (5432) и redis (6379) наружу — только в сети linguolab_internal.",
+    "Не трогать соседние Docker-контейнеры (main_nginx, linkbetter_bot, flowershop_*)."
+  ],
+  "doc_maintenance_protocol": {
+    "purpose": "Документация — это история проекта. После каждых значимых изменений обновляй MD-файлы, чтобы новая сессия всегда видела актуальное состояние.",
+    "when_to_update": {
+      "small_fix_or_typo": "ничего не обновлять, только коммит кода",
+      "new_feature_or_page": "обновить SESSION_SUMMARY.md + project_progress.md + README.md",
+      "architecture_change": "обновить HANDOFF.md + project_progress.md + README.md",
+      "completed_stage_or_task_group": "закрыть этап в README.md ([x]) + добавить запись в project_progress.md + обновить SESSION_SUMMARY.md",
+      "deploy_workflow_change": "обновить HANDOFF.md + SESSION_SUMMARY.md (раздел 'Деплой Web вручную')",
+      "new_md_file_or_rename": "обновить README.md (структура) + HANDOFF.md (раздел 4 структура проекта)"
+    },
+    "file_responsibilities": {
+      "docs/HANDOFF.md": {
+        "role": "Контекст для новой сессии — стек, роли, конвенции, deploy",
+        "update_when": "Изменение архитектуры / стека / workflow / структуры проекта",
+        "update_format": "Обнови верх (дата + список изменений) + соответствующую секцию"
+      },
+      "docs/project_progress.md": {
+        "role": "Детальный дневник — каждый этап с датой, целью, файлами, что сделано",
+        "update_when": "После каждой значимой задачи (новая страница, фича, рефакторинг)",
+        "update_format": "Добавь новую секцию '## ✅ Этап N — Название' в конец файла. Структура: Статус | Дата | Цель | Что сделано (с путями файлов) | Коммиты"
+      },
+      "docs/SESSION_SUMMARY.md": {
+        "role": "Краткая сводка последней большой сессии",
+        "update_when": "После закрытия группы задач или большой фичи",
+        "update_format": "Перепиши секцию '✅ Сделано' с новыми пунктами. Обнови список последних коммитов в конце"
+      },
+      "README.md": {
+        "role": "Чеклист этапов + структура + конвенции (видна на GitHub главной)",
+        "update_when": "Закрытие пункта этапа или добавление нового этапа",
+        "update_format": "Помечай [x] выполненные пункты. Добавляй новые секции '### Этап N' если объём оправдывает отдельный этап"
+      },
+      "docs/PLAN_FINAL.md": {
+        "role": "Целевой план продукта (НЕ дневник)",
+        "update_when": "Только при принципиальном изменении архитектуры (новый стек, удаление модуля)",
+        "update_format": "Версия v6 / v7 / etc."
+      },
+      "docs/NEW_SESSION_PROMPT.json": {
+        "role": "Этот файл — промпт для следующей сессии",
+        "update_when": "Изменение workflow, путей, добавление новых правил, рост remaining_tasks",
+        "update_format": "Обнови current_state.stage, remaining_tasks, critical_rules при необходимости"
+      }
+    },
+    "doc_commit_examples": [
+      "docs: close stage 27 + update HANDOFF and project_progress",
+      "docs: sync README checkboxes after CSV export feature",
+      "docs: update SESSION_SUMMARY with latest commits"
+    ],
+    "anti_patterns": [
+      "Не накапливай 10 несинхронизированных изменений в коде без обновления docs — следующая сессия не поймёт что произошло",
+      "Не дублируй одну и ту же запись в HANDOFF и project_progress — HANDOFF это краткая сводка, project_progress это детали",
+      "Не пиши 'TODO: обновить docs' и не делай — обновляй сразу"
+    ]
+  },
+  "deploy_commands": {
+    "web_via_cicd": "git push origin main",
+    "web_manual": [
+      "cd apps/web; pnpm build",
+      "ssh -i ~/.ssh/linguolab_deploy root@79.143.176.220 'rm -rf /opt/linguolab/web/dist/assets'",
+      "scp -i ~/.ssh/linguolab_deploy -r apps/web/dist/assets root@79.143.176.220:/opt/linguolab/web/dist/",
+      "scp -i ~/.ssh/linguolab_deploy apps/web/dist/index.html root@79.143.176.220:/opt/linguolab/web/dist/index.html",
+      "ssh -i ~/.ssh/linguolab_deploy root@79.143.176.220 'chmod 755 /opt/linguolab/web/dist/assets && chmod 644 /opt/linguolab/web/dist/assets/*'"
+    ],
+    "api_via_cicd": "git push origin main (workflow Deploy API запустится автоматом)",
+    "api_logs": "ssh -i ~/.ssh/linguolab_deploy root@79.143.176.220 'docker logs linguolab_api --tail=50'",
+    "prisma_migrate": "cd apps/api; pnpm prisma migrate dev --name X"
+  },
+  "remaining_tasks": {
+    "medium_priority_i18n_tail": {
+      "status": "✅ ЗАВЕРШЕНО (01.06.2026, commit 40f594c)",
+      "what": "Все 10 страниц переведены на t(). Добавлены новые ключи в ru/en/uz локали."
+    },
+    "large_separate_sessions": {
+      "stage_11_5_fiscal_soliq": "SKIP — см. docs/PAYMENT_FISCALIZATION_PROMPT.md",
+      "stage_14_tests": "✅ E2E updated (TWA auth mock). Sentry: API+portal+web. Weekly PDF report.",
+      "stage_13_5_analytics_events": "✅ AnalyticsEvent model + AnalyticsService + 3 endpoints (01.06.2026)",
+      "weekly_pdf_report": "SUPER_ADMIN еженедельный отчёт",
+      "observability": "Sentry + OpenTelemetry"
+    }
+  },
+  "first_action_on_session_start": [
+    "1. Прочитай 4 файла из must_read_before_anything в указанном порядке.",
+    "2. Напиши коротко: 'Готов к работе. Контекст изучен.'",
+    "3. Перескажи в 3-5 предложениях текущее состояние проекта (стадия, что готово, что осталось).",
+    "4. Жди инструкций от пользователя. НЕ начинай работу самостоятельно."
+  ],
+  "after_each_significant_task": [
+    "1. Закоммить код: git add → commit → push origin main.",
+    "2. Определи уровень изменения по doc_maintenance_protocol.when_to_update.",
+    "3. Обнови нужные MD-файлы согласно doc_maintenance_protocol.file_responsibilities.",
+    "4. Закоммить docs отдельно: git commit -m 'docs: ...'.",
+    "5. Запушь docs: git push origin main."
+  ],
+  "user_instruction_to_paste_as_first_message": "Прочитай этот JSON и следуй ему как контракту. Сначала выполни first_action_on_session_start. После любого значимого изменения выполняй after_each_significant_task. Никаких уточняющих вопросов про базовый контекст — он весь в must_read_before_anything."
+}

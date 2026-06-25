@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@import '../styles/glass.css';
+
+/* Nuar (dark) theme defaults — SSR-safe, no flash */
+:root {
+  --glass-body-bg: #09120e;
+  --glass-g1: rgba(16, 185, 129, 0.22);
+  --glass-g2: rgba(5, 150, 105, 0.15);
+  --glass-g3: rgba(52, 211, 153, 0.1);
+  --glass-accent: #10b981;
+  --glass-accent-text: #ffffff;
+  --glass-accent-glow: rgba(16, 185, 129, 0.42);
+  --glass-tabbar-bg: rgba(9, 20, 15, 0.88);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-card-bg: rgba(255, 255, 255, 0.035);
+  --glass-blue-bg: rgba(14, 165, 233, 0.06);
+  --glass-blue-border: rgba(14, 165, 233, 0.18);
+  --glass-green-bg: rgba(16, 185, 129, 0.1);
+  --glass-green-border: rgba(16, 185, 129, 0.22);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-text: #f0fdf4;
+  --glass-hint: #6ee7b7;
+  --glass-divider: rgba(255, 255, 255, 0.06);
+}

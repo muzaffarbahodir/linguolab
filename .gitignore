@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.turbo/
+.vite/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.prod
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Misc
+.cache/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# tsc -b composite project leaks (Vite config emits .js/.d.ts next to .ts)
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
+
+# Certificates (НИКОГДА не коммить)
+*.pem
+*.key
+*.crt
+infra/certs/
+
+# Prisma local migrations
+prisma/migrations/dev/
+
+# Local debug logs
+*-fail.txt
+api-fail.txt
+admin-fail.txt

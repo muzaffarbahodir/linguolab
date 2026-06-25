@@ -1,0 +1,30 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@sentry-internal/node-cpu-profiler': true
+  '@sentry/cli': true
+  bcrypt: true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+
+# pnpm 11+ блокирует post-install скрипты по умолчанию (security).
+# Эти зависимости имеют легитимные post-install (компиляция нативных бинарей).
+onlyBuiltDependencies:
+  - esbuild
+  - '@prisma/client'
+  - '@prisma/engines'
+  - prisma
+  - '@swc/core'
+  - bcrypt
+  - sharp
+  - msgpackr-extract
+  - '@sentry-internal/node-cpu-profiler'
+  - '@sentry/cli'

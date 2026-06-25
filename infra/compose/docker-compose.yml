@@ -1,0 +1,107 @@
+services:
+  linguolab_postgres:
+    image: postgres:16-alpine
+    container_name: linguolab_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - linguolab_postgres_data:/var/lib/postgresql/data
+      - /opt/linguolab/backups:/backups
+    networks:
+      - linguolab_internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  linguolab_redis:
+    image: redis:7-alpine
+    container_name: linguolab_redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--requirepass', '${REDIS_PASSWORD}']
+    volumes:
+      - linguolab_redis_data:/data
+    networks:
+      - linguolab_internal
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a ${REDIS_PASSWORD} ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  linguolab_api:
+    image: ghcr.io/artsoftmuzaffarkhon/linguolab-api:${API_TAG:-latest}
+    container_name: linguolab_api
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - linguolab_internal
+      - shared_web
+    depends_on:
+      linguolab_postgres:
+        condition: service_healthy
+      linguolab_redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  linguolab_admin:
+    image: ghcr.io/artsoftmuzaffarkhon/linguolab-admin:${ADMIN_TAG:-latest}
+    container_name: linguolab_admin
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3001
+      HOSTNAME: '0.0.0.0'
+    networks:
+      - linguolab_internal
+      - shared_web
+    depends_on:
+      - linguolab_api
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3001/ || exit 1']
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  linguolab_portal:
+    image: ghcr.io/artsoftmuzaffarkhon/linguolab-portal:${PORTAL_TAG:-latest}
+    container_name: linguolab_portal
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3002
+      HOSTNAME: '0.0.0.0'
+      API_URL: 'http://linguolab_api:3000'
+    networks:
+      - linguolab_internal
+      - shared_web
+    depends_on:
+      - linguolab_api
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3002/ || exit 1']
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  linguolab_postgres_data:
+  linguolab_redis_data:
+
+networks:
+  linguolab_internal:
+    name: linguolab_internal
+    driver: bridge
+  shared_web:
+    external: true

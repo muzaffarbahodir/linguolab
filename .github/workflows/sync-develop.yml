@@ -1,0 +1,34 @@
+name: Sync develop with main
+
+# Запускается после каждого push в main (merge PR).
+# Автоматически мержит main → develop чтобы develop не отставал.
+# Это предотвращает конфликты при следующем PR из develop в main.
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    name: Merge main → develop
+    runs-on: ubuntu-latest
+    # Явно даём write-права т.к. default_workflow_permissions = read в настройках репо
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into develop
+        run: |
+          git checkout develop
+          git merge origin/main --no-edit
+          git push origin develop
