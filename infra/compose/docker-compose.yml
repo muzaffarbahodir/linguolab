@@ -35,7 +35,7 @@ services:
       retries: 5
 
   linguolab_api:
-    image: ghcr.io/artsoftmuzaffarkhon/linguolab-api:${API_TAG:-latest}
+    image: ghcr.io/muzaffarbahodir/linguolab-api:${API_TAG:-latest}
     container_name: linguolab_api
     restart: unless-stopped
     env_file: .env
@@ -55,7 +55,7 @@ services:
       retries: 3
 
   linguolab_admin:
-    image: ghcr.io/artsoftmuzaffarkhon/linguolab-admin:${ADMIN_TAG:-latest}
+    image: ghcr.io/muzaffarbahodir/linguolab-admin:${ADMIN_TAG:-latest}
     container_name: linguolab_admin
     restart: unless-stopped
     env_file: .env
@@ -75,7 +75,7 @@ services:
       retries: 3
 
   linguolab_portal:
-    image: ghcr.io/artsoftmuzaffarkhon/linguolab-portal:${PORTAL_TAG:-latest}
+    image: ghcr.io/muzaffarbahodir/linguolab-portal:${PORTAL_TAG:-latest}
     container_name: linguolab_portal
     restart: unless-stopped
     env_file: .env

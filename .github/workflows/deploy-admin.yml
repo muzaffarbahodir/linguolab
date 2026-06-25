@@ -15,7 +15,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: artsoftmuzaffarkhon/linguolab-admin
+  IMAGE_NAME: muzaffarbahodir/linguolab-admin
 
 jobs:
   deploy:
