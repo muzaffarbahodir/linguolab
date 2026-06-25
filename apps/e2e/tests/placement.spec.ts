@@ -39,12 +39,8 @@ test.describe('Placement test', () => {
       await startBtn.click();
     }
 
-    // Progress indicator (e.g. "1 / 15" or progress bar element)
-    await expect(
-      page.locator('[role="progressbar"], text=/\\d+\\s*\\/\\s*15/').first(),
-    ).toBeVisible({
-      timeout: 10_000,
-    });
+    // Прогресс: портал показывает "Вопрос N из 15"
+    await expect(page.getByText(/из 15/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('can answer a question and advance', async ({ page }) => {
@@ -67,25 +63,18 @@ test.describe('Placement test', () => {
   test('completes test and shows CEFR result', async ({ page }) => {
     await page.goto('/placement-test/english');
 
-    const startBtn = page.locator('button', { hasText: /начать|старт|start/i });
-    if (await startBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await startBtn.click();
-    }
-
-    // Answer all 15 questions — mock server returns "done" after index 14
+    // Отвечаем на все 15 вопросов (страница авто-переходит к следующему).
     for (let i = 0; i < 15; i++) {
-      // Pick any option that's visible
-      const option = page
-        .locator('button')
-        .filter({ hasText: /Option|am|A|B|C|D/i })
-        .first();
-      const isVisible = await option.isVisible({ timeout: 5_000 }).catch(() => false);
-      if (!isVisible) break; // result screen reached
+      const option = page.locator('main ul button').first();
+      await expect(option).toBeVisible({ timeout: 10_000 });
       await option.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
     }
 
-    // Result screen should show CEFR level
-    await expect(page.locator('text=B1').first()).toBeVisible({ timeout: 15_000 });
+    // После всех ответов появляется кнопка завершения.
+    await page.getByRole('button', { name: 'Завершить тест' }).click();
+
+    // Экран результата показывает уровень CEFR.
+    await expect(page.getByText('B1').first()).toBeVisible({ timeout: 15_000 });
   });
 });

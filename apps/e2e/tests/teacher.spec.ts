@@ -53,13 +53,13 @@ test.describe('Teacher — lessons', () => {
 
   test('can open create lesson form', async ({ page }) => {
     await page.goto('/teacher/classes/class-1/lessons');
-    await page.locator('button', { hasText: 'Добавить урок' }).click();
+    await page.locator('button', { hasText: 'Добавить' }).first().click();
     await expect(page.locator('input[placeholder*="Урок"]')).toBeVisible();
   });
 
   test('creates a new lesson', async ({ page }) => {
     await page.goto('/teacher/classes/class-1/lessons');
-    await page.locator('button', { hasText: 'Добавить урок' }).click();
+    await page.locator('button', { hasText: 'Добавить' }).first().click();
 
     await page.locator('input[placeholder*="Урок"]').fill('Урок 3 — Тест');
     // Fill datetime-local inputs

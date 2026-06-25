@@ -73,8 +73,12 @@ const HOMEWORK = [
     title: 'Выучить 20 слов',
     description: 'Повторить слова из урока 1',
     due_date: '2026-05-25T23:59:00Z',
+    status: 'PENDING',
+    feedback: null,
     class_id: 'class-1',
     class: { title: 'Английский A2' },
+    // портал ждёт lesson.class.title
+    lesson: { title: 'Урок 1 — Введение', class: { title: 'Английский A2' } },
     submissions: [],
     my_submission: null,
   },
@@ -124,20 +128,22 @@ const PROFILE = {
   locale: 'ru',
 };
 
-const PLACEMENT_SESSION = {
-  id: 'pt-session-1',
-  language: 'english',
-  current_index: 0,
-  total: 15,
-  status: 'IN_PROGRESS',
-};
-
-const PLACEMENT_QUESTION = {
-  question_index: 0,
-  total: 15,
-  text: 'Which sentence is correct?',
-  options: ['I is happy', 'I am happy', 'I be happy', 'I are happy'],
-};
+// Портал ждёт от /start: { test_id, questions: [{id, text, options[], level}] }
+const PLACEMENT_QUESTIONS = Array.from({ length: 15 }, (_, i) =>
+  i === 0
+    ? {
+        id: 1,
+        text: 'Which sentence is correct?',
+        options: ['I is happy', 'I am happy', 'I be happy', 'I are happy'],
+        level: 'A1',
+      }
+    : {
+        id: i + 1,
+        text: `Question ${i + 1}: choose the correct option`,
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        level: 'A2',
+      },
+);
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -246,6 +252,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── Lessons ───────────────────────────────────────────────────────────────
+  if (method === 'GET' && path === '/lessons/my') return json(res, 200, LESSONS);
   if (method === 'GET' && path === '/lessons/upcoming') return json(res, 200, LESSONS);
   if (method === 'GET' && path === '/lessons/history') return json(res, 200, []);
 
@@ -321,33 +328,18 @@ const server = http.createServer(async (req, res) => {
     ]);
   }
 
+  // Портал: start → все вопросы сразу; answer/complete — плоские пути.
   const ptStartMatch = path.match(/^\/placement-tests\/start\/([^/]+)$/);
   if (method === 'POST' && ptStartMatch) {
-    return json(res, 200, {
-      ...PLACEMENT_SESSION,
-      language: ptStartMatch[1],
-      ...PLACEMENT_QUESTION,
-    });
+    return json(res, 200, { test_id: 'pt-1', questions: PLACEMENT_QUESTIONS });
   }
 
-  const ptAnswerMatch = path.match(/^\/placement-tests\/([^/]+)\/answer$/);
-  if (method === 'POST' && ptAnswerMatch) {
-    const body = await readBody(req);
-    const nextIndex = (body.question_index ?? 0) + 1;
-    if (nextIndex >= 15) {
-      return json(res, 200, { done: true, level: 'B1', score: 72 });
-    }
-    return json(res, 200, {
-      question_index: nextIndex,
-      total: 15,
-      text: `Question ${nextIndex + 1}: Choose the correct option`,
-      options: ['Option A', 'Option B', 'Option C', 'Option D'],
-    });
+  if (method === 'POST' && path === '/placement-tests/answer') {
+    return json(res, 200, { ok: true });
   }
 
-  const ptCompleteMatch = path.match(/^\/placement-tests\/([^/]+)\/complete$/);
-  if (method === 'POST' && ptCompleteMatch) {
-    return json(res, 200, { level: 'B1', score: 72, session_id: ptCompleteMatch[1] });
+  if (method === 'POST' && path === '/placement-tests/complete') {
+    return json(res, 200, { score: 72, level: 'B1', correct: 11, total: 15 });
   }
 
   // ── Notifications / misc ──────────────────────────────────────────────────
