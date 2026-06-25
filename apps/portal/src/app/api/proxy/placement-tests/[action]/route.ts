@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerToken } from '../../../../lib/server-token';
-import { apiFetch } from '../../../../lib/api';
+import { getServerToken } from '../../../../../lib/server-token';
+import { apiFetch } from '../../../../../lib/api';
 
 // POST /api/proxy/placement-tests/start?lang=en
 // POST /api/proxy/placement-tests/answer
