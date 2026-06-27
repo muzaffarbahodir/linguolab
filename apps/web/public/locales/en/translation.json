@@ -365,7 +365,12 @@
     "load_error": "Failed to load data.",
     "invoice_title": "Invoice",
     "per_month": "per month",
-    "pay_invoice": "💳 Pay"
+    "pay_invoice": "💳 Pay",
+    "cash": "Cash",
+    "cash_hint": "Pay in cash at the center. A manager confirms the payment and your group access opens.",
+    "cash_pending_title": "Payment request created",
+    "cash_pending_hint": "Pay in cash at the center. Your enrollment activates once a manager confirms it.",
+    "cash_pending_ok": "Got it"
   },
   "quick_actions": {
     "sheet_title": "Quick actions",
@@ -1088,7 +1093,11 @@
       "refund_confirm": "Refund this payment?",
       "refund_done": "Refund recorded",
       "refund_done_cabinet": "Refund recorded. Enrollment dropped. Return the money in the provider cabinet (Payme/Click).",
-      "refund_error": "Refund failed"
+      "refund_error": "Refund failed",
+      "cash_confirm_btn": "Confirm cash",
+      "cash_confirm": "Confirm cash received? The student will be enrolled.",
+      "cash_done": "Payment confirmed. Student enrolled.",
+      "cash_error": "Failed to confirm payment"
     },
     "broadcast": {
       "title": "Broadcast",

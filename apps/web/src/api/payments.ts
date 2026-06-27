@@ -6,7 +6,7 @@ function uuidv4(): string {
   return crypto.randomUUID();
 }
 
-export type PaymentProvider = 'PAYME' | 'CLICK' | 'UZUMBANK';
+export type PaymentProvider = 'PAYME' | 'CLICK' | 'UZUMBANK' | 'CASH';
 export type PaymentStatus =
   | 'PENDING'
   | 'AUTHORIZED'

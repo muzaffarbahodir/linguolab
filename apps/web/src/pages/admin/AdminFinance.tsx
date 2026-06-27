@@ -14,6 +14,7 @@ import {
   useAnalyticsStudents,
   useAdminPayments,
   useRefundPayment,
+  useConfirmCashPayment,
   type AdminPayment,
 } from '../../api/admin';
 import { apiClient } from '../../api/client';
@@ -194,6 +195,17 @@ function PaymentsSection() {
   const { t, i18n } = useTranslation();
   const { data, isLoading } = useAdminPayments();
   const refund = useRefundPayment();
+  const confirmCash = useConfirmCashPayment();
+
+  const handleConfirmCash = (p: AdminPayment) => {
+    WebApp.showConfirm(t('admin.finance.cash_confirm'), (ok) => {
+      if (!ok) return;
+      confirmCash.mutate(p.id, {
+        onSuccess: () => WebApp.showAlert(t('admin.finance.cash_done')),
+        onError: () => WebApp.showAlert(t('admin.finance.cash_error')),
+      });
+    });
+  };
 
   const handleRefund = (p: AdminPayment) => {
     WebApp.showConfirm(t('admin.finance.refund_confirm'), (ok) => {
@@ -251,6 +263,15 @@ function PaymentsSection() {
                     </span>
                   </div>
                 </div>
+                {p.provider === 'CASH' && p.status === 'PENDING' && (
+                  <button
+                    onClick={() => handleConfirmCash(p)}
+                    disabled={confirmCash.isPending}
+                    className="bg-ok/10 text-ok border-ok/25 press mt-2 w-full rounded-xl border py-1.5 text-xs font-semibold disabled:opacity-50"
+                  >
+                    💵 {t('admin.finance.cash_confirm_btn')}
+                  </button>
+                )}
                 {p.status === 'PAID' && (
                   <button
                     onClick={() => handleRefund(p)}

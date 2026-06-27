@@ -694,3 +694,22 @@ export function useRefundPayment() {
     },
   });
 }
+
+/** Подтверждение наличной оплаты (MANAGER+): CASH PENDING → PAID + запись в курс. */
+export function useConfirmCashPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient
+        .post<{
+          ok: boolean;
+          status: string;
+          already?: boolean;
+        }>(`/payments/admin/${id}/confirm-cash`)
+        .then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'payments'] });
+      void qc.invalidateQueries({ queryKey: ['enrollments'] });
+    },
+  });
+}

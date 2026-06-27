@@ -5,6 +5,8 @@ import { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
+import { Banknote, CheckCircle2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useBackButton } from '../hooks/useBackButton';
 
 import { useCheckout, useMyPayments, type PaymentProvider } from '../api/payments';
@@ -15,9 +17,10 @@ import { PAYMENT_STATUS } from '../lib/status';
 import { toast } from '../store/toast';
 import { EmptyState } from '../components/EmptyState';
 
-const PROVIDERS: { id: PaymentProvider; label: string; logo: string }[] = [
+const PROVIDERS: { id: PaymentProvider; label: string; logo?: string; icon?: ReactNode }[] = [
   { id: 'PAYME', label: 'Payme', logo: '💳' },
   { id: 'CLICK', label: 'Click', logo: '🔵' },
+  { id: 'CASH', label: 'payment.cash', icon: <Banknote className="text-brand h-6 w-6" /> },
 ];
 
 export default function Payment() {
@@ -37,6 +40,7 @@ export default function Payment() {
 
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('PAYME');
   const [redirected, setRedirected] = useState(false);
+  const [cashPending, setCashPending] = useState(false);
   const { fmt } = useCurrency();
 
   useBackButton(() => navigate(-1));
@@ -63,12 +67,37 @@ export default function Payment() {
         ...(trialId ? { trial_id: trialId } : {}),
         ...(offlineTrialLanguageId ? { offline_trial_language_id: offlineTrialLanguageId } : {}),
       });
+      // Наличные — нет редиректа в кассу, ждём подтверждения менеджера.
+      if (selectedProvider === 'CASH' || !result.redirect_url) {
+        setCashPending(true);
+        return;
+      }
       WebApp.openLink(result.redirect_url);
       setRedirected(true);
     } catch {
       toast.error(t('payment.load_error'));
     }
   };
+
+  // ── Cash pending screen ────────────────────────────────────────────────────────
+
+  if (cashPending) {
+    return (
+      <div className="glass-fade-in flex flex-col items-center gap-5 p-6 text-center">
+        <div className="bg-brand/12 flex h-16 w-16 items-center justify-center rounded-full">
+          <CheckCircle2 className="text-brand h-8 w-8" />
+        </div>
+        <h1 className="text-xl font-bold">{t('payment.cash_pending_title')}</h1>
+        <p className="text-muted text-sm">{t('payment.cash_pending_hint')}</p>
+        <button
+          onClick={() => navigate('/courses')}
+          className="glass-btn press mt-2 w-full rounded-2xl py-3 font-semibold"
+        >
+          {t('payment.cash_pending_ok')}
+        </button>
+      </div>
+    );
+  }
 
   // ── Checkout screen ──────────────────────────────────────────────────────────
 
@@ -100,8 +129,8 @@ export default function Payment() {
                     : 'bg-surface border-hairline'
                 }`}
               >
-                <span className="text-2xl">{p.logo}</span>
-                <span className="font-medium">{p.label}</span>
+                {p.icon ?? <span className="text-2xl">{p.logo}</span>}
+                <span className="font-medium">{p.label.includes('.') ? t(p.label) : p.label}</span>
                 {selectedProvider === p.id && (
                   <span className="text-brand ml-auto font-bold">✓</span>
                 )}
@@ -110,7 +139,9 @@ export default function Payment() {
           </div>
         </div>
 
-        <p className="text-tg-hint text-center text-xs">{t('payment.redirect_hint')}</p>
+        <p className="text-tg-hint text-center text-xs">
+          {selectedProvider === 'CASH' ? t('payment.cash_hint') : t('payment.redirect_hint')}
+        </p>
 
         <button
           onClick={handlePay}

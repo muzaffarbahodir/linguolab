@@ -561,6 +561,7 @@ enum PaymentProvider {
   PAYME
   CLICK
   UZUMBANK
+  CASH // наличные — подтверждает менеджер вручную, без онлайн-кассы
 }
 
 enum PaymentStatus {

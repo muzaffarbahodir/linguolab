@@ -365,7 +365,12 @@
     "load_error": "Ma'lumotlar yuklanmadi.",
     "invoice_title": "To'lov hisobi",
     "per_month": "oyiga",
-    "pay_invoice": "💳 To'lash"
+    "pay_invoice": "💳 To'lash",
+    "cash": "Naqd pul",
+    "cash_hint": "O'quv markazida naqd pul bilan to'lang. Menejer to'lovni tasdiqlagach, guruhga kirish ochiladi.",
+    "cash_pending_title": "To'lov arizasi yaratildi",
+    "cash_pending_hint": "O'quv markazida naqd pul bilan to'lang. Menejer tasdiqlagach, kursga yozilishingiz faollashadi.",
+    "cash_pending_ok": "Tushunarli"
   },
   "quick_actions": {
     "sheet_title": "Tezkor amallar",
@@ -1088,7 +1093,11 @@
       "refund_confirm": "To'lovni qaytarasizmi?",
       "refund_done": "Qaytarish rasmiylashtirildi",
       "refund_done_cabinet": "Qaytarish rasmiylashtirildi. Yozuv bekor qilindi. Pulni provayder kabinetida (Payme/Click) qaytaring.",
-      "refund_error": "Qaytarib bo'lmadi"
+      "refund_error": "Qaytarib bo'lmadi",
+      "cash_confirm_btn": "Naqdni tasdiqlash",
+      "cash_confirm": "Naqd pul qabul qilinganini tasdiqlaysizmi? Talaba kursga yoziladi.",
+      "cash_done": "To'lov tasdiqlandi. Talaba kursga yozildi.",
+      "cash_error": "To'lovni tasdiqlab bo'lmadi"
     },
     "broadcast": {
       "title": "Xabar tarqatish",

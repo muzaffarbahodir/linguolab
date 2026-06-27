@@ -144,6 +144,13 @@ export class PaymentsController {
     return this.paymentsService.adminListPayments(page, limit, status);
   }
 
+  /** POST /payments/admin/:id/confirm-cash — MANAGER+ (приём наличных) */
+  @Post('admin/:id/confirm-cash')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  confirmCash(@Param('id') id: string) {
+    return this.paymentsService.adminConfirmCash(id);
+  }
+
   /** POST /payments/admin/:id/refund — ADMIN+ */
   @Post('admin/:id/refund')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)

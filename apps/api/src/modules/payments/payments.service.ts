@@ -157,6 +157,10 @@ export class PaymentsService {
         // Uzumbank — placeholder, реальная интеграция в следующей итерации
         return `https://uzumbank.uz/pay?order=${orderId}&amount=${amountTiyin}`;
       }
+      case PaymentProvider.CASH: {
+        // Наличные — нет онлайн-кассы. Платёж PENDING, менеджер подтверждает вручную.
+        return '';
+      }
     }
   }
 
@@ -368,6 +372,40 @@ export class PaymentsService {
       limit,
       pages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * Подтверждение наличной оплаты (MANAGER+). Идемпотентно.
+   * Студент выбрал «Наличные» → создан PENDING-платёж с provider=CASH.
+   * Менеджер принял деньги → переводим в PAID и запускаем ту же доменную
+   * обработку, что Payme/Click после оплаты: enrollment ACTIVE + фискальный чек.
+   */
+  async adminConfirmCash(paymentId: string) {
+    const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment) throw new NotFoundException('Payment not found');
+    if (payment.provider !== PaymentProvider.CASH) {
+      throw new BadRequestException('Only CASH payments can be confirmed manually');
+    }
+    // Идемпотентность: уже оплачен — повторно не делаем.
+    if (payment.status === PaymentStatus.PAID) {
+      return { ok: true, payment_id: payment.id, status: payment.status, already: true };
+    }
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new BadRequestException(`Cannot confirm payment in status ${payment.status}`);
+    }
+
+    const updated = await this.prisma.payment.update({
+      where: { id: paymentId },
+      data: { status: PaymentStatus.PAID, paid_at: new Date() },
+    });
+
+    // Та же доменная обработка, что у онлайн-провайдеров после PAID.
+    await this.handlePaidPayment(updated.id);
+    void this.fiscal.scheduleReceipt(updated.id);
+
+    this.logger.log(`Cash payment ${updated.id} confirmed manually`);
+
+    return { ok: true, payment_id: updated.id, status: updated.status, already: false };
   }
 
   /**
