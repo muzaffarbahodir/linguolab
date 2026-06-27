@@ -4,7 +4,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Clock, Check, Star, Sparkles, Users } from 'lucide-react';
+import { Clock, Check, Star, Sparkles, Users, GraduationCap, School } from 'lucide-react';
 
 import { useBackButton } from '../hooks/useBackButton';
 import { useCurrency } from '../hooks/useCurrency';
@@ -150,16 +150,18 @@ export function CourseDetailPage() {
           <button
             onClick={guard(() => startTrial('ONLINE'))}
             disabled={requestTrial.isPending}
-            className="glass-btn press flex-1 rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
+            className="glass-btn press flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            🎓 {t('course.trial_online_btn')}
+            <GraduationCap size={16} />
+            {t('course.trial_online_btn')}
           </button>
           <button
             onClick={guard(() => startTrial('OFFLINE'))}
             disabled={requestTrial.isPending}
-            className="glass-option press flex-1 rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
+            className="glass-option press flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            🏫 {t('course.trial_offline_btn')}
+            <School size={16} />
+            {t('course.trial_offline_btn')}
           </button>
         </div>
 

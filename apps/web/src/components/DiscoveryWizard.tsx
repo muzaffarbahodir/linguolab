@@ -6,6 +6,19 @@
  */
 import { useMemo, useState, type ReactNode } from 'react';
 import WebApp from '@twa-dev/sdk';
+import {
+  Globe,
+  School,
+  User,
+  Users,
+  TrendingUp,
+  Languages as LanguagesIcon,
+  GraduationCap,
+  Ruler,
+  BookOpen,
+  Landmark,
+  Award,
+} from 'lucide-react';
 
 import { useLanguages, CATEGORY_ORDER, type LanguageCategory } from '../api/languages';
 import {
@@ -15,14 +28,23 @@ import {
   type DiscoveryInput,
 } from '../api/users';
 
-/** Подписи с эмодзи для крупных кнопок опроса. */
-const CATEGORY_BTN: Record<LanguageCategory, string> = {
-  LANGUAGES: '🗣 Языки',
-  IELTS: '🎓 IELTS',
-  SAT: '📐 SAT',
-  CEFR: '📖 CEFR',
-  DTM: '🏛 DTM',
-  MILLIY_SERTIFIKAT: '🏅 Milliy sertifikat',
+/** Иконка категории (lucide). */
+const CATEGORY_ICON: Record<LanguageCategory, ReactNode> = {
+  LANGUAGES: <LanguagesIcon size={22} />,
+  IELTS: <GraduationCap size={22} />,
+  SAT: <Ruler size={22} />,
+  CEFR: <BookOpen size={22} />,
+  DTM: <Landmark size={22} />,
+  MILLIY_SERTIFIKAT: <Award size={22} />,
+};
+
+const CATEGORY_FULL: Record<LanguageCategory, string> = {
+  LANGUAGES: 'Языки',
+  IELTS: 'IELTS',
+  SAT: 'SAT',
+  CEFR: 'CEFR',
+  DTM: 'DTM (Davlat testi)',
+  MILLIY_SERTIFIKAT: 'Milliy sertifikat',
 };
 
 export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
@@ -67,7 +89,7 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
       {step === 0 && (
         <Step title="Как удобнее учиться?" subtitle="Выберите формат занятий">
           <BigOption
-            emoji="🌐"
+            icon={<Globe size={22} />}
             title="Онлайн"
             desc="Из дома, по видеосвязи"
             onClick={() => {
@@ -77,7 +99,7 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
             }}
           />
           <BigOption
-            emoji="🏫"
+            icon={<School size={22} />}
             title="Очно"
             desc="В учебном центре"
             onClick={() => {
@@ -96,7 +118,8 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
             {categories.map((c) => (
               <BigOption
                 key={c}
-                title={CATEGORY_BTN[c]}
+                icon={CATEGORY_ICON[c]}
+                title={CATEGORY_FULL[c]}
                 onClick={() => {
                   tap();
                   setCategory(c);
@@ -119,13 +142,16 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
       {step === 2 && (
         <Step title="Индивидуально или в группе?" subtitle="Можно изменить позже">
           <div className="bg-brand/10 border-brand/20 mb-3 rounded-2xl border p-3">
-            <p className="text-sm font-semibold">📈 Индивидуально — эффективнее</p>
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <TrendingUp size={16} style={{ color: 'var(--brand)' }} />
+              Индивидуально — эффективнее
+            </p>
             <p className="text-muted mt-1 text-xs">
               По нашей статистике до 88% учеников на индивидуальных занятиях достигают цели быстрее.
             </p>
           </div>
           <BigOption
-            emoji="👤"
+            icon={<User size={22} />}
             title="Индивидуально"
             desc="Рекомендуем · максимум результата"
             recommended
@@ -135,7 +161,7 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
             }}
           />
           <BigOption
-            emoji="👥"
+            icon={<Users size={22} />}
             title="В группе"
             desc="Дешевле, учимся вместе"
             onClick={() => {
@@ -173,13 +199,13 @@ function Step({
 }
 
 function BigOption({
-  emoji,
+  icon,
   title,
   desc,
   recommended,
   onClick,
 }: {
-  emoji?: string;
+  icon?: ReactNode;
   title: string;
   desc?: string;
   recommended?: boolean;
@@ -192,7 +218,11 @@ function BigOption({
         recommended ? 'border-brand bg-brand/10 border-2' : 'glass-card'
       }`}
     >
-      {emoji && <span className="text-2xl">{emoji}</span>}
+      {icon && (
+        <span className="shrink-0" style={{ color: 'var(--brand)' }}>
+          {icon}
+        </span>
+      )}
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">{title}</p>
         {desc && <p className="text-muted truncate text-xs">{desc}</p>}

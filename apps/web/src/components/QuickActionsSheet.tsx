@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
+import { GraduationCap, Gift, MessageCircle, ChevronRight } from 'lucide-react';
 
 import { useLanguages } from '../api/languages';
 import { useMyReferral, useRequestTrial, useCreateTicket } from '../api/quick-actions';
@@ -51,18 +52,20 @@ function TrialForm({ onBack, onClose }: { onBack: () => void; onClose: () => voi
 
       {/* Language picker */}
       <div className="flex flex-wrap gap-2">
-        {languages?.map((l) => (
-          <button
-            key={l.id}
-            onClick={() => setLangId(l.id)}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition ${
-              langId === l.id ? 'text-white' : 'glass-option'
-            }`}
-            style={langId === l.id ? { backgroundColor: l.color ?? '#6366f1' } : {}}
-          >
-            {l.flag_emoji} {l.name_ru}
-          </button>
-        ))}
+        {languages?.map((l) => {
+          const active = langId === l.id;
+          return (
+            <button
+              key={l.id}
+              onClick={() => setLangId(l.id)}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                active ? 'glass-btn' : 'glass-option'
+              }`}
+            >
+              {l.flag_emoji} {l.name_ru}
+            </button>
+          );
+        })}
       </div>
 
       {/* Note */}
@@ -191,22 +194,19 @@ export function QuickActionsSheet({ open, onClose }: Props) {
   const ACTIONS = [
     {
       id: 'trial' as Screen,
-      icon: '🎓',
-      color: '#6366f1',
+      Icon: GraduationCap,
       label: t('quick_actions.action_trial_label'),
       desc: t('quick_actions.action_trial_desc'),
     },
     {
       id: 'referral' as Screen,
-      icon: '🎁',
-      color: '#00B894',
+      Icon: Gift,
       label: t('quick_actions.action_referral_label'),
       desc: t('quick_actions.action_referral_desc'),
     },
     {
       id: 'support' as Screen,
-      icon: '💬',
-      color: '#0984E3',
+      Icon: MessageCircle,
       label: t('quick_actions.action_support_label'),
       desc: t('quick_actions.action_support_desc'),
     },
@@ -236,10 +236,10 @@ export function QuickActionsSheet({ open, onClose }: Props) {
               }}
             >
               <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
-                style={{ background: `${a.color}22` }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: 'rgb(var(--brand-rgb) / 0.12)', color: 'var(--brand)' }}
               >
-                {a.icon}
+                <a.Icon size={20} strokeWidth={2} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-tight">{a.label}</p>
@@ -247,9 +247,7 @@ export function QuickActionsSheet({ open, onClose }: Props) {
                   {a.desc}
                 </p>
               </div>
-              <span className="shrink-0 text-lg" style={{ color: 'var(--faint)' }}>
-                ›
-              </span>
+              <ChevronRight size={18} className="shrink-0" style={{ color: 'var(--faint)' }} />
             </button>
           ))}
         </div>

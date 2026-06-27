@@ -75,7 +75,7 @@ export function BottomSheet({ open, onClose, title, children }: Props) {
           right: 0,
           bottom: 0,
           zIndex: 201,
-          background: '#1e2a3a',
+          background: 'var(--secondary-bg)',
           borderTop: '1px solid var(--hairline)',
           borderRadius: '24px 24px 0 0',
           transition: 'transform 0.2s ease',

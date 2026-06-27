@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
+import { Target, Zap, Clock, CheckCircle2 } from 'lucide-react';
 
 import { useAuthStore } from '../store/auth';
 import { useUpcomingLesson } from '../api/lessons';
@@ -107,7 +108,8 @@ function LessonCard() {
         </div>
       </div>
       <p className="text-tg-hint mt-2 text-xs">
-        🕐 {formatLessonTime(lesson.scheduled_at)} · {t('home.min', { n: lesson.duration_minutes })}
+        <Clock size={13} className="mb-0.5 mr-1 inline" />
+        {formatLessonTime(lesson.scheduled_at)} · {t('home.min', { n: lesson.duration_minutes })}
       </p>
     </div>
   );
@@ -194,7 +196,10 @@ function TrialLessonsSection() {
     <div>
       {/* Header row */}
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-title">🎯 {t('home.trial_section')}</h2>
+        <h2 className="text-title flex items-center gap-2">
+          <Target size={18} style={{ color: 'var(--brand)' }} />
+          {t('home.trial_section')}
+        </h2>
         <button
           onClick={() => {
             WebApp.HapticFeedback.selectionChanged();
@@ -238,7 +243,7 @@ function TrialLessonsSection() {
         <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
           {sent ? (
             <div className="flex flex-col items-center gap-2 py-3">
-              <span className="text-3xl">✅</span>
+              <CheckCircle2 size={32} style={{ color: 'var(--brand)' }} />
               <p className="text-sm font-semibold">{t('home.trial_sent')}</p>
               <p className="text-muted text-xs">{t('home.trial_sent_sub')}</p>
             </div>
@@ -247,7 +252,6 @@ function TrialLessonsSection() {
               <p className="text-muted mb-3 text-xs font-semibold">{t('home.trial_select_lang')}</p>
               <div className="mb-3 flex flex-wrap gap-2">
                 {languages?.map((lang) => {
-                  const bg = lang.color ?? '#6366f1';
                   const active = selectedLang === lang.id;
                   const alreadyPending = trials?.some(
                     (tr) => tr.language.id === lang.id && tr.status === 'PENDING',
@@ -260,16 +264,13 @@ function TrialLessonsSection() {
                         WebApp.HapticFeedback.selectionChanged();
                         setSelectedLang(lang.id);
                       }}
-                      className="press flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium"
-                      style={{
-                        background: active ? bg : `${bg}22`,
-                        color: active ? '#fff' : bg,
-                        opacity: alreadyPending ? 0.4 : 1,
-                        border: `1px solid ${bg}44`,
-                      }}
+                      className={`press flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium ${
+                        active ? 'glass-btn' : 'glass-option'
+                      }`}
+                      style={{ opacity: alreadyPending ? 0.4 : 1 }}
                     >
                       {lang.flag_emoji} {lang.name_ru}
-                      {alreadyPending && ' ✓'}
+                      {alreadyPending && <CheckCircle2 size={13} className="ml-0.5 inline" />}
                     </button>
                   );
                 })}
@@ -372,10 +373,10 @@ export function HomePage() {
         </button>
         <button
           onClick={() => setSheetOpen(true)}
-          className="glass-card press flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl"
+          className="glass-card press flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
           aria-label={t('home.quick_actions_label')}
         >
-          ⚡
+          <Zap size={20} style={{ color: 'var(--brand)' }} />
         </button>
       </div>
 
