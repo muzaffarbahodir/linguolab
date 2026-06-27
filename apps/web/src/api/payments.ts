@@ -67,6 +67,23 @@ export function useCheckout() {
   });
 }
 
+export interface ReceiptInfo {
+  status: 'NONE' | 'PENDING' | 'SENT' | 'CONFIRMED' | 'FAILED' | 'REFUNDED';
+  receipt_url: string | null;
+  fiscal_sign: string | null;
+  fiscal_number: string | null;
+}
+
+/** Фискальный чек по платежу — тянем по кнопке (on-demand). */
+export function useFetchReceipt() {
+  return useMutation({
+    mutationFn: async (paymentId: string) => {
+      const { data } = await apiClient.get<ReceiptInfo>(`/payments/${paymentId}/receipt`);
+      return data;
+    },
+  });
+}
+
 /** История платежей студента */
 export function useMyPayments() {
   return useQuery<Payment[]>({

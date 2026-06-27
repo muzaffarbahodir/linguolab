@@ -320,6 +320,39 @@ export class PaymentsService {
     };
   }
 
+  /**
+   * GET /payments/:id/receipt — фискальный чек студента (по кнопке).
+   * Проверяем владельца (студент или родитель-плательщик). Если чек ещё не
+   * сформирован — возвращаем status:'NONE' (фронт покажет «формируется»).
+   */
+  async getMyReceipt(paymentId: string, userId: string) {
+    const payment = await this.prisma.payment.findFirst({
+      where: { id: paymentId, OR: [{ user_id: userId }, { payer_user_id: userId }] },
+      select: { id: true },
+    });
+    if (!payment) throw new NotFoundException('Payment not found');
+
+    const receipt = await this.prisma.fiscalReceipt.findUnique({
+      where: { payment_id: paymentId },
+      select: {
+        status: true,
+        receipt_type: true,
+        receipt_url: true,
+        fiscal_sign: true,
+        fiscal_number: true,
+      },
+    });
+    if (!receipt) {
+      return {
+        status: 'NONE' as const,
+        receipt_url: null,
+        fiscal_sign: null,
+        fiscal_number: null,
+      };
+    }
+    return receipt;
+  }
+
   async getLastPending(userId: string) {
     const payment = await this.prisma.payment.findFirst({
       where: { user_id: userId, status: PaymentStatus.PENDING },

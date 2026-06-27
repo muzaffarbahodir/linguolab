@@ -370,7 +370,9 @@
     "cash_hint": "O'quv markazida naqd pul bilan to'lang. Menejer to'lovni tasdiqlagach, guruhga kirish ochiladi.",
     "cash_pending_title": "To'lov arizasi yaratildi",
     "cash_pending_hint": "O'quv markazida naqd pul bilan to'lang. Menejer tasdiqlagach, kursga yozilishingiz faollashadi.",
-    "cash_pending_ok": "Tushunarli"
+    "cash_pending_ok": "Tushunarli",
+    "receipt_btn": "Fiskal chek",
+    "receipt_pending": "Chek hali shakllanmoqda. Keyinroq urinib ko'ring."
   },
   "quick_actions": {
     "sheet_title": "Tezkor amallar",

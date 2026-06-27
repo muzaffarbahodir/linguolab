@@ -57,6 +57,12 @@ export class PaymentsController {
     return this.paymentsService.getLastPending(user.id);
   }
 
+  /** GET /payments/:id/receipt — фискальный чек платежа (только владелец) */
+  @Get(':id/receipt')
+  receipt(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.paymentsService.getMyReceipt(id, user.id);
+  }
+
   /** GET /payments/:id */
   @Get(':id')
   getOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {

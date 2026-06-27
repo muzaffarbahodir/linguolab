@@ -370,7 +370,9 @@
     "cash_hint": "Pay in cash at the center. A manager confirms the payment and your group access opens.",
     "cash_pending_title": "Payment request created",
     "cash_pending_hint": "Pay in cash at the center. Your enrollment activates once a manager confirms it.",
-    "cash_pending_ok": "Got it"
+    "cash_pending_ok": "Got it",
+    "receipt_btn": "Fiscal receipt",
+    "receipt_pending": "Receipt is still being generated. Try again later."
   },
   "quick_actions": {
     "sheet_title": "Quick actions",

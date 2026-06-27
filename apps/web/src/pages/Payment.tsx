@@ -5,11 +5,11 @@ import { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
-import { Banknote, CheckCircle2 } from 'lucide-react';
+import { Banknote, CheckCircle2, Receipt } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useBackButton } from '../hooks/useBackButton';
 
-import { useCheckout, useMyPayments, type PaymentProvider } from '../api/payments';
+import { useCheckout, useMyPayments, useFetchReceipt, type PaymentProvider } from '../api/payments';
 import { useMyEnrollments } from '../api/enrollments';
 import { formatUzs } from '../lib/money';
 import { useCurrency } from '../hooks/useCurrency';
@@ -41,11 +41,13 @@ export default function Payment() {
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('PAYME');
   const [redirected, setRedirected] = useState(false);
   const [cashPending, setCashPending] = useState(false);
+  const [receiptId, setReceiptId] = useState<string | null>(null);
   const { fmt } = useCurrency();
 
   useBackButton(() => navigate(-1));
 
   const checkout = useCheckout();
+  const fetchReceipt = useFetchReceipt();
   const { data: history, isLoading: historyLoading } = useMyPayments();
   const { data: enrollments } = useMyEnrollments();
 
@@ -76,6 +78,22 @@ export default function Payment() {
       setRedirected(true);
     } catch {
       toast.error(t('payment.load_error'));
+    }
+  };
+
+  const handleReceipt = async (paymentId: string) => {
+    setReceiptId(paymentId);
+    try {
+      const r = await fetchReceipt.mutateAsync(paymentId);
+      if (r.receipt_url) {
+        WebApp.openLink(r.receipt_url);
+      } else {
+        toast.info(t('payment.receipt_pending'));
+      }
+    } catch {
+      toast.error(t('payment.load_error'));
+    } finally {
+      setReceiptId(null);
     }
   };
 
@@ -260,6 +278,16 @@ export default function Payment() {
                 {' · '}
                 {p.provider}
               </div>
+              {p.status === 'PAID' && (
+                <button
+                  onClick={() => handleReceipt(p.id)}
+                  disabled={receiptId === p.id}
+                  className="bg-surface border-hairline press mt-3 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-sm font-medium disabled:opacity-50"
+                >
+                  <Receipt className="h-4 w-4" />
+                  {t('payment.receipt_btn')}
+                </button>
+              )}
             </div>
           ))}
         </div>
