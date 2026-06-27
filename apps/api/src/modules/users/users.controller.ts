@@ -53,6 +53,20 @@ export class UsersController {
     return this.usersService.onboardSelf(user.id, dto.role);
   }
 
+  /** PATCH /users/me/discovery — сохранить ответы опроса подбора курса */
+  @Patch('me/discovery')
+  discovery(
+    @CurrentUser() user: RequestUser,
+    @Body()
+    dto: {
+      study_format?: 'ONLINE' | 'OFFLINE';
+      study_mode?: 'INDIVIDUAL' | 'GROUP' | null;
+      preferred_category?: string | null;
+    },
+  ) {
+    return this.usersService.saveDiscovery(user.id, dto as never);
+  }
+
   /** GET /users/me/progress */
   @Get('me/progress')
   progress(@CurrentUser() user: RequestUser) {

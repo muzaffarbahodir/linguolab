@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
+import type { LanguageCategory } from './languages';
+
+export type StudyFormat = 'ONLINE' | 'OFFLINE';
+export type StudyMode = 'INDIVIDUAL' | 'GROUP';
 
 export interface UserMe {
   id: string;
@@ -14,8 +18,21 @@ export interface UserMe {
   timezone: string;
   gender: 'MALE' | 'FEMALE' | null;
   birth_date: string | null;
+  /** Преференсы подбора курса (опрос-онбординг). */
+  study_format: StudyFormat | null;
+  study_mode: StudyMode | null;
+  preferred_category: LanguageCategory | null;
+  /** Прошёл опрос подбора — null если ещё нет. */
+  discovery_done_at: string | null;
   last_active_at: string;
   created_at: string;
+}
+
+/** Ответы опроса подбора курса. */
+export interface DiscoveryInput {
+  study_format: StudyFormat;
+  study_mode?: StudyMode | null;
+  preferred_category?: LanguageCategory | null;
 }
 
 export interface StudentStats {
@@ -152,6 +169,20 @@ export function useOnboard() {
     mutationFn: async (role: 'STUDENT' | 'PARENT') => {
       const res = await apiClient.patch('/users/me/onboard', { role });
       return res.data as { id: string; role: string; is_active: boolean };
+    },
+  });
+}
+
+/** Сохранить ответы опроса подбора курса + отметить визард пройденным. */
+export function useSaveDiscovery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (dto: DiscoveryInput) => {
+      const res = await apiClient.patch('/users/me/discovery', dto);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users', 'me'] });
     },
   });
 }

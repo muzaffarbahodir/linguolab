@@ -112,6 +112,18 @@ enum Gender {
   FEMALE
 }
 
+/// Формат обучения: онлайн / очно. Шаг 2 опроса подбора (обязательный).
+enum StudyFormat {
+  ONLINE
+  OFFLINE
+}
+
+/// Режим: индивидуально / в группе. Шаг 4 опроса (можно пропустить).
+enum StudyMode {
+  INDIVIDUAL
+  GROUP
+}
+
 /// Первичный идентификатор — telegram_user_id (TWA авторизация).
 /// email/phone/password — опциональны, нужны только для админ-логина.
 model User {
@@ -139,6 +151,13 @@ model User {
   // Профиль студента (опционально, из настроек)
   gender              Gender?
   birth_date          DateTime?
+
+  // Преференсы подбора курса (опрос-онбординг, шаги 2-4)
+  study_format        StudyFormat?       // онлайн / очно
+  study_mode          StudyMode?         // индивидуально / группа
+  preferred_category  LanguageCategory?  // IELTS / SAT / языки...
+  /// Прошёл опрос подбора — показываем визард 1 раз
+  discovery_done_at   DateTime?
 
   /// Активирован ли аккаунт менеджером/админом.
   /// Новые юзеры — false, доступ к данным ограничен до активации.

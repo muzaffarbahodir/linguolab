@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import type { StudyFormat, StudyMode, LanguageCategory } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -32,6 +33,10 @@ export class UsersService {
         timezone: true,
         gender: true,
         birth_date: true,
+        study_format: true,
+        study_mode: true,
+        preferred_category: true,
+        discovery_done_at: true,
         last_active_at: true,
         created_at: true,
       },
@@ -301,6 +306,48 @@ export class UsersService {
       where: { id: userId },
       data: { role, is_active: true },
       select: { id: true, role: true, is_active: true },
+    });
+  }
+
+  /**
+   * PATCH /users/me/discovery — сохранить ответы опроса подбора курса.
+   * study_format обязателен (шаг 2). study_mode / preferred_category можно
+   * пропустить (null). Проставляет discovery_done_at — визард больше не показываем.
+   */
+  async saveDiscovery(
+    userId: string,
+    dto: {
+      study_format?: StudyFormat;
+      study_mode?: StudyMode | null;
+      preferred_category?: LanguageCategory | null;
+    },
+  ) {
+    const fmt = dto.study_format;
+    if (fmt !== 'ONLINE' && fmt !== 'OFFLINE') {
+      throw new BadRequestException('study_format must be ONLINE or OFFLINE');
+    }
+    const mode =
+      dto.study_mode === 'INDIVIDUAL' || dto.study_mode === 'GROUP' ? dto.study_mode : null;
+    const CATS = ['LANGUAGES', 'IELTS', 'SAT', 'CEFR', 'DTM', 'MILLIY_SERTIFIKAT'];
+    const category =
+      dto.preferred_category && CATS.includes(dto.preferred_category)
+        ? dto.preferred_category
+        : null;
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        study_format: fmt,
+        study_mode: mode,
+        preferred_category: category,
+        discovery_done_at: new Date(),
+      },
+      select: {
+        study_format: true,
+        study_mode: true,
+        preferred_category: true,
+        discovery_done_at: true,
+      },
     });
   }
 
