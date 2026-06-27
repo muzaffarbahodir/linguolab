@@ -379,25 +379,25 @@
   --accent2: #818cf8;
 }
 html.light {
-  /* Pearl (светлая, как flowershop) — мягкий сине-серый фон, акцент индиго. */
-  --bg: #eef1f8;
-  --bg-1: rgba(99, 102, 241, 0.1);
-  --bg-2: rgba(139, 92, 246, 0.07);
-  --bg-3: rgba(14, 165, 233, 0.06);
-  --text: #0f172a;
-  --muted: rgba(15, 23, 42, 0.62);
-  --faint: rgba(15, 23, 42, 0.42);
-  --surface: rgba(255, 255, 255, 0.62);
-  --surface-2: rgba(15, 23, 42, 0.05);
-  --secondary-bg: #ffffff;
-  --hairline: rgba(15, 23, 42, 0.11);
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-card-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(15, 23, 42, 0.11);
+  /* Pearl (светлая) — молочно-жемчужный тёплый фон, акцент индиго. */
+  --bg: #f4f1e9;
+  --bg-1: rgba(99, 102, 241, 0.09);
+  --bg-2: rgba(139, 92, 246, 0.06);
+  --bg-3: rgba(234, 179, 110, 0.05);
+  --text: #1c1a17;
+  --muted: rgba(28, 26, 23, 0.6);
+  --faint: rgba(28, 26, 23, 0.4);
+  --surface: rgba(255, 254, 249, 0.64);
+  --surface-2: rgba(28, 26, 23, 0.05);
+  --secondary-bg: #fcfbf7;
+  --hairline: rgba(28, 26, 23, 0.1);
+  --glass-bg: rgba(255, 254, 249, 0.58);
+  --glass-card-bg: rgba(255, 254, 249, 0.6);
+  --glass-border: rgba(28, 26, 23, 0.1);
   --glass-hi: rgba(255, 255, 255, 0.8);
-  --glass-lo: rgba(15, 23, 42, 0.025);
-  --glass-shadow: rgba(15, 23, 42, 0.1);
-  --pill-bg: rgba(248, 250, 253, 0.8);
+  --glass-lo: rgba(28, 26, 23, 0.02);
+  --glass-shadow: rgba(28, 26, 23, 0.09);
+  --pill-bg: rgba(252, 251, 246, 0.82);
   --brand-rgb: 79 70 229;
   --brand-400-rgb: 99 102 241;
   --brand: rgb(var(--brand-rgb));
