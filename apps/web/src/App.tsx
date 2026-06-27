@@ -8,9 +8,11 @@ const SentryRoutes = withSentryReactRouterV6Routing(Routes);
 
 import { useAuthStore } from './store/auth';
 import { useUIStore } from './store/ui';
+import { useMe } from './api/users';
 import { BottomNav } from './components/BottomNav';
 import { ToastViewport } from './components/ToastViewport';
 import { AnnouncementMarquee } from './components/AnnouncementMarquee';
+import { DiscoveryWizard } from './components/DiscoveryWizard';
 import { RoleGate } from './pages/RoleGate';
 
 // ── Critical (eager) ──────────────────────────────────────────────────────────
@@ -251,6 +253,9 @@ function AuthenticatedApp() {
   // Новый клиент может «просто посмотреть курсы» до выбора роли (витрина).
   const [browse, setBrowse] = useState(false);
 
+  // Профиль (для гейта опроса подбора при старте).
+  const { data: me, refetch: refetchMe } = useMe();
+
   useEffect(() => {
     if (realRole && realRole !== 'STUDENT' && realRole !== 'PARENT') {
       setOnboardingChecked(true);
@@ -314,6 +319,17 @@ function AuthenticatedApp() {
   // Убирает тупик «ждите подтверждения менеджера».
   if ((realRole === 'STUDENT' || realRole === 'PARENT') && isActive === false && !browse) {
     return <RoleGate onBrowse={() => setBrowse(true)} />;
+  }
+
+  // Опрос подбора курса (как в Udemy) — сразу при открытии, до основного
+  // интерфейса. Только активный студент/родитель, который ещё не проходил.
+  if (
+    (realRole === 'STUDENT' || realRole === 'PARENT') &&
+    isActive !== false &&
+    me &&
+    !me.discovery_done_at
+  ) {
+    return <DiscoveryWizard onDone={() => void refetchMe()} />;
   }
 
   return (

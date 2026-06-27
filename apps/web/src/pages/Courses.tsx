@@ -16,7 +16,6 @@ import {
   type LanguageCategory,
 } from '../api/languages';
 import { useMe } from '../api/users';
-import { DiscoveryWizard } from '../components/DiscoveryWizard';
 import { EmptyState } from '../components/EmptyState';
 
 type CatFilter = 'all' | LanguageCategory;
@@ -25,10 +24,7 @@ export function CoursesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: languages, isLoading, isError } = useLanguages();
-  const { data: me, refetch: refetchMe } = useMe();
-
-  // Новый клиент без пройденного опроса — показываем визард подбора (1 раз).
-  const showWizard = !!me && !me.discovery_done_at;
+  const { data: me } = useMe();
 
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<CatFilter>('all');
@@ -59,10 +55,6 @@ export function CoursesPage() {
         .sort((a, b) => (b.groups_count ?? 0) - (a.groups_count ?? 0))
     );
   }, [languages, query, effectiveCat]);
-
-  if (showWizard) {
-    return <DiscoveryWizard onDone={() => void refetchMe()} />;
-  }
 
   return (
     <div className="glass-fade-in flex flex-col gap-4 px-4 pt-6">
