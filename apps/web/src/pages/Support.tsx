@@ -84,9 +84,9 @@ function CreateTicketSheet({ open, onClose }: { open: boolean; onClose: () => vo
     >
       <div
         className="border-brand/20 w-full rounded-t-3xl border p-5 pb-8"
-        style={{ background: '#1a2436' }}
+        style={{ background: 'var(--secondary-bg)' }}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <div className="bg-[color:var(--text)]/15 mx-auto mb-4 h-1 w-10 rounded-full" />
 
         {done ? (
           <div className="flex flex-col items-center gap-3 py-6">
@@ -107,7 +107,7 @@ function CreateTicketSheet({ open, onClose }: { open: boolean; onClose: () => vo
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder={t('support.subject_ph')}
                 maxLength={120}
-                className="bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2.5 text-sm text-white outline-none"
+                className="bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
               />
             </div>
 
@@ -121,7 +121,7 @@ function CreateTicketSheet({ open, onClose }: { open: boolean; onClose: () => vo
                 placeholder={t('support.message_ph')}
                 rows={4}
                 maxLength={2000}
-                className="bg-surface-2 border-hairline w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-white outline-none"
+                className="bg-surface-2 border-hairline w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
               />
               <p className="text-faint mt-1 text-right text-xs">{message.length}/2000</p>
             </div>

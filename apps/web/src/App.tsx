@@ -50,6 +50,9 @@ const NotificationsPage = lazy(() =>
   import('./pages/Notifications').then((m) => ({ default: m.NotificationsPage })),
 );
 const SupportPage = lazy(() => import('./pages/Support').then((m) => ({ default: m.SupportPage })));
+const MyRequestsPage = lazy(() =>
+  import('./pages/MyRequests').then((m) => ({ default: m.MyRequestsPage })),
+);
 const AttendancePage = lazy(() =>
   import('./pages/Attendance').then((m) => ({ default: m.AttendancePage })),
 );
@@ -380,6 +383,7 @@ function AuthenticatedApp() {
             <Route path="/placement-test" element={<PlacementTestPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
+            <Route path="/requests" element={<MyRequestsPage />} />
             <Route path="/attendance" element={<AttendancePage />} />
 
             {/* ── Parent cabinet ── */}

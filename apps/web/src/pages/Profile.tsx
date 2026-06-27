@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   Flame,
   Star,
-  TrendingUp,
   Trophy,
   Home,
   Calendar,
@@ -23,9 +22,7 @@ import {
   Gift,
   Coins,
   Palette,
-  Plus,
   Inbox,
-  ChevronDown,
   UserRound,
   Cake,
   type LucideIcon,
@@ -43,10 +40,6 @@ import {
 import { useTeacherStats } from '../api/teacher';
 import { useUnreadCount } from '../api/notifications';
 import { useMyReferral, useRedeemReferral } from '../api/referrals';
-import { useMyTrials, useRequestTrial, type TrialType } from '../api/trial-lessons';
-import { useMyClassRequests } from '../api/class-requests';
-import { useLanguages } from '../api/languages';
-import { TRIAL_STATUS } from '../lib/status';
 import { toast } from '../store/toast';
 import { useThemeStore } from '../store/theme';
 
@@ -119,33 +112,6 @@ function fmtDate(iso: string): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-// Крупная метрика в шапке предмета.
-function HeaderStat({
-  Icon,
-  label,
-  value,
-  color,
-  onClick,
-}: {
-  Icon: LucideIcon;
-  label: string;
-  value: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button onClick={onClick} className="press flex flex-col items-center gap-1 rounded-xl py-1">
-      <Icon size={16} color={color} strokeWidth={2.4} />
-      <span className="text-base font-bold tabular-nums leading-none" style={{ color }}>
-        {value}
-      </span>
-      <span className="text-faint text-center text-[9px] font-semibold uppercase leading-tight tracking-wide">
-        {label}
-      </span>
-    </button>
-  );
-}
-
 // Мини-карточка показателя: значение + бар 0..100 + ярлык уровня.
 function SkillCard({
   Icon,
@@ -185,19 +151,6 @@ function SkillCard({
         {levelLabel}
       </p>
     </button>
-  );
-}
-
-// Чип-показатель (хороший/плохой).
-function Chip({ text, good }: { text: string; good: boolean }) {
-  const c = good ? '#22C55E' : '#EF4444';
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium"
-      style={{ background: `${c}1a`, color: c }}
-    >
-      {good ? '✓' : '✕'} {text}
-    </span>
   );
 }
 
@@ -268,10 +221,6 @@ function StudentStatsCard() {
   const streakNo = streak === 0;
   const formColor = percent > 0 ? bandColor(percent) : NEUTRAL;
 
-  const subject = progress?.classes?.[0];
-  const level = progress?.placement_test?.level_assigned ?? subject?.level ?? null;
-  const accent = subject?.language.color ?? '#818cf8';
-
   const skills = [
     {
       Icon: CalendarCheck,
@@ -309,86 +258,8 @@ function StudentStatsCard() {
 
   const strong = skills.filter((s) => !s.nodata && s.value >= 70).length;
 
-  const good: string[] = [];
-  const bad: string[] = [];
-  if (progress?.placement_test)
-    good.push(`${t('profile.stat_level')} ${progress.placement_test.level_assigned}`);
-  else bad.push(t('profile.placement_test'));
-  if (attendPct >= 80) good.push(`${t('profile.dash_m_attend')} ${attendPct}%`);
-  else if (stats && stats.lessons_total > 0 && attendPct < 60)
-    bad.push(`${t('profile.dash_m_attend')} ${attendPct}%`);
-  if (hwTotal > 0 && hwPct >= 80) good.push(`${t('profile.dash_m_hw')} ${hwPct}%`);
-  else if (hwTotal > 0 && hwPct < 60) bad.push(`${t('profile.dash_m_hw')} ${hwPct}%`);
-  if (streak >= 3) good.push(`${t('profile.dash_m_streak')} ${streak}`);
-  else bad.push(`${t('profile.dash_m_streak')} ${streak}`);
-  if ((progress?.achievements_count ?? 0) > 0)
-    good.push(`${t('profile.achievements')}: ${progress?.achievements_count}`);
-
   return (
     <div className="flex flex-col gap-4">
-      {/* Шапка предмета + ключевые метрики */}
-      <div className="glass-card rounded-2xl p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-faint text-[10px] font-semibold uppercase tracking-wide">
-              {t('profile.dash_subject')}
-            </p>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="text-2xl">{subject?.language.flag_emoji ?? '🎓'}</span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-bold">
-                  {subject?.language.name_ru ?? t('profile.dash_no_subject')}
-                </p>
-                {subject?.class_title && (
-                  <p className="text-muted truncate text-xs">{subject.class_title}</p>
-                )}
-              </div>
-            </div>
-          </div>
-          {level && (
-            <span
-              className="shrink-0 rounded-lg px-2.5 py-1 text-sm font-bold"
-              style={{ background: `${accent}22`, color: accent }}
-            >
-              {level}
-            </span>
-          )}
-        </div>
-
-        <div className="bg-hairline my-3 h-px" />
-
-        <div className="grid grid-cols-4 gap-1">
-          <HeaderStat
-            Icon={TrendingUp}
-            label={t('profile.progress')}
-            value={`${percent}%`}
-            color={formColor}
-            onClick={() => go('/courses')}
-          />
-          <HeaderStat
-            Icon={CalendarCheck}
-            label={t('profile.dash_m_attend')}
-            value={attendNo ? '—' : `${attendPct}%`}
-            color={attendNo ? NEUTRAL : bandColor(attendPct)}
-            onClick={() => go('/attendance')}
-          />
-          <HeaderStat
-            Icon={Star}
-            label={t('profile.dash_m_grade')}
-            value={gradeNo ? '—' : String(avg)}
-            color={gradeNo ? NEUTRAL : '#a5b4fc'}
-            onClick={() => go('/achievements')}
-          />
-          <HeaderStat
-            Icon={Flame}
-            label={t('profile.dash_m_streak')}
-            value={streakNo ? '—' : `${streak}`}
-            color={streakNo ? NEUTRAL : '#F59E0B'}
-            onClick={() => go('/schedule')}
-          />
-        </div>
-      </div>
-
       {/* Учебная форма */}
       <div className="glass-card rounded-2xl p-4">
         <p className="text-muted mb-3 text-xs font-semibold uppercase tracking-wide">
@@ -425,36 +296,6 @@ function StudentStatsCard() {
           {skills.map((s, i) => (
             <SkillCard key={i} {...s} levelLabel={s.nodata ? '—' : lvl(s.value)} />
           ))}
-        </div>
-      </div>
-
-      {/* Показатели */}
-      <div className="glass-card rounded-2xl p-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <p className="mb-2 text-xs font-semibold" style={{ color: '#22C55E' }}>
-              {t('profile.dash_good')}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {good.length ? (
-                good.map((g, i) => <Chip key={i} text={g} good />)
-              ) : (
-                <span className="text-faint text-xs">—</span>
-              )}
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold" style={{ color: '#EF4444' }}>
-              {t('profile.dash_bad')}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {bad.length ? (
-                bad.map((b, i) => <Chip key={i} text={b} good={false} />)
-              ) : (
-                <span className="text-faint text-xs">—</span>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -516,233 +357,6 @@ function StudentStatsCard() {
                 </span>
               </button>
             ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Мои заявки (статусы поданных заявок + подача новой) ────────────────────────
-
-const REQ_STATUS: Record<string, { color: string; key: string }> = {
-  PENDING: { color: '#F59E0B', key: 'profile.req_pending' },
-  APPROVED: { color: '#22C55E', key: 'profile.req_approved' },
-  REJECTED: { color: '#EF4444', key: 'profile.req_rejected' },
-};
-
-function MyRequestsCard() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { data: trials } = useMyTrials();
-  const { data: classReqs } = useMyClassRequests();
-  const { data: languages } = useLanguages();
-  const requestTrial = useRequestTrial();
-  const [open, setOpen] = useState<string | null>(null);
-  const [picking, setPicking] = useState(false);
-  const [trialType, setTrialType] = useState<TrialType>('ONLINE');
-
-  const submitTrial = (language_id: string) => {
-    if (requestTrial.isPending) return;
-    requestTrial.mutate(
-      { language_id, type: trialType },
-      {
-        onSuccess: (res) => {
-          setPicking(false);
-          // Очный пробный — ведём на оплату (после оплаты авто-подтвердится).
-          if (res.needs_payment && res.class_id) {
-            navigate('/payment', {
-              state: {
-                classId: res.class_id,
-                classTitle: `${res.language.name_ru} — ${t('profile.trial_offline')}`,
-                priceUzs: res.price_uzs,
-                offlineTrialLanguageId: language_id,
-              },
-            });
-            return;
-          }
-          // Онлайн пробный — авто-доступ, ссылка ушла в чат.
-          if (res.status === 'CONFIRMED') {
-            toast.success(t('profile.trial_online_sent'));
-          } else {
-            toast.success(t('profile.requests_sent'));
-          }
-        },
-        onError: (e: unknown) => {
-          const msg =
-            (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? null;
-          toast.error(msg ?? t('app.server_error'));
-        },
-      },
-    );
-  };
-
-  const rows = [
-    ...(trials ?? []).map((tr) => {
-      const unpaidOffline = tr.type === 'OFFLINE' && tr.status === 'PENDING';
-      const m = TRIAL_STATUS[tr.status] ?? TRIAL_STATUS.PENDING!;
-      return {
-        id: `t-${tr.id}`,
-        flag: tr.language.flag_emoji,
-        title: tr.language.name_ru,
-        sub: tr.type === 'OFFLINE' ? t('profile.trial_offline') : t('profile.trial_online'),
-        color: unpaidOffline ? '#F59E0B' : m.color,
-        statusLabel: unpaidOffline ? t('profile.trial_awaiting_pay') : t(m.labelKey),
-        date: tr.created_at,
-        note: tr.note ?? null,
-        extra: null as string | null,
-        pay:
-          unpaidOffline && tr.class_id
-            ? { trialId: tr.id, classId: tr.class_id, lang: tr.language.name_ru }
-            : null,
-      };
-    }),
-    ...(classReqs ?? []).map((cr) => {
-      const m = REQ_STATUS[cr.status] ?? REQ_STATUS.PENDING!;
-      return {
-        id: `c-${cr.id}`,
-        flag: cr.language.flag_emoji,
-        title: cr.title,
-        sub: cr.level,
-        color: m.color,
-        statusLabel: t(m.key),
-        date: cr.created_at,
-        note: cr.note ?? null,
-        extra: cr.admin_note ?? cr.approved_class?.title ?? null,
-        pay: null as { trialId: string; classId: string; lang: string } | null,
-      };
-    }),
-  ];
-
-  return (
-    <div className="glass-card rounded-2xl p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-muted text-xs font-semibold uppercase tracking-wide">
-          {t('profile.requests_title')}
-        </p>
-        <button
-          onClick={() => setPicking(true)}
-          className="press text-brand-400 flex items-center gap-1 text-xs font-semibold"
-        >
-          <Plus size={14} strokeWidth={2.6} /> {t('profile.requests_submit')}
-        </button>
-      </div>
-
-      {rows.length === 0 ? (
-        <button
-          onClick={() => setPicking(true)}
-          className="press flex w-full flex-col items-center gap-2 py-4 text-center"
-        >
-          <Inbox size={28} className="text-faint" strokeWidth={1.8} />
-          <p className="text-faint text-xs">{t('profile.requests_empty')}</p>
-        </button>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {rows.map((r) => (
-            <div key={r.id} className="bg-surface-2/50 overflow-hidden rounded-xl">
-              <button
-                onClick={() => setOpen((o) => (o === r.id ? null : r.id))}
-                className="press flex w-full items-center gap-3 px-3 py-2.5 text-left"
-              >
-                <span className="text-lg">{r.flag}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{r.title}</p>
-                  <p className="text-faint text-xs">{r.sub}</p>
-                </div>
-                <span
-                  className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold"
-                  style={{ background: `${r.color}1f`, color: r.color }}
-                >
-                  {r.statusLabel}
-                </span>
-                <ChevronDown
-                  size={15}
-                  className="text-faint"
-                  style={{
-                    transform: open === r.id ? 'rotate(180deg)' : 'none',
-                    transition: 'transform 0.2s',
-                  }}
-                />
-              </button>
-              {open === r.id && (
-                <div className="border-hairline space-y-1 border-t px-3 py-2.5 text-xs">
-                  <p className="text-muted">
-                    {t('profile.req_date')}:{' '}
-                    <span style={{ color: 'var(--text)' }}>{fmtDate(r.date)}</span>
-                  </p>
-                  {r.note && (
-                    <p className="text-muted">
-                      {t('profile.req_note')}:{' '}
-                      <span style={{ color: 'var(--text)' }}>{r.note}</span>
-                    </p>
-                  )}
-                  {r.extra && <p style={{ color: 'var(--text)' }}>{r.extra}</p>}
-                  {r.pay && (
-                    <button
-                      onClick={() =>
-                        navigate('/payment', {
-                          state: {
-                            classId: r.pay!.classId,
-                            classTitle: `${r.pay!.lang} — ${t('profile.trial_offline')}`,
-                            trialId: r.pay!.trialId,
-                          },
-                        })
-                      }
-                      className="glass-btn press mt-1 w-full rounded-xl py-2 text-xs font-semibold"
-                    >
-                      {t('profile.trial_pay_now')}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Пикер языка для подачи заявки на пробный урок */}
-      {picking && (
-        <div
-          className="fixed inset-0 z-[120] flex items-end justify-center bg-black/50 p-0"
-          onClick={() => setPicking(false)}
-        >
-          <div
-            className="glass-section w-full max-w-lg rounded-t-3xl p-5 pb-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="mb-3 text-sm font-bold">{t('profile.requests_pick')}</p>
-
-            {/* Тип пробного: онлайн (бесплатно) / очный (платно) */}
-            <div className="bg-surface-2 mb-3 flex rounded-xl p-1">
-              {(['ONLINE', 'OFFLINE'] as TrialType[]).map((tp) => (
-                <button
-                  key={tp}
-                  onClick={() => setTrialType(tp)}
-                  className={`press flex-1 rounded-lg py-2 text-xs font-semibold ${
-                    trialType === tp ? 'bg-brand/25 text-brand-400' : 'text-faint'
-                  }`}
-                >
-                  {tp === 'ONLINE'
-                    ? t('profile.trial_online_free')
-                    : t('profile.trial_offline_paid')}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {(languages ?? []).map((lang) => (
-                <button
-                  key={lang.id}
-                  disabled={requestTrial.isPending}
-                  onClick={() => submitTrial(lang.id)}
-                  className="press bg-surface-2 flex items-center gap-3 rounded-xl px-4 py-3 text-left disabled:opacity-50"
-                >
-                  <span className="text-xl">{lang.flag_emoji}</span>
-                  <span className="flex-1 text-sm font-semibold">{lang.name_ru}</span>
-                  <Plus size={16} className="text-brand-400" strokeWidth={2.4} />
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       )}
@@ -1090,6 +704,12 @@ export function ProfilePage() {
   // ── Student quick links ───────────────────────────────────────────────────
   const studentQuickLinks: MenuItem[] = [
     {
+      Icon: Inbox,
+      label: t('profile.requests_title'),
+      hint: t('profile.requests_hint'),
+      onClick: () => navigate('/requests'),
+    },
+    {
       Icon: Calendar,
       label: t('profile.schedule'),
       hint: t('profile.schedule_hint'),
@@ -1278,9 +898,6 @@ export function ProfilePage() {
 
       {/* Stats (students only) */}
       {!isAdmin && !isTeacher && !isParent && <StudentStatsCard />}
-
-      {/* My requests (students only) */}
-      {!isAdmin && !isTeacher && !isParent && <MyRequestsCard />}
 
       {/* Referral card (students only) */}
       {!isAdmin && !isTeacher && !isParent && <ReferralCard />}
