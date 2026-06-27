@@ -4,6 +4,26 @@ import { apiClient } from './client';
 /** Категория направления — группирует каталог (языки vs экзамены). */
 export type LanguageCategory = 'LANGUAGES' | 'IELTS' | 'SAT' | 'CEFR' | 'DTM' | 'MILLIY_SERTIFIKAT';
 
+/** Порядок категорий в UI (опрос + чипсы каталога). */
+export const CATEGORY_ORDER: LanguageCategory[] = [
+  'LANGUAGES',
+  'IELTS',
+  'SAT',
+  'CEFR',
+  'DTM',
+  'MILLIY_SERTIFIKAT',
+];
+
+/** Короткие подписи категорий для UI. */
+export const CATEGORY_LABEL: Record<LanguageCategory, string> = {
+  LANGUAGES: 'Языки',
+  IELTS: 'IELTS',
+  SAT: 'SAT',
+  CEFR: 'CEFR',
+  DTM: 'DTM',
+  MILLIY_SERTIFIKAT: 'Milliy',
+};
+
 export interface Language {
   id: string;
   code: string;

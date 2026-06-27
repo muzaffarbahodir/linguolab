@@ -1,37 +1,68 @@
 /**
- * Courses — главный каталог курсов (направлений): баннеры + поиск + фильтр.
- * Тап по курсу → /course/:id (инфо, требования, учителя, рекомендация).
- * Виден всем, в т.ч. новым пользователям (витрина).
+ * Courses — каталог направлений: визард подбора (1 раз новому клиенту),
+ * затем баннеры + поиск + чипсы категорий + сортировка по популярности.
+ * Тап по курсу → /course/:id. Виден всем, в т.ч. новым пользователям.
  */
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Search, Users } from 'lucide-react';
 
-import { useLanguages, type Language } from '../api/languages';
+import {
+  useLanguages,
+  CATEGORY_ORDER,
+  CATEGORY_LABEL,
+  type Language,
+  type LanguageCategory,
+} from '../api/languages';
+import { useMe } from '../api/users';
+import { DiscoveryWizard } from '../components/DiscoveryWizard';
 import { EmptyState } from '../components/EmptyState';
 
-type Filter = 'all' | 'open';
+type CatFilter = 'all' | LanguageCategory;
 
 export function CoursesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: languages, isLoading, isError } = useLanguages();
+  const { data: me, refetch: refetchMe } = useMe();
+
+  // Новый клиент без пройденного опроса — показываем визард подбора (1 раз).
+  const showWizard = !!me && !me.discovery_done_at;
 
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
+  const [cat, setCat] = useState<CatFilter>('all');
+
+  // Категории, у которых есть направления (для чипсов).
+  const categories = useMemo(() => {
+    const present = new Set((languages ?? []).map((l) => l.category ?? 'LANGUAGES'));
+    return CATEGORY_ORDER.filter((c) => present.has(c));
+  }, [languages]);
+
+  // Стартовый фильтр = выбор из опроса.
+  const effectiveCat: CatFilter =
+    cat === 'all' && me?.preferred_category ? me.preferred_category : cat;
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (languages ?? []).filter((l) => {
-      const matchQ =
-        !q ||
-        l.name_ru.toLowerCase().includes(q) ||
-        (l.description ?? '').toLowerCase().includes(q);
-      const matchF = filter === 'all' || (l.groups_count ?? 0) > 0;
-      return matchQ && matchF;
-    });
-  }, [languages, query, filter]);
+    return (
+      (languages ?? [])
+        .filter((l) => {
+          const matchQ =
+            !q ||
+            l.name_ru.toLowerCase().includes(q) ||
+            (l.description ?? '').toLowerCase().includes(q);
+          const matchCat = effectiveCat === 'all' || (l.category ?? 'LANGUAGES') === effectiveCat;
+          return matchQ && matchCat;
+        })
+        // Популярные (больше открытых групп) — выше: маркетплейс-логика.
+        .sort((a, b) => (b.groups_count ?? 0) - (a.groups_count ?? 0))
+    );
+  }, [languages, query, effectiveCat]);
+
+  if (showWizard) {
+    return <DiscoveryWizard onDone={() => void refetchMe()} />;
+  }
 
   return (
     <div className="glass-fade-in flex flex-col gap-4 px-4 pt-6">
@@ -48,18 +79,16 @@ export function CoursesPage() {
         />
       </div>
 
-      {/* Фильтр */}
-      <div className="flex gap-2">
-        {(['all', 'open'] as Filter[]).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`press rounded-full px-4 py-1.5 text-sm font-medium ${
-              filter === f ? 'glass-btn' : 'glass-option'
-            }`}
-          >
-            {f === 'all' ? t('courses.all') : t('courses.filter_open')}
-          </button>
+      {/* Чипсы категорий */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <Chip active={effectiveCat === 'all'} onClick={() => setCat('all')} label="Все" />
+        {categories.map((c) => (
+          <Chip
+            key={c}
+            active={effectiveCat === c}
+            onClick={() => setCat(c)}
+            label={CATEGORY_LABEL[c]}
+          />
         ))}
       </div>
 
@@ -89,6 +118,19 @@ export function CoursesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function Chip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`press shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${
+        active ? 'glass-btn' : 'glass-option'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
