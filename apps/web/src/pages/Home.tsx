@@ -116,6 +116,7 @@ function LessonCard() {
 }
 
 function LanguageScroll() {
+  const navigate = useNavigate();
   const { data: languages, isLoading } = useLanguages();
 
   if (isLoading) {
@@ -138,6 +139,7 @@ function LanguageScroll() {
         return (
           <button
             key={lang.id}
+            onClick={() => navigate(`/course/${lang.id}`)}
             className="press shadow-e1 relative flex h-20 w-28 flex-none flex-col items-center justify-end overflow-hidden rounded-2xl p-2 font-medium text-white"
             style={img ? undefined : { backgroundColor: bg }}
           >

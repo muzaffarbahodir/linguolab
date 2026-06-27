@@ -25,13 +25,15 @@ export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { classId, classTitle, priceUzs, studentId, trialId } = (location.state ?? {}) as {
-    classId?: string;
-    classTitle?: string;
-    priceUzs?: number;
-    studentId?: string;
-    trialId?: string;
-  };
+  const { classId, classTitle, priceUzs, studentId, trialId, offlineTrialLanguageId } =
+    (location.state ?? {}) as {
+      classId?: string;
+      classTitle?: string;
+      priceUzs?: number;
+      studentId?: string;
+      trialId?: string;
+      offlineTrialLanguageId?: string;
+    };
 
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('PAYME');
   const [redirected, setRedirected] = useState(false);
@@ -47,7 +49,7 @@ export default function Payment() {
   // не плодит дубли PENDING. Смена провайдера → новый ключ → новый платёж с верным провайдером.
   const idempotencyKey = useMemo(
     () => crypto.randomUUID(),
-    [classId, selectedProvider, studentId, trialId],
+    [classId, selectedProvider, studentId, trialId, offlineTrialLanguageId],
   );
 
   const handlePay = async () => {
@@ -59,6 +61,7 @@ export default function Payment() {
         idempotency_key: idempotencyKey,
         ...(studentId ? { student_id: studentId } : {}),
         ...(trialId ? { trial_id: trialId } : {}),
+        ...(offlineTrialLanguageId ? { offline_trial_language_id: offlineTrialLanguageId } : {}),
       });
       WebApp.openLink(result.redirect_url);
       setRedirected(true);

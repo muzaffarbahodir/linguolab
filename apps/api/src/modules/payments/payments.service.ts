@@ -20,8 +20,10 @@ export interface CheckoutDto {
   idempotency_key: string; // UUID v4, генерирует клиент
   /** За кого платим (для родителя — id ребёнка). По умолчанию — сам плательщик. */
   student_id?: string;
-  /** ID заявки на очный пробный урок (OFFLINE) — платёж привяжется к ней. */
+  /** ID заявки на очный пробный урок (OFFLINE) — платёж привяжется к ней (legacy). */
   trial_id?: string;
+  /** Язык очного пробного — заявка создастся CONFIRMED после оплаты (новый флоу). */
+  offline_trial_language_id?: string;
 }
 
 @Injectable()
@@ -81,6 +83,7 @@ export class PaymentsService {
         provider: dto.provider,
         status: PaymentStatus.PENDING,
         idempotency_key: dto.idempotency_key,
+        trial_language_id: dto.offline_trial_language_id ?? null,
       },
       update: {}, // уже существует — возвращаем как есть
     });
@@ -185,7 +188,7 @@ export class PaymentsService {
       });
       if (!payment) return;
 
-      // ── Очный пробный урок: только подтверждаем заявку ──
+      // ── Очный пробный урок (legacy: заявка уже была привязана) ──
       if (payment.trial) {
         await this.prisma.trialLessonRequest.update({
           where: { id: payment.trial.id },
@@ -196,6 +199,37 @@ export class PaymentsService {
           payment.trial.language.name_ru,
           payment.trial.id,
         );
+        return;
+      }
+
+      // ── Очный пробный урок (новый флоу): заявка создаётся CONFIRMED после оплаты ──
+      if (payment.trial_language_id) {
+        const existing = await this.prisma.trialLessonRequest.findFirst({
+          where: {
+            student_id: payment.user_id,
+            language_id: payment.trial_language_id,
+            status: { in: ['PENDING', 'CONFIRMED'] },
+          },
+          select: { id: true },
+        });
+        if (!existing) {
+          const tr = await this.prisma.trialLessonRequest.create({
+            data: {
+              student_id: payment.user_id,
+              language_id: payment.trial_language_id,
+              type: 'OFFLINE',
+              class_id: payment.class_id,
+              payment_id: payment.id,
+              status: 'CONFIRMED',
+            },
+            select: { id: true, language: { select: { name_ru: true } } },
+          });
+          void this.notifications.scheduleTrialConfirmed(
+            payment.user_id,
+            tr.language.name_ru,
+            tr.id,
+          );
+        }
         return;
       }
 

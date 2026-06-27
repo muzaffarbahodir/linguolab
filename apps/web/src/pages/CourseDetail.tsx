@@ -43,7 +43,7 @@ export function CourseDetailPage() {
                 classId: res.class_id,
                 classTitle: `${res.language.name_ru} — ${t('profile.trial_offline')}`,
                 priceUzs: res.price_uzs,
-                trialId: res.id,
+                offlineTrialLanguageId: languageId,
               },
             });
             return;

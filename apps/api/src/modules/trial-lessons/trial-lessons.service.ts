@@ -50,25 +50,30 @@ export class TrialLessonsService {
     const openClass = await this.findOpenClassForLanguage(languageId);
 
     // ── Очный (платный) ──
+    // Заявку НЕ создаём здесь — только после успешной оплаты (handlePaidPayment).
+    // Это убирает «висящие» неоплаченные заявки и блокировку повторной попытки.
     if (type === TrialType.OFFLINE) {
       if (!openClass) {
         throw new BadRequestException(
           'Пока нет открытых курсов по этому языку для очного пробного',
         );
       }
-      const created = await this.prisma.trialLessonRequest.create({
-        data: {
-          student_id: studentId,
-          language_id: languageId,
-          type: TrialType.OFFLINE,
-          class_id: openClass.id,
-          note,
-          status: 'PENDING',
-        },
-        select: trialSelect,
+      const lang = await this.prisma.language.findUnique({
+        where: { id: languageId },
+        select: { id: true, name_ru: true, flag_emoji: true, color: true },
       });
-      this.notifyStaff(created.id, studentId, created.language.name_ru, 'очный (ожидает оплаты)');
-      return { ...created, needs_payment: true, price_uzs: openClass.price_uzs };
+      if (!lang) throw new NotFoundException('Language not found');
+      return {
+        id: '',
+        type: TrialType.OFFLINE,
+        status: 'PENDING' as const,
+        note: note ?? null,
+        class_id: openClass.id,
+        created_at: new Date(),
+        language: lang,
+        needs_payment: true,
+        price_uzs: openClass.price_uzs,
+      };
     }
 
     // ── Онлайн (бесплатный, авто) ──

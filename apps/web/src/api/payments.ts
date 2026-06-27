@@ -47,8 +47,10 @@ export function useCheckout() {
       idempotency_key?: string;
       /** Для родителя — id ребёнка, за которого платят. */
       student_id?: string;
-      /** Для очного пробного — id заявки, к которой привязать платёж. */
+      /** Для очного пробного — id заявки, к которой привязать платёж (legacy). */
       trial_id?: string;
+      /** Язык очного пробного — заявка создастся после оплаты. */
+      offline_trial_language_id?: string;
     }) => {
       const { data } = await apiClient.post<CheckoutResponse>('/payments/checkout', {
         provider: params.provider,
@@ -56,6 +58,9 @@ export function useCheckout() {
         idempotency_key: params.idempotency_key ?? uuidv4(),
         ...(params.student_id ? { student_id: params.student_id } : {}),
         ...(params.trial_id ? { trial_id: params.trial_id } : {}),
+        ...(params.offline_trial_language_id
+          ? { offline_trial_language_id: params.offline_trial_language_id }
+          : {}),
       });
       return data;
     },

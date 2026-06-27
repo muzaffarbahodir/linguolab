@@ -585,6 +585,9 @@ model Payment {
   paid_at           DateTime?
   refunded_at       DateTime?                             // когда оформлен возврат
   refund_reason     String?                               // причина возврата (админ)
+  /// Если задан — платёж за ОЧНЫЙ пробный урок (а не за курс).
+  /// Заявка создаётся CONFIRMED только после оплаты (не до). Запись в курс не делаем.
+  trial_language_id String?
   created_at        DateTime        @default(now())
   updated_at        DateTime        @updatedAt
 
