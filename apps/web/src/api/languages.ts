@@ -1,11 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from './client';
 
+/** Категория направления — группирует каталог (языки vs экзамены). */
+export type LanguageCategory =
+  | 'LANGUAGES'
+  | 'IELTS'
+  | 'SAT'
+  | 'CEFR'
+  | 'DTM'
+  | 'MILLIY_SERTIFIKAT';
+
 export interface Language {
   id: string;
   code: string;
   name_ru: string;
   flag_emoji: string;
+  /** Категория для фильтра каталога. */
+  category?: LanguageCategory;
   color: string | null;
   /** Картинка-баннер вместо цвета. */
   image_url?: string | null;

@@ -186,12 +186,24 @@ model User {
 //  LANGUAGES (справочник)
 // =====================
 
-/// Языки которым обучаем (en/es/fr/zh/uz...)
+/// Категория направления: языки vs экзамены/сертификаты.
+/// English и IELTS — разные предметы, группируются по категории.
+enum LanguageCategory {
+  LANGUAGES         // English, Spanish, French...
+  IELTS
+  SAT
+  CEFR
+  DTM               // Davlat testi (поступление в вуз)
+  MILLIY_SERTIFIKAT
+}
+
+/// Направления обучения: языки (en/es/fr...) и экзамены (IELTS/SAT/DTM...)
 model Language {
   id          String  @id @default(cuid())
   code        String  @unique // ISO 639-1: en, es, fr, zh, uz
   name_ru     String          // "Английский", "Испанский"
   flag_emoji  String          // 🇬🇧 🇪🇸 🇫🇷
+  category    LanguageCategory @default(LANGUAGES) // группировка каталога/онбординга
   color       String?         // hex цвет для UI (брендирование курса)
   image_url   String?         // картинка-баннер вместо цвета (задаёт супер-админ / учитель)
   description String?         // описание курса

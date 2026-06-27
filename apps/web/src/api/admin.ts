@@ -4,6 +4,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
+import type { LanguageCategory } from './languages';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -577,6 +578,7 @@ export interface AdminLanguage {
   code: string;
   name_ru: string;
   flag_emoji: string;
+  category: LanguageCategory;
   color: string | null;
   image_url: string | null;
   description: string | null;
@@ -591,6 +593,7 @@ export interface UpsertLanguageInput {
   code?: string;
   name_ru?: string;
   flag_emoji?: string;
+  category?: LanguageCategory;
   color?: string | null;
   image_url?: string | null;
   description?: string | null;

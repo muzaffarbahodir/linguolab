@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { LanguageCategory } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
@@ -10,6 +11,7 @@ export interface UpsertLanguageDto {
   code?: string;
   name_ru?: string;
   flag_emoji?: string;
+  category?: LanguageCategory;
   color?: string | null;
   image_url?: string | null;
   description?: string | null;
@@ -41,6 +43,7 @@ export class LanguagesService {
         code: true,
         name_ru: true,
         flag_emoji: true,
+        category: true,
         color: true,
         image_url: true,
         description: true,
@@ -77,6 +80,7 @@ export class LanguagesService {
         code: true,
         name_ru: true,
         flag_emoji: true,
+        category: true,
         color: true,
         image_url: true,
         description: true,
@@ -174,6 +178,7 @@ export class LanguagesService {
         code: dto.code ?? '',
         name_ru: dto.name_ru ?? '',
         flag_emoji: dto.flag_emoji ?? '',
+        category: dto.category ?? 'LANGUAGES',
         color: dto.color ?? null,
         image_url: dto.image_url ?? null,
         description: dto.description ?? null,
@@ -194,6 +199,7 @@ export class LanguagesService {
         ...(dto.code !== undefined ? { code: dto.code } : {}),
         ...(dto.name_ru !== undefined ? { name_ru: dto.name_ru } : {}),
         ...(dto.flag_emoji !== undefined ? { flag_emoji: dto.flag_emoji } : {}),
+        ...(dto.category !== undefined ? { category: dto.category } : {}),
         ...(dto.color !== undefined ? { color: dto.color } : {}),
         ...(dto.image_url !== undefined ? { image_url: dto.image_url } : {}),
         ...(dto.description !== undefined ? { description: dto.description } : {}),

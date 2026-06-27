@@ -17,12 +17,24 @@ import {
   useDeleteLanguage,
   type AdminLanguage,
 } from '../../api/admin';
+import type { LanguageCategory } from '../../api/languages';
+
+/** Категории направлений для селектора (значение enum → подпись). */
+const CATEGORIES: { value: LanguageCategory; label: string }[] = [
+  { value: 'LANGUAGES', label: 'Языки' },
+  { value: 'IELTS', label: 'IELTS' },
+  { value: 'SAT', label: 'SAT' },
+  { value: 'CEFR', label: 'CEFR' },
+  { value: 'DTM', label: 'DTM' },
+  { value: 'MILLIY_SERTIFIKAT', label: 'Milliy sertifikat' },
+];
 
 type Draft = {
   id?: string;
   code: string;
   name_ru: string;
   flag_emoji: string;
+  category: LanguageCategory;
   color: string;
   image_url: string;
   description: string;
@@ -36,6 +48,7 @@ const EMPTY: Draft = {
   code: '',
   name_ru: '',
   flag_emoji: '',
+  category: 'LANGUAGES',
   color: '#6C5CE7',
   image_url: '',
   description: '',
@@ -57,6 +70,7 @@ function toDraft(l: AdminLanguage): Draft {
     code: l.code,
     name_ru: l.name_ru,
     flag_emoji: l.flag_emoji,
+    category: l.category ?? 'LANGUAGES',
     color: l.color ?? '#6C5CE7',
     image_url: l.image_url ?? '',
     description: l.description ?? '',
@@ -94,6 +108,7 @@ export function AdminLanguagesPage() {
       code: draft.code.trim(),
       name_ru: draft.name_ru.trim(),
       flag_emoji: draft.flag_emoji.trim(),
+      category: draft.category,
       color: draft.color || null,
       image_url: draft.image_url.trim() || null,
       description: draft.description.trim() || null,
@@ -203,6 +218,22 @@ export function AdminLanguagesPage() {
                   className="input"
                   placeholder="Английский"
                 />
+              </Field>
+
+              <Field label="Категория">
+                <select
+                  value={draft.category}
+                  onChange={(e) =>
+                    setDraft({ ...draft, category: e.target.value as LanguageCategory })
+                  }
+                  className="input"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <div className="flex gap-3">
