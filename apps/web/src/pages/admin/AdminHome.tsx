@@ -39,14 +39,14 @@ function getQuickLinks(t: TFn): QuickLink[] {
       label: t('admin.users.title'),
       desc: t('admin.users.desc'),
       path: '/admin/users',
-      color: '#C8623F',
+      color: '#6366f1',
     },
     {
       emoji: '🎓',
       label: t('admin.students.title'),
       desc: t('admin.students.desc'),
       path: '/admin/students',
-      color: '#E0875A',
+      color: '#818cf8',
     },
     {
       emoji: '💰',
@@ -121,14 +121,14 @@ function getQuickLinks(t: TFn): QuickLink[] {
       label: t('admin.referrals.title'),
       desc: t('admin.referrals.desc'),
       path: '/admin/referrals',
-      color: '#E0875A',
+      color: '#818cf8',
     },
     {
       emoji: '🔄',
       label: t('admin.transfers.title'),
       desc: t('admin.transfers.desc'),
       path: '/admin/transfers',
-      color: '#E0875A',
+      color: '#818cf8',
     },
     {
       emoji: '🎯',
@@ -172,10 +172,10 @@ function getQuickLinks(t: TFn): QuickLink[] {
 } // end getQuickLinks
 
 const PREVIEW_ROLES_BASE: { role: Role; tKey: string; emoji: string; color: string }[] = [
-  { role: 'STUDENT', tKey: 'profile.role_student', emoji: '🎓', color: '#C8623F' },
+  { role: 'STUDENT', tKey: 'profile.role_student', emoji: '🎓', color: '#6366f1' },
   { role: 'TEACHER', tKey: 'profile.role_teacher', emoji: '👨‍🏫', color: '#3B82F6' },
   { role: 'PARENT', tKey: 'profile.role_parent', emoji: '👨‍👧', color: '#10B981' },
-  { role: 'MANAGER', tKey: 'profile.role_manager', emoji: '🛠', color: '#E0875A' },
+  { role: 'MANAGER', tKey: 'profile.role_manager', emoji: '🛠', color: '#818cf8' },
 ];
 
 export function AdminHomePage() {
@@ -211,7 +211,7 @@ export function AdminHomePage() {
     SUPER_ADMIN: t('profile.role_super_admin'),
   };
   const PREVIEW_ROLES = PREVIEW_ROLES_BASE.map((r) => ({ ...r, label: t(r.tKey) }));
-  const roleColor = ROLE_COLOR[role] ?? '#C8623F';
+  const roleColor = ROLE_COLOR[role] ?? '#6366f1';
   const roleLabel = ROLE_LABEL[role] ?? role;
 
   return (
@@ -251,13 +251,13 @@ export function AdminHomePage() {
                 emoji="🎓"
                 label={t('admin.home.stat_students')}
                 value={String(widgets.total_students)}
-                color="#C8623F"
+                color="#6366f1"
               />
               <WidgetCard
                 emoji="📚"
                 label={t('admin.home.stat_enrollments')}
                 value={String(widgets.active_enrollments)}
-                color="#E0875A"
+                color="#818cf8"
               />
               <WidgetCard
                 emoji="📅"

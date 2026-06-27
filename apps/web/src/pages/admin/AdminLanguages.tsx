@@ -49,7 +49,7 @@ const EMPTY: Draft = {
   name_ru: '',
   flag_emoji: '',
   category: 'LANGUAGES',
-  color: '#C8623F',
+  color: '#6366f1',
   image_url: '',
   description: '',
   duration_label: '',
@@ -71,7 +71,7 @@ function toDraft(l: AdminLanguage): Draft {
     name_ru: l.name_ru,
     flag_emoji: l.flag_emoji,
     category: l.category ?? 'LANGUAGES',
-    color: l.color ?? '#C8623F',
+    color: l.color ?? '#6366f1',
     image_url: l.image_url ?? '',
     description: l.description ?? '',
     duration_label: l.duration_label ?? '',
@@ -165,7 +165,7 @@ export function AdminLanguagesPage() {
               {/* Preview: картинка или цвет */}
               <div
                 className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl text-xl"
-                style={l.image_url ? undefined : { background: l.color ?? '#C8623F' }}
+                style={l.image_url ? undefined : { background: l.color ?? '#6366f1' }}
               >
                 {l.image_url ? (
                   <img src={l.image_url} alt="" className="h-full w-full object-cover" />
@@ -276,7 +276,7 @@ export function AdminLanguagesPage() {
                     value={draft.color}
                     onChange={(e) => setDraft({ ...draft, color: e.target.value })}
                     className="input flex-1"
-                    placeholder="#C8623F"
+                    placeholder="#6366f1"
                   />
                 </div>
                 <p className="text-faint mt-1 text-xs">{t('admin.languages.f_color_hint')}</p>
@@ -329,7 +329,7 @@ export function AdminLanguagesPage() {
                   type="checkbox"
                   checked={draft.is_active}
                   onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })}
-                  className="h-5 w-5 accent-[#C8623F]"
+                  className="h-5 w-5 accent-[#6366f1]"
                 />
               </label>
             </div>

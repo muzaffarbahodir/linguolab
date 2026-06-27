@@ -48,7 +48,7 @@ export function ParentLinkPage() {
       <div className="mb-6 flex justify-center">
         <div
           className="flex h-24 w-24 items-center justify-center rounded-full text-5xl"
-          style={{ background: 'rgba(200,98,63,0.15)' }}
+          style={{ background: 'rgba(99,102,241,0.15)' }}
         >
           👨‍👩‍👦
         </div>
@@ -81,7 +81,7 @@ export function ParentLinkPage() {
         onClick={handleSubmit}
         disabled={code.trim().length < 6 || accept.isPending}
         className="press w-full rounded-2xl py-4 font-bold text-white disabled:opacity-40"
-        style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
+        style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)' }}
       >
         {accept.isPending ? t('parent.link_checking') : t('parent.link_confirm')}
       </button>
@@ -89,7 +89,7 @@ export function ParentLinkPage() {
       {/* Info */}
       <div
         className="mt-6 rounded-2xl px-4 py-3"
-        style={{ background: 'rgba(200,98,63,0.08)', border: '1px solid rgba(200,98,63,0.15)' }}
+        style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}
       >
         <p className="text-xs leading-relaxed" style={{ color: 'var(--faint)' }}>
           {t('parent.link_page_info')}

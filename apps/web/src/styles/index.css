@@ -226,11 +226,11 @@
 .shimmer-brand-text {
   background: linear-gradient(
     90deg,
-    #eca985 0%,
-    #c8623f 30%,
-    #e0875a 50%,
-    #c8623f 70%,
-    #eca985 100%
+    #a5b4fc 0%,
+    #6366f1 30%,
+    #818cf8 50%,
+    #6366f1 70%,
+    #a5b4fc 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -351,58 +351,58 @@
    Элегантная тёмная (default) + светлая. Переключение через html.light
    (см. store/theme.ts). Все семантические токены Tailwind ссылаются сюда. */
 :root {
-  /* Clay & Linen — тёмная. Тёплый эспрессо + терракотовый акцент.
+  /* Nuar (тёмная, как flowershop) — shadcn чёрно-белый, акцент индиго.
      brand-rgb / brand-400-rgb — каналы для Tailwind (opacity-модификаторы). */
-  --bg: #1b1815;
-  --bg-1: rgba(217, 121, 78, 0.05);
-  --bg-2: rgba(111, 168, 158, 0.035);
-  --bg-3: rgba(217, 121, 78, 0.025);
-  --text: #ece6dc;
-  --muted: rgba(236, 230, 220, 0.56);
-  --faint: rgba(236, 230, 220, 0.36);
-  --surface: rgba(255, 250, 244, 0.05);
-  --surface-2: rgba(255, 250, 244, 0.08);
-  --secondary-bg: #251f18;
-  --hairline: rgba(255, 250, 244, 0.08);
-  --glass-bg: rgba(255, 250, 244, 0.03);
-  --glass-card-bg: rgba(255, 250, 244, 0.045);
-  --glass-border: rgba(255, 250, 244, 0.07);
-  --glass-hi: rgba(255, 250, 244, 0.045);
-  --glass-lo: rgba(0, 0, 0, 0.05);
-  --glass-shadow: rgba(0, 0, 0, 0.18);
-  --pill-bg: rgba(27, 24, 21, 0.76);
-  --glass-bright: 1.01;
-  --brand-rgb: 200 98 63;
-  --brand-400-rgb: 229 144 105;
+  --bg: #09090b;
+  --bg-1: rgba(255, 255, 255, 0.025);
+  --bg-2: rgba(255, 255, 255, 0.015);
+  --bg-3: rgba(255, 255, 255, 0.01);
+  --text: #fafafa;
+  --muted: rgba(250, 250, 250, 0.62);
+  --faint: rgba(250, 250, 250, 0.4);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --secondary-bg: #18181b;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-card-bg: rgba(255, 255, 255, 0.025);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hi: rgba(255, 255, 255, 0.06);
+  --glass-lo: rgba(0, 0, 0, 0.2);
+  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --pill-bg: rgba(9, 9, 11, 0.88);
+  --glass-bright: 1.02;
+  --brand-rgb: 99 102 241;
+  --brand-400-rgb: 129 140 248;
   --brand: rgb(var(--brand-rgb));
   --on-brand: #ffffff;
-  --accent2: #6fa89e;
+  --accent2: #818cf8;
 }
 html.light {
-  /* Clay & Linen — светлая. Льняной фон + тёплая терракота. */
-  --bg: #f4f1ea;
-  --bg-1: rgba(190, 95, 60, 0.05);
-  --bg-2: rgba(78, 138, 130, 0.04);
-  --bg-3: rgba(190, 95, 60, 0.03);
-  --text: #2b2722;
-  --muted: rgba(43, 39, 34, 0.6);
-  --faint: rgba(43, 39, 34, 0.4);
-  --surface: rgba(43, 39, 34, 0.04);
-  --surface-2: rgba(43, 39, 34, 0.07);
-  --secondary-bg: #fcfaf5;
-  --hairline: rgba(43, 39, 34, 0.1);
-  --glass-bg: rgba(255, 253, 249, 0.6);
-  --glass-card-bg: rgba(255, 253, 249, 0.72);
-  --glass-border: rgba(43, 39, 34, 0.08);
-  --glass-hi: rgba(255, 255, 255, 0.6);
-  --glass-lo: rgba(43, 39, 34, 0.02);
-  --glass-shadow: rgba(43, 39, 34, 0.1);
-  --pill-bg: rgba(252, 250, 245, 0.8);
-  --brand-rgb: 190 95 60;
-  --brand-400-rgb: 168 81 46;
+  /* Pearl (светлая, как flowershop) — мягкий сине-серый фон, акцент индиго. */
+  --bg: #eef1f8;
+  --bg-1: rgba(99, 102, 241, 0.1);
+  --bg-2: rgba(139, 92, 246, 0.07);
+  --bg-3: rgba(14, 165, 233, 0.06);
+  --text: #0f172a;
+  --muted: rgba(15, 23, 42, 0.62);
+  --faint: rgba(15, 23, 42, 0.42);
+  --surface: rgba(255, 255, 255, 0.62);
+  --surface-2: rgba(15, 23, 42, 0.05);
+  --secondary-bg: #ffffff;
+  --hairline: rgba(15, 23, 42, 0.11);
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-card-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(15, 23, 42, 0.11);
+  --glass-hi: rgba(255, 255, 255, 0.8);
+  --glass-lo: rgba(15, 23, 42, 0.025);
+  --glass-shadow: rgba(15, 23, 42, 0.1);
+  --pill-bg: rgba(248, 250, 253, 0.8);
+  --brand-rgb: 79 70 229;
+  --brand-400-rgb: 99 102 241;
   --brand: rgb(var(--brand-rgb));
   --on-brand: #ffffff;
-  --accent2: #4e8a82;
+  --accent2: #6366f1;
   --glass-bright: 0.98;
 }
 
@@ -524,12 +524,12 @@ html.light {
 }
 
 .glass-violet {
-  background: rgba(200, 98, 63, 0.1);
+  background: rgba(99, 102, 241, 0.1);
   backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
   -webkit-backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
-  border: 1px solid rgba(224, 135, 90, 0.18);
+  border: 1px solid rgba(129, 140, 248, 0.18);
   box-shadow:
-    0 8px 36px rgba(200, 98, 63, 0.12),
+    0 8px 36px rgba(99, 102, 241, 0.12),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.11),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
@@ -565,12 +565,12 @@ html.light {
 }
 
 .glass-option-violet {
-  background: rgba(224, 135, 90, 0.2);
+  background: rgba(129, 140, 248, 0.2);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(224, 135, 90, 0.38);
+  border: 1px solid rgba(129, 140, 248, 0.38);
   box-shadow:
-    0 4px 18px rgba(224, 135, 90, 0.22),
+    0 4px 18px rgba(129, 140, 248, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -699,11 +699,11 @@ html.light .ll-ann-info {
 }
 /* promo — фиолетовый бренд */
 .ll-ann-promo {
-  background: linear-gradient(90deg, #c8623f, #e0875a);
+  background: linear-gradient(90deg, #6366f1, #818cf8);
   color: #ffffff;
 }
 html.light .ll-ann-promo {
-  background: linear-gradient(90deg, #d9794e, #eca985);
+  background: linear-gradient(90deg, #6366f1, #a5b4fc);
 }
 
 /* ── Form inputs — themed, used in admin forms ───────────────────────────── */
@@ -722,7 +722,7 @@ html.light .ll-ann-promo {
   color: var(--faint);
 }
 .input:focus {
-  border-color: rgba(200, 98, 63, 0.55);
+  border-color: rgba(99, 102, 241, 0.55);
 }
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */

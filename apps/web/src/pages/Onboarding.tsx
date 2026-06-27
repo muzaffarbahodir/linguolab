@@ -14,15 +14,15 @@ const SLIDES = [
     emoji: '🎓',
     titleKey: 'onboarding.slide1_title',
     textKey: 'onboarding.slide1_text',
-    color: '#C8623F',
-    glow: 'rgba(200,98,63,0.35)',
+    color: '#6366f1',
+    glow: 'rgba(99,102,241,0.35)',
   },
   {
     emoji: '📅',
     titleKey: 'onboarding.slide2_title',
     textKey: 'onboarding.slide2_text',
-    color: '#E0875A',
-    glow: 'rgba(224,135,90,0.35)',
+    color: '#818cf8',
+    glow: 'rgba(129,140,248,0.35)',
   },
   {
     emoji: '🏆',
@@ -56,7 +56,7 @@ export function Onboarding({ onClose }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: '#1b1815' }}>
+    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: '#09090b' }}>
       {/* Skip button */}
       <div className="flex justify-end p-4">
         <button onClick={handleSkip} className="text-tg-hint press text-sm">

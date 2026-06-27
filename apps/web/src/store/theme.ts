@@ -13,22 +13,22 @@ const KEY = 'll_theme';
 // Telegram tg-theme vars per theme — чтобы нативная шапка/фон совпадали с UI.
 const TG_VARS: Record<Theme, Record<string, string>> = {
   dark: {
-    '--tg-theme-bg-color': '#1b1815',
-    '--tg-theme-secondary-bg-color': '#251f18',
-    '--tg-theme-text-color': '#ece6dc',
-    '--tg-theme-hint-color': '#9a8f80',
-    '--tg-theme-header-bg-color': '#1b1815',
+    '--tg-theme-bg-color': '#09090b',
+    '--tg-theme-secondary-bg-color': '#18181b',
+    '--tg-theme-text-color': '#fafafa',
+    '--tg-theme-hint-color': '#71717a',
+    '--tg-theme-header-bg-color': '#09090b',
   },
   light: {
-    '--tg-theme-bg-color': '#f4f1ea',
-    '--tg-theme-secondary-bg-color': '#fcfaf5',
-    '--tg-theme-text-color': '#2b2722',
-    '--tg-theme-hint-color': '#6b6258',
-    '--tg-theme-header-bg-color': '#f4f1ea',
+    '--tg-theme-bg-color': '#eef1f8',
+    '--tg-theme-secondary-bg-color': '#ffffff',
+    '--tg-theme-text-color': '#0f172a',
+    '--tg-theme-hint-color': '#64748b',
+    '--tg-theme-header-bg-color': '#eef1f8',
   },
 };
 
-const CHROME: Record<Theme, `#${string}`> = { dark: '#1b1815', light: '#f4f1ea' };
+const CHROME: Record<Theme, `#${string}`> = { dark: '#09090b', light: '#eef1f8' };
 
 export function applyTheme(theme: Theme): void {
   const root = document.documentElement;

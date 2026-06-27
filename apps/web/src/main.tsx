@@ -44,11 +44,11 @@ if (typeof WebApp.disableVerticalSwipes === 'function') {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATIC_TG_VARS: Record<string, string> = {
-  '--tg-theme-link-color': '#E0875A',
-  '--tg-theme-button-color': '#C8623F',
+  '--tg-theme-link-color': '#818cf8',
+  '--tg-theme-button-color': '#6366f1',
   '--tg-theme-button-text-color': '#ffffff',
   '--tg-theme-destructive-text-color': '#ff453a',
-  '--tg-theme-accent-text-color': '#E0875A',
+  '--tg-theme-accent-text-color': '#818cf8',
 };
 for (const [k, v] of Object.entries(STATIC_TG_VARS)) {
   document.documentElement.style.setProperty(k, v);
@@ -120,7 +120,7 @@ function AppCrash() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
-        background: '#1b1815',
+        background: '#09090b',
         color: 'rgba(255,255,255,0.7)',
         padding: 24,
         textAlign: 'center',
@@ -134,7 +134,7 @@ function AppCrash() {
           marginTop: 8,
           padding: '8px 20px',
           borderRadius: 12,
-          background: '#C8623F',
+          background: '#6366f1',
           color: '#fff',
           border: 'none',
           fontSize: 13,

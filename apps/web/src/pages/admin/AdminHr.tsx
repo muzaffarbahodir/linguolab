@@ -279,7 +279,7 @@ function EmployeesTab() {
                   type="checkbox"
                   checked={draft.is_active}
                   onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })}
-                  className="h-5 w-5 accent-[#C8623F]"
+                  className="h-5 w-5 accent-[#6366f1]"
                 />
               </label>
             </div>
@@ -333,7 +333,7 @@ function Picker<T extends string>({
             className="press rounded-xl px-3 py-1.5 text-xs font-semibold"
             style={{
               background: value === o ? 'var(--surface-2)' : 'transparent',
-              border: `2px solid ${value === o ? '#C8623F' : 'var(--hairline)'}`,
+              border: `2px solid ${value === o ? '#6366f1' : 'var(--hairline)'}`,
             }}
           >
             {labelFor(o)}

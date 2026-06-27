@@ -130,7 +130,7 @@ function CreateTicketSheet({ open, onClose }: { open: boolean; onClose: () => vo
               onClick={handleSend}
               disabled={subject.trim().length < 3 || message.trim().length < 10 || create.isPending}
               className="press flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg, #C8623F, #ECA985)' }}
+              style={{ background: 'linear-gradient(135deg, #6366f1, #a5b4fc)' }}
             >
               {create.isPending ? '...' : t('support.send_btn')}
             </button>

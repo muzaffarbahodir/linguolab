@@ -142,7 +142,7 @@ function EditProfileSheet({ userId, onClose }: { userId: string; onClose: () => 
               onClick={handleSave}
               disabled={update.isPending}
               className="press w-full rounded-2xl py-3 text-sm font-bold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
+              style={{ background: 'linear-gradient(135deg,#6366f1,#a5b4fc)' }}
             >
               {update.isPending ? '...' : t('teacher.save')}
             </button>
@@ -292,7 +292,7 @@ export function TeacherHomePage() {
           emoji="🎓"
           title={t('teacher.my_classes')}
           count={classes?.length}
-          color="#C8623F"
+          color="#6366f1"
         />
 
         {classesLoading ? (

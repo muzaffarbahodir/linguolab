@@ -113,8 +113,8 @@ export function TeacherClassPage() {
             onClick={() => setTab(tabKey)}
             className="press flex-1 py-3 text-sm font-medium transition-colors"
             style={{
-              color: tab === tabKey ? '#C8623F' : 'var(--surface-2)',
-              borderBottom: tab === tabKey ? '2px solid #C8623F' : '2px solid transparent',
+              color: tab === tabKey ? '#6366f1' : 'var(--surface-2)',
+              borderBottom: tab === tabKey ? '2px solid #6366f1' : '2px solid transparent',
             }}
           >
             {tabKey === 'lessons'
@@ -181,7 +181,7 @@ export function TeacherClassPage() {
               <div className="flex justify-center pt-8">
                 <div
                   className="h-6 w-6 animate-spin rounded-full border-4 border-t-transparent"
-                  style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+                  style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
                 />
               </div>
             ) : (
@@ -249,7 +249,7 @@ export function TeacherClassPage() {
               <div className="flex justify-center pt-8">
                 <div
                   className="h-6 w-6 animate-spin rounded-full border-4 border-t-transparent"
-                  style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+                  style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
                 />
               </div>
             ) : (studentStatsQuery.data ?? []).length > 0 ? (
@@ -283,7 +283,7 @@ export function TeacherClassPage() {
                       <div className="flex min-w-0 items-center gap-2">
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                          style={{ background: '#C8623F' }}
+                          style={{ background: '#6366f1' }}
                         >
                           {s.student.first_name[0]}
                           {s.student.last_name?.[0] ?? ''}
@@ -333,7 +333,7 @@ export function TeacherClassPage() {
                   >
                     <div
                       className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white"
-                      style={{ background: '#C8623F' }}
+                      style={{ background: '#6366f1' }}
                     >
                       {student.first_name[0]}
                       {student.last_name?.[0] ?? ''}
@@ -360,7 +360,7 @@ export function TeacherClassPage() {
             <button
               onClick={() => setShowAddHw(true)}
               className="glass-btn press mb-4 w-full rounded-xl py-3 text-sm font-semibold"
-              style={{ background: '#E0875A' }}
+              style={{ background: '#818cf8' }}
             >
               {t('teacher.create_hw_btn')}
             </button>
@@ -369,7 +369,7 @@ export function TeacherClassPage() {
               <div className="flex justify-center pt-8">
                 <div
                   className="h-6 w-6 animate-spin rounded-full border-4 border-t-transparent"
-                  style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+                  style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
                 />
               </div>
             ) : (
@@ -572,7 +572,7 @@ export function TeacherClassPage() {
                 onClick={() => void handleAddHw()}
                 disabled={!hwTitle || createHw.isPending}
                 className="glass-btn press flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-                style={{ background: '#E0875A' }}
+                style={{ background: '#818cf8' }}
               >
                 {createHw.isPending ? t('teacher.saving') : t('teacher.generate_btn')}
               </button>

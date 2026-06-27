@@ -33,7 +33,7 @@ export function TeacherStudentPage() {
     <div className="flex justify-center py-16">
       <div
         className="h-7 w-7 animate-spin rounded-full border-4 border-t-transparent"
-        style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+        style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
       />
     </div>
   );
@@ -66,7 +66,7 @@ export function TeacherStudentPage() {
           {/* Teacher badge */}
           <div
             className="rounded-xl px-3 py-1.5 text-xs font-medium"
-            style={{ background: 'rgba(200,98,63,0.2)', color: '#ECA985' }}
+            style={{ background: 'rgba(99,102,241,0.2)', color: '#a5b4fc' }}
           >
             {t('teacher.role_label')}
           </div>
@@ -81,7 +81,7 @@ export function TeacherStudentPage() {
               className="press flex-1 rounded-xl py-2 text-xs font-semibold transition-colors"
               style={
                 tab === t.id
-                  ? { background: '#C8623F', color: '#fff' }
+                  ? { background: '#6366f1', color: '#fff' }
                   : { background: 'var(--surface-2)', color: 'var(--muted)' }
               }
             >

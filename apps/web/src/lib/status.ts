@@ -28,7 +28,7 @@ export const CLASS_STATUS: Record<string, StatusMeta> = {
   ENROLLMENT_OPEN: { color: '#3B82F6', labelKey: 'status.class_ENROLLMENT_OPEN', icon: '📝' },
   ACTIVE: { color: '#10B981', labelKey: 'status.class_ACTIVE', icon: '▶️' },
   EXAM: { color: '#F59E0B', labelKey: 'status.class_EXAM', icon: '📋' },
-  COMPLETED: { color: '#E0875A', labelKey: 'status.class_COMPLETED', icon: '✅' },
+  COMPLETED: { color: '#818cf8', labelKey: 'status.class_COMPLETED', icon: '✅' },
   CANCELLED: { color: '#EF4444', labelKey: 'status.class_CANCELLED', icon: '❌' },
 };
 
@@ -63,11 +63,11 @@ export const LEVEL_COLOR: Record<string, string> = {
   A2: '#3B82F6',
   B1: '#F59E0B',
   B2: '#EF4444',
-  C1: '#E0875A',
+  C1: '#818cf8',
   C2: '#EC4899',
 };
 
 /** Безопасный доступ — неизвестный статус не роняет UI */
 export function classStatusMeta(status: string): StatusMeta {
-  return CLASS_STATUS[status] ?? { color: '#C8623F', labelKey: status, icon: '•' };
+  return CLASS_STATUS[status] ?? { color: '#6366f1', labelKey: status, icon: '•' };
 }

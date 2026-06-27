@@ -14,21 +14,21 @@ export default {
           'secondary-bg': 'var(--secondary-bg)',
           text: 'var(--text)',
           hint: 'var(--muted)',
-          link: 'var(--tg-theme-link-color, #C8623F)',
-          button: 'var(--tg-theme-button-color, #C8623F)',
+          link: 'var(--tg-theme-link-color, #6366F1)',
+          button: 'var(--tg-theme-button-color, #6366F1)',
           'button-text': 'var(--tg-theme-button-text-color, #ffffff)',
           destructive: 'var(--tg-theme-destructive-text-color, #ff453a)',
         },
-        // Бренд — терракота (Clay & Linen). Тема-зависимый через CSS-переменные
+        // Бренд — индиго (тема flowershop). Тема-зависимый через CSS-переменные
         // (каналы RGB), чтобы работали opacity-модификаторы bg-brand/15 и т.д.
         brand: {
           DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
-          50: '#FBF0EA',
-          100: '#F4DCD0',
+          50: '#EEF0FE',
+          100: '#E0E3FB',
           400: 'rgb(var(--brand-400-rgb) / <alpha-value>)',
           500: 'rgb(var(--brand-rgb) / <alpha-value>)',
-          600: '#A8512E',
-          700: '#823D22',
+          600: '#4F46E5',
+          700: '#4338CA',
         },
         // Семантические токены поверхностей/границ/текста (тёмная тема).
         // Юзать вместо повторяющихся rgba(255,255,255,0.0x):

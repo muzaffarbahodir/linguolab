@@ -32,7 +32,7 @@ export function LanguageSelectPage() {
               <span className="text-2xl">{lang.flag}</span>
               <span className="flex-1 font-medium">{lang.label}</span>
               {locale === lang.code && (
-                <span className="text-lg font-bold" style={{ color: '#C8623F' }}>
+                <span className="text-lg font-bold" style={{ color: '#6366f1' }}>
                   ✓
                 </span>
               )}

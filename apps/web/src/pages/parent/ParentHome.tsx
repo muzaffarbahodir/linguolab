@@ -97,7 +97,7 @@ function InviteModal({
           style={{
             background: copied
               ? 'linear-gradient(135deg,#10B981,#059669)'
-              : 'linear-gradient(135deg,#C8623F,#E0875A)',
+              : 'linear-gradient(135deg,#6366f1,#818cf8)',
           }}
         >
           {copied ? t('parent.invite_copied') : t('parent.invite_copy')}
@@ -130,7 +130,7 @@ function ChildCard({ item }: { item: ChildListItem }) {
       {/* Avatar */}
       <div
         className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-bold text-white"
-        style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
+        style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)' }}
       >
         {child.avatar_url ? (
           <img src={child.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover" />

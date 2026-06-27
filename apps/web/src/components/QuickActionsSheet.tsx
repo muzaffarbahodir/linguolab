@@ -58,7 +58,7 @@ function TrialForm({ onBack, onClose }: { onBack: () => void; onClose: () => voi
             className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition ${
               langId === l.id ? 'text-white' : 'glass-option'
             }`}
-            style={langId === l.id ? { backgroundColor: l.color ?? '#C8623F' } : {}}
+            style={langId === l.id ? { backgroundColor: l.color ?? '#6366f1' } : {}}
           >
             {l.flag_emoji} {l.name_ru}
           </button>
@@ -192,7 +192,7 @@ export function QuickActionsSheet({ open, onClose }: Props) {
     {
       id: 'trial' as Screen,
       icon: '🎓',
-      color: '#C8623F',
+      color: '#6366f1',
       label: t('quick_actions.action_trial_label'),
       desc: t('quick_actions.action_trial_desc'),
     },

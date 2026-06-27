@@ -39,7 +39,7 @@ const ACTION_COLOR: Record<string, string> = {
   class_deleted: '#EF4444',
   role_changed: '#F59E0B',
   user_activated: '#10B981',
-  broadcast_sent: '#E0875A',
+  broadcast_sent: '#818cf8',
 };
 
 export function AdminAuditPage() {

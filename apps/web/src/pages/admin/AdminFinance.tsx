@@ -77,7 +77,7 @@ export function AdminFinancePage() {
           label={t('admin.finance.revenue_6m')}
           value={formatUzs(totalRevenue6m)}
           emoji="📈"
-          color="#C8623F"
+          color="#6366f1"
         />
         <SummaryCard
           label={t('admin.finance.active_enrollments')}
@@ -89,7 +89,7 @@ export function AdminFinancePage() {
           label={t('admin.finance.total_students')}
           value={String(widgets?.total_students ?? 0)}
           emoji="🎓"
-          color="#E0875A"
+          color="#818cf8"
         />
       </div>
 
@@ -161,7 +161,7 @@ export function AdminFinancePage() {
                     className="w-full rounded-t-lg transition-all duration-700"
                     style={{
                       height: `${Math.max(pct, 4)}%`,
-                      background: 'linear-gradient(180deg,#C8623F,#4F46E5)',
+                      background: 'linear-gradient(180deg,#6366f1,#4F46E5)',
                     }}
                   />
                   <span className="text-tg-hint text-[9px]">{s.month.slice(5)}</span>
@@ -183,7 +183,7 @@ export function AdminFinancePage() {
 const PAY_STATUS_COLOR: Record<string, string> = {
   PAID: '#10B981',
   PENDING: '#F59E0B',
-  REFUNDED: '#E0875A',
+  REFUNDED: '#818cf8',
   CANCELLED: '#6B7280',
   FAILED: '#EF4444',
   EXPIRED: '#6B7280',

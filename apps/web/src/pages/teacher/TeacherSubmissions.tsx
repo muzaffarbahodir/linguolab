@@ -51,7 +51,7 @@ export function TeacherSubmissionsPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div
           className="h-7 w-7 animate-spin rounded-full border-4 border-t-transparent"
-          style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+          style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
         />
       </div>
     );
@@ -117,7 +117,7 @@ export function TeacherSubmissionsPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 block text-sm underline"
-                style={{ color: '#E0875A' }}
+                style={{ color: '#818cf8' }}
               >
                 {t('teacher.open_file')}
               </a>
@@ -137,7 +137,7 @@ export function TeacherSubmissionsPage() {
                   setFeedback('');
                 }}
                 className="glass-btn press mt-3 w-full rounded-xl py-2.5 text-sm font-semibold"
-                style={{ background: '#E0875A' }}
+                style={{ background: '#818cf8' }}
               >
                 {t('teacher.set_grade')}
               </button>
@@ -192,7 +192,7 @@ export function TeacherSubmissionsPage() {
                 onClick={() => void handleGrade()}
                 disabled={!grade || gradeMutation.isPending}
                 className="glass-btn press flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-                style={{ background: '#E0875A' }}
+                style={{ background: '#818cf8' }}
               >
                 {gradeMutation.isPending ? t('teacher.grade_saving') : t('teacher.grade_save')}
               </button>

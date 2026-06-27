@@ -166,7 +166,7 @@ function StudentsSection({ months }: { months: number }) {
         >
           {t('admin.analytics.new_students')}
         </p>
-        <p className="mt-0.5 text-xl font-bold" style={{ color: '#C8623F' }}>
+        <p className="mt-0.5 text-xl font-bold" style={{ color: '#6366f1' }}>
           {total}
         </p>
         <p className="text-xs" style={{ color: 'var(--faint)' }}>
@@ -176,7 +176,7 @@ function StudentsSection({ months }: { months: number }) {
       {isLoading ? (
         <div className="skeleton h-20 rounded-xl" />
       ) : (
-        <BarChart data={chartData} color="#C8623F" formatValue={(v) => String(v)} />
+        <BarChart data={chartData} color="#6366f1" formatValue={(v) => String(v)} />
       )}
     </div>
   );
@@ -276,7 +276,7 @@ export function AdminAnalyticsPage() {
                 onClick={() => setMonths(opt.value)}
                 className="press rounded-lg px-3 py-1.5 text-xs font-semibold"
                 style={{
-                  background: months === opt.value ? '#C8623F' : 'var(--surface-2)',
+                  background: months === opt.value ? '#6366f1' : 'var(--surface-2)',
                   color: months === opt.value ? '#fff' : 'var(--surface-2)',
                 }}
               >

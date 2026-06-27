@@ -29,7 +29,7 @@ export function CourseDetailPage() {
   const guard = (fn: () => void) => () => (needsOnboard ? navigate('/onboard') : fn());
 
   const course = data?.course;
-  const accent = course?.color ?? '#C8623F';
+  const accent = course?.color ?? '#6366f1';
 
   const startTrial = (type: 'ONLINE' | 'OFFLINE') => {
     if (!languageId || requestTrial.isPending) return;
@@ -83,7 +83,7 @@ export function CourseDetailPage() {
 
   return (
     <div className="glass-fade-in pb-10">
-      {/* Banner */}
+      {/* Banner — только фото, без текста (текст ниже, чтобы не мешать фото) */}
       <div className="relative h-44 w-full overflow-hidden">
         {course.image_url ? (
           <img src={course.image_url} alt={course.name_ru} className="h-full w-full object-cover" />
@@ -93,14 +93,15 @@ export function CourseDetailPage() {
             style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-        <div className="absolute bottom-0 left-0 p-4">
-          <p className="text-3xl">{course.flag_emoji}</p>
-          <h1 className="text-2xl font-bold text-white drop-shadow">{course.name_ru}</h1>
-        </div>
       </div>
 
       <div className="flex flex-col gap-4 px-4 pt-4">
+        {/* Заголовок под баннером */}
+        <div className="flex items-center gap-2.5">
+          <span className="text-3xl">{course.flag_emoji}</span>
+          <h1 className="text-2xl font-bold">{course.name_ru}</h1>
+        </div>
+
         {course.description && (
           <p className="text-muted text-sm leading-relaxed">{course.description}</p>
         )}

@@ -166,7 +166,7 @@ function PageLoader() {
     <div className="flex min-h-[40vh] items-center justify-center">
       <div
         className="h-7 w-7 animate-spin rounded-full border-4 border-t-transparent"
-        style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+        style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
       />
     </div>
   );
@@ -193,12 +193,12 @@ export default function App() {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
-        style={{ background: '#1b1815' }}
+        style={{ background: '#09090b' }}
       >
         <div className="floral-float flex flex-col items-center gap-3">
           <div
             className="h-10 w-10 animate-spin rounded-full border-4 border-t-transparent"
-            style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+            style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
           />
           <span className="text-xs font-medium" style={{ color: 'var(--faint)' }}>
             LinguoLab
@@ -216,7 +216,7 @@ export default function App() {
     return (
       <div
         className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
-        style={{ background: '#1b1815' }}
+        style={{ background: '#09090b' }}
       >
         <p className="mb-4 text-sm" style={{ color: 'var(--muted)' }}>
           {t('app.server_error')}
@@ -304,11 +304,11 @@ function AuthenticatedApp() {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
-        style={{ background: '#1b1815' }}
+        style={{ background: '#09090b' }}
       >
         <div
           className="h-6 w-6 animate-spin rounded-full border-4 border-t-transparent"
-          style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+          style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
         />
       </div>
     );

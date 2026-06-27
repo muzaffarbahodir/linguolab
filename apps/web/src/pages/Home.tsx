@@ -63,8 +63,8 @@ function ProgressCard() {
           className="h-2.5 rounded-full transition-[width] duration-700 ease-out"
           style={{
             width: `${fill}%`,
-            background: 'linear-gradient(90deg,#C8623F,#ECA985)',
-            boxShadow: done ? '0 0 12px rgba(224,135,90,0.6)' : 'none',
+            background: 'linear-gradient(90deg,#6366f1,#a5b4fc)',
+            boxShadow: done ? '0 0 12px rgba(129,140,248,0.6)' : 'none',
           }}
         />
       </div>
@@ -89,7 +89,7 @@ function LessonCard() {
     return null;
   }
 
-  const color = lesson.language.color ?? '#C8623F';
+  const color = lesson.language.color ?? '#6366f1';
 
   return (
     <div
@@ -131,7 +131,7 @@ function LanguageScroll() {
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {languages.map((lang) => {
-        const bg = lang.color ?? '#C8623F';
+        const bg = lang.color ?? '#6366f1';
         const img = lang.image_url ?? null;
         return (
           <button
@@ -247,7 +247,7 @@ function TrialLessonsSection() {
               <p className="text-muted mb-3 text-xs font-semibold">{t('home.trial_select_lang')}</p>
               <div className="mb-3 flex flex-wrap gap-2">
                 {languages?.map((lang) => {
-                  const bg = lang.color ?? '#C8623F';
+                  const bg = lang.color ?? '#6366f1';
                   const active = selectedLang === lang.id;
                   const alreadyPending = trials?.some(
                     (tr) => tr.language.id === lang.id && tr.status === 'PENDING',
@@ -289,8 +289,8 @@ function TrialLessonsSection() {
                 disabled={!canRequest || requestMutation.isPending}
                 className="press flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                 style={{
-                  background: 'linear-gradient(135deg, #C8623F, #ECA985)',
-                  boxShadow: '0 4px 16px rgba(200,98,63,0.3)',
+                  background: 'linear-gradient(135deg, #6366f1, #a5b4fc)',
+                  boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
                 }}
               >
                 {requestMutation.isPending ? '...' : t('home.trial_submit')}
@@ -326,7 +326,7 @@ export function HomePage() {
     <div className="stagger flex flex-col gap-5 px-4 pt-6">
       {/* Greeting */}
       <div className="glass-card relative overflow-hidden rounded-3xl px-5 py-6">
-        <div className="deco-orb" style={{ background: '#E0875A', top: -50, right: -20 }} />
+        <div className="deco-orb" style={{ background: '#818cf8', top: -50, right: -20 }} />
         <div className="relative flex items-center gap-3.5">
           {photo ? (
             <img

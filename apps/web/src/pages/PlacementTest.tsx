@@ -24,7 +24,7 @@ const LEVEL_BG: Record<string, string> = {
   A2: 'rgba(16,185,129,0.2)',
   B1: 'rgba(59,130,246,0.2)',
   B2: 'rgba(99,102,241,0.2)',
-  C1: 'rgba(224,135,90,0.2)',
+  C1: 'rgba(129,140,248,0.2)',
   C2: 'rgba(245,158,11,0.2)',
 };
 const LEVEL_COLOR: Record<string, string> = {
@@ -32,7 +32,7 @@ const LEVEL_COLOR: Record<string, string> = {
   A2: '#10B981',
   B1: '#3B82F6',
   B2: '#6366F1',
-  C1: '#E0875A',
+  C1: '#818cf8',
   C2: '#F59E0B',
 };
 export function PlacementTestPage() {
@@ -186,7 +186,7 @@ export function PlacementTestPage() {
               className="h-full rounded-full transition-all duration-300"
               style={{
                 width: `${progress}%`,
-                background: 'linear-gradient(90deg,#C8623F,#E0875A)',
+                background: 'linear-gradient(90deg,#6366f1,#818cf8)',
               }}
             />
           </div>
@@ -325,7 +325,7 @@ export function PlacementTestPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div
         className="h-7 w-7 animate-spin rounded-full border-4 border-t-transparent"
-        style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
+        style={{ borderColor: 'rgba(99,102,241,0.3)', borderTopColor: '#6366f1' }}
       />
     </div>
   );

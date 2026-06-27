@@ -66,7 +66,7 @@ function StudentCertCard({
     <div className="bg-surface border-hairline flex items-center gap-3 rounded-2xl border p-3">
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-        style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
+        style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)' }}
       >
         {student.avatar_url ? (
           <img src={student.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
@@ -214,7 +214,7 @@ function FoundStudentRow({
       <div className="flex items-center gap-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-          style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
+          style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)' }}
         >
           {name[0]?.toUpperCase()}
         </div>
@@ -335,7 +335,7 @@ export function AdminCertificatesPage() {
             ) : (
               <div className="mb-4 flex flex-col gap-2">
                 {activeClasses.map((cls) => {
-                  const color = cls.language.color ?? '#C8623F';
+                  const color = cls.language.color ?? '#6366f1';
                   const active = selectedClass === cls.id;
                   return (
                     <button

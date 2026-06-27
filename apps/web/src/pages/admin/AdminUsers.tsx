@@ -36,7 +36,7 @@ const ROLE_COLOR: Record<string, string> = {
   STUDENT: 'var(--surface-2)',
   PARENT: '#10B981',
   TEACHER: '#3B82F6',
-  MANAGER: '#E0875A',
+  MANAGER: '#818cf8',
   ADMIN: '#EF4444',
   SUPER_ADMIN: '#F59E0B',
 };

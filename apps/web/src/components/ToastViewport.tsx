@@ -7,7 +7,7 @@ import { useToastStore, type ToastType } from '../store/toast';
 const TYPE_STYLE: Record<ToastType, { border: string; icon: string; accent: string }> = {
   success: { border: 'rgba(16,185,129,0.4)', icon: '✅', accent: '#10B981' },
   error: { border: 'rgba(239,68,68,0.4)', icon: '⚠️', accent: '#EF4444' },
-  info: { border: 'rgba(200,98,63,0.4)', icon: 'ℹ️', accent: '#E0875A' },
+  info: { border: 'rgba(99,102,241,0.4)', icon: 'ℹ️', accent: '#818cf8' },
 };
 
 export function ToastViewport() {

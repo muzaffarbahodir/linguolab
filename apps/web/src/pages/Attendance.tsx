@@ -63,7 +63,7 @@ function AttendanceCard({ stat }: { stat: AttendanceStat }) {
 
 function AttendanceChips({ stat }: { stat: AttendanceStat }) {
   const { t } = useTranslation();
-  const bg = stat.language.color ?? '#C8623F';
+  const bg = stat.language.color ?? '#6366f1';
   return (
     <div className="grid grid-cols-4 gap-2">
       <StatChip emoji="📅" label={t('attendance.total')} value={stat.total} color={bg} />

@@ -15,7 +15,7 @@ export function NotInTelegramPage() {
   return (
     <div
       className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
-      style={{ background: '#1b1815' }}
+      style={{ background: '#09090b' }}
     >
       <div className="floral-float mb-6 text-6xl">✈️</div>
       <h1 className="shimmer-brand-text mb-2 text-2xl font-bold">{t('not_in_telegram.title')}</h1>

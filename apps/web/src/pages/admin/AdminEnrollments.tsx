@@ -24,8 +24,8 @@ const STATUS_COLOR: Record<string, string> = {
 function EnrollmentCard({ enrollment }: { enrollment: ManagerEnrollment }) {
   const { t, i18n } = useTranslation();
   const update = useUpdateEnrollmentStatus();
-  const color = STATUS_COLOR[enrollment.status] ?? '#C8623F';
-  const langColor = enrollment.class.language.color ?? '#C8623F';
+  const color = STATUS_COLOR[enrollment.status] ?? '#6366f1';
+  const langColor = enrollment.class.language.color ?? '#6366f1';
 
   function act(status: 'ACTIVE' | 'DROPPED') {
     const qKey = status === 'ACTIVE' ? 'admin.enrollments.confirm_q' : 'admin.enrollments.drop_q';
@@ -57,7 +57,7 @@ function EnrollmentCard({ enrollment }: { enrollment: ManagerEnrollment }) {
         <div className="flex items-center gap-2">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
+            style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)' }}
           >
             {enrollment.student.first_name[0]?.toUpperCase()}
           </div>

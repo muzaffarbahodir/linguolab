@@ -11,8 +11,8 @@ const LEVEL_COLOR: Record<string, string> = {
   A2: '#10B981',
   B1: '#3B82F6',
   B2: '#3B82F6',
-  C1: '#E0875A',
-  C2: '#E0875A',
+  C1: '#818cf8',
+  C2: '#818cf8',
 };
 
 function CertCard({ cert }: { cert: Certificate }) {
@@ -23,7 +23,7 @@ function CertCard({ cert }: { cert: Certificate }) {
     year: 'numeric',
   });
 
-  const levelColor = LEVEL_COLOR[cert.class.level] ?? '#C8623F';
+  const levelColor = LEVEL_COLOR[cert.class.level] ?? '#6366f1';
 
   function handleOpen() {
     WebApp.HapticFeedback.selectionChanged();
@@ -64,8 +64,8 @@ function CertCard({ cert }: { cert: Certificate }) {
         onClick={handleOpen}
         className="press flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white"
         style={{
-          background: 'linear-gradient(135deg, #C8623F, #ECA985)',
-          boxShadow: '0 4px 16px rgba(200,98,63,0.3)',
+          background: 'linear-gradient(135deg, #6366f1, #a5b4fc)',
+          boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
         }}
       >
         {t('certificates.open_pdf')}

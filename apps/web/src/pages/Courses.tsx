@@ -128,7 +128,7 @@ function Chip({ active, label, onClick }: { active: boolean; label: string; onCl
 
 function CourseBanner({ lang, onClick }: { lang: Language; onClick: () => void }) {
   const { t } = useTranslation();
-  const accent = lang.color ?? '#C8623F';
+  const accent = lang.color ?? '#6366f1';
   const groups = lang.groups_count ?? 0;
 
   return (
