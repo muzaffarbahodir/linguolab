@@ -20,15 +20,15 @@ const TG_VARS: Record<Theme, Record<string, string>> = {
     '--tg-theme-header-bg-color': '#09090b',
   },
   light: {
-    '--tg-theme-bg-color': '#f4f1e9',
-    '--tg-theme-secondary-bg-color': '#fcfbf7',
-    '--tg-theme-text-color': '#1c1a17',
+    '--tg-theme-bg-color': '#e7e1ce',
+    '--tg-theme-secondary-bg-color': '#fbf9f3',
+    '--tg-theme-text-color': '#1f1d18',
     '--tg-theme-hint-color': '#6b6760',
-    '--tg-theme-header-bg-color': '#f4f1e9',
+    '--tg-theme-header-bg-color': '#e7e1ce',
   },
 };
 
-const CHROME: Record<Theme, `#${string}`> = { dark: '#09090b', light: '#f4f1e9' };
+const CHROME: Record<Theme, `#${string}`> = { dark: '#09090b', light: '#e7e1ce' };
 
 export function applyTheme(theme: Theme): void {
   const root = document.documentElement;
