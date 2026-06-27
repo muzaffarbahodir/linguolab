@@ -39,7 +39,7 @@ const STATUS_COLOR: Record<ClassStatus, string> = {
   ENROLLMENT_OPEN: '#3B82F6',
   ACTIVE: '#10B981',
   EXAM: '#F59E0B',
-  COMPLETED: '#8B5CF6',
+  COMPLETED: '#E0875A',
   CANCELLED: '#EF4444',
 };
 
@@ -102,7 +102,7 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
               onClick={() => toggleDay(key)}
               className="press flex-1 rounded-xl py-2 text-xs font-bold"
               style={{
-                background: days.includes(key) ? '#6C5CE7' : 'var(--surface-2)',
+                background: days.includes(key) ? '#C8623F' : 'var(--surface-2)',
                 color: days.includes(key) ? '#fff' : 'var(--surface-2)',
               }}
             >
@@ -141,7 +141,7 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
           onClick={handleSave}
           disabled={setSchedule.isPending || !days.length}
           className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+          style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
         >
           {setSchedule.isPending ? '...' : t('admin.classes.schedule_save')}
         </button>
@@ -156,7 +156,7 @@ const LEVEL_COLOR: Record<string, string> = {
   A2: '#3B82F6',
   B1: '#F59E0B',
   B2: '#EF4444',
-  C1: '#8B5CF6',
+  C1: '#E0875A',
   C2: '#EC4899',
 };
 
@@ -263,7 +263,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
                   onClick={() => setLangId(l.id)}
                   className="press rounded-xl px-3 py-1.5 text-sm font-medium"
                   style={{
-                    background: langId === l.id ? (l.color ?? '#6C5CE7') : 'var(--surface-2)',
+                    background: langId === l.id ? (l.color ?? '#C8623F') : 'var(--surface-2)',
                     color: langId === l.id ? '#fff' : 'var(--surface-2)',
                   }}
                 >
@@ -306,7 +306,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
               onClick={() => setLevel(l)}
               className="press flex-1 rounded-xl py-2 text-xs font-bold"
               style={{
-                background: level === l ? (LEVEL_COLOR[l] ?? '#6C5CE7') : 'var(--surface-2)',
+                background: level === l ? (LEVEL_COLOR[l] ?? '#C8623F') : 'var(--surface-2)',
                 color: level === l ? '#fff' : 'var(--surface-2)',
               }}
             >
@@ -367,7 +367,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
           onClick={handleSave}
           disabled={isPending || !title.trim() || !priceUzs || (!isEdit && (!langId || !teacherId))}
           className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+          style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
         >
           {isPending ? '...' : isEdit ? t('admin.classes.save') : t('admin.classes.create_btn')}
         </button>
@@ -384,7 +384,7 @@ const NEXT_STATUS: Partial<
   DRAFT: { status: 'ENROLLMENT_OPEN', label: 'Открыть запись', color: '#3B82F6' },
   ENROLLMENT_OPEN: { status: 'ACTIVE', label: 'Начать семестр', color: '#10B981' },
   ACTIVE: { status: 'EXAM', label: 'Экзамен', color: '#F59E0B' },
-  EXAM: { status: 'COMPLETED', label: 'Завершить', color: '#8B5CF6' },
+  EXAM: { status: 'COMPLETED', label: 'Завершить', color: '#E0875A' },
 };
 
 function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) {
@@ -395,8 +395,8 @@ function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) 
   const [showEdit, setShowEdit] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
 
-  const color = cls.language.color ?? '#6C5CE7';
-  const levelColor = LEVEL_COLOR[cls.level] ?? '#6C5CE7';
+  const color = cls.language.color ?? '#C8623F';
+  const levelColor = LEVEL_COLOR[cls.level] ?? '#C8623F';
   const statusLabel = STATUS_LABEL[cls.status] ?? cls.status;
   const statusColor = STATUS_COLOR[cls.status] ?? 'var(--surface-2)';
   const nextStep = NEXT_STATUS[cls.status];
@@ -592,7 +592,7 @@ export function AdminClassesPage() {
             <button
               onClick={() => setShowCreate(true)}
               className="press rounded-xl px-3 py-1.5 text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+              style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
             >
               {t('admin.classes.create')}
             </button>

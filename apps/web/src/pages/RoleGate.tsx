@@ -96,7 +96,7 @@ export function RoleGate({ onBrowse }: { onBrowse?: () => void }) {
         <Card
           role="STUDENT"
           emoji="🎓"
-          color="#6C5CE7"
+          color="#C8623F"
           title={t('rolegate.student_title')}
           desc={t('rolegate.student_desc')}
         />

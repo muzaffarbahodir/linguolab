@@ -37,7 +37,7 @@ export function AdminReferralsPage() {
                 {
                   label: t('admin.referrals.codes_created'),
                   value: data.total,
-                  color: '#6C5CE7',
+                  color: '#C8623F',
                   emoji: '🔗',
                 },
                 {

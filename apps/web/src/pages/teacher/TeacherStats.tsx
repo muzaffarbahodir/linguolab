@@ -72,7 +72,7 @@ function ClassStudentStatsCard({ classId, title }: { classId: string; title: str
             <div key={s.student.id} className="flex items-center gap-3">
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#6C5CE7,#8B5CF6)' }}
+                style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
               >
                 {s.student.avatar_url ? (
                   <img
@@ -149,7 +149,7 @@ export function TeacherStatsPage() {
               emoji="🎓"
               value={stats?.classes_count ?? 0}
               label={t('teacher.stats_classes')}
-              color="#6C5CE7"
+              color="#C8623F"
             />
             <StatCard
               emoji="👥"

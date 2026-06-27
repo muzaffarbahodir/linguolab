@@ -146,7 +146,7 @@ export default function Payment() {
             {enrollments
               .filter((e) => e.status === 'ACTIVE')
               .map((e) => {
-                const color = e.class.language.color ?? '#6C5CE7';
+                const color = e.class.language.color ?? '#C8623F';
                 return (
                   <div
                     key={e.id}

@@ -265,7 +265,7 @@ export function AdminAnnouncementsPage() {
                       className="press flex-1 rounded-xl px-2 py-2 text-xs font-semibold"
                       style={{
                         background: draft.style === s ? 'var(--surface-2)' : 'transparent',
-                        border: `2px solid ${draft.style === s ? '#6C5CE7' : 'var(--hairline)'}`,
+                        border: `2px solid ${draft.style === s ? '#C8623F' : 'var(--hairline)'}`,
                       }}
                     >
                       {styleLabel(s)}
@@ -287,7 +287,7 @@ export function AdminAnnouncementsPage() {
                       className="press flex-1 rounded-xl px-2 py-2 text-xs font-semibold"
                       style={{
                         background: draft.position === p ? 'var(--surface-2)' : 'transparent',
-                        border: `2px solid ${draft.position === p ? '#6C5CE7' : 'var(--hairline)'}`,
+                        border: `2px solid ${draft.position === p ? '#C8623F' : 'var(--hairline)'}`,
                       }}
                     >
                       {t(`admin.announce.pos_${p.toLowerCase()}`)}
@@ -308,7 +308,7 @@ export function AdminAnnouncementsPage() {
                       className="press rounded-xl px-3 py-1.5 text-xs font-semibold"
                       style={{
                         background: draft.duration === -1 ? 'var(--surface-2)' : 'transparent',
-                        border: `2px solid ${draft.duration === -1 ? '#6C5CE7' : 'var(--hairline)'}`,
+                        border: `2px solid ${draft.duration === -1 ? '#C8623F' : 'var(--hairline)'}`,
                       }}
                     >
                       {t('admin.announce.dur_keep')}
@@ -321,7 +321,7 @@ export function AdminAnnouncementsPage() {
                       className="press rounded-xl px-3 py-1.5 text-xs font-semibold"
                       style={{
                         background: draft.duration === d.v ? 'var(--surface-2)' : 'transparent',
-                        border: `2px solid ${draft.duration === d.v ? '#6C5CE7' : 'var(--hairline)'}`,
+                        border: `2px solid ${draft.duration === d.v ? '#C8623F' : 'var(--hairline)'}`,
                       }}
                     >
                       {t(`admin.announce.${d.key}`)}
@@ -352,7 +352,7 @@ export function AdminAnnouncementsPage() {
                         className="press rounded-xl px-3 py-1.5 text-xs font-semibold"
                         style={{
                           background: on ? 'var(--surface-2)' : 'transparent',
-                          border: `2px solid ${on ? '#6C5CE7' : 'var(--hairline)'}`,
+                          border: `2px solid ${on ? '#C8623F' : 'var(--hairline)'}`,
                         }}
                       >
                         {t(`profile.role_${r.toLowerCase()}`)}
@@ -390,7 +390,7 @@ export function AdminAnnouncementsPage() {
                       className="press rounded-xl px-3 py-1.5 text-xs font-semibold"
                       style={{
                         background: draft.recurrence === r ? 'var(--surface-2)' : 'transparent',
-                        border: `2px solid ${draft.recurrence === r ? '#6C5CE7' : 'var(--hairline)'}`,
+                        border: `2px solid ${draft.recurrence === r ? '#C8623F' : 'var(--hairline)'}`,
                       }}
                     >
                       {t(`admin.announce.rec_${r.toLowerCase()}`)}
@@ -429,7 +429,7 @@ export function AdminAnnouncementsPage() {
                         style={{
                           background:
                             draft.recurrenceDay === d ? 'var(--surface-2)' : 'transparent',
-                          border: `2px solid ${draft.recurrenceDay === d ? '#6C5CE7' : 'var(--hairline)'}`,
+                          border: `2px solid ${draft.recurrenceDay === d ? '#C8623F' : 'var(--hairline)'}`,
                         }}
                       >
                         {t(`schedule.day_${['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d]}`)}
@@ -458,7 +458,7 @@ export function AdminAnnouncementsPage() {
                     type="checkbox"
                     checked={draft.broadcast}
                     onChange={(e) => setDraft({ ...draft, broadcast: e.target.checked })}
-                    className="h-5 w-5 shrink-0 accent-[#6C5CE7]"
+                    className="h-5 w-5 shrink-0 accent-[#C8623F]"
                   />
                 </label>
               )}
@@ -481,7 +481,7 @@ export function AdminAnnouncementsPage() {
                   type="checkbox"
                   checked={draft.is_active}
                   onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })}
-                  className="h-5 w-5 accent-[#6C5CE7]"
+                  className="h-5 w-5 accent-[#C8623F]"
                 />
               </label>
             </div>

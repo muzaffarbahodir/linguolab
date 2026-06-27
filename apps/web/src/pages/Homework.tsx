@@ -289,7 +289,7 @@ export function HomeworkPage() {
 
   const TABS: { key: HwFilter; label: string; color?: string }[] = [
     { key: 'all', label: t('homework.filter_all') },
-    { key: 'active', label: t('homework.filter_active'), color: '#6C5CE7' },
+    { key: 'active', label: t('homework.filter_active'), color: '#C8623F' },
     { key: 'submitted', label: t('homework.filter_submitted'), color: '#10B981' },
     { key: 'overdue', label: t('homework.filter_overdue'), color: '#EF4444' },
   ];
@@ -314,7 +314,7 @@ export function HomeworkPage() {
                   onClick={() => setFilter(tab.key)}
                   className="press flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                   style={{
-                    background: active ? (tab.color ?? '#6C5CE7') : 'var(--surface-2)',
+                    background: active ? (tab.color ?? '#C8623F') : 'var(--surface-2)',
                     color: active ? '#fff' : 'var(--surface-2)',
                   }}
                 >

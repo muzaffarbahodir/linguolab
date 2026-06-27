@@ -28,7 +28,7 @@ function AppIcon({
 
 function IconHome({ active }: { active: boolean }) {
   return (
-    <AppIcon active={active} bg="#6C5CE7">
+    <AppIcon active={active} bg="#C8623F">
       <path d="M15 7 L24 14.5 V23 H19 V18 H11 V23 H6 V14.5 Z" fill="rgba(255,255,255,0.90)" />
       <path d="M11 23 V18 H19 V23" fill="rgba(255,255,255,0.65)" />
     </AppIcon>
@@ -140,7 +140,7 @@ export function BottomNav({ previewRole }: { previewRole?: string }) {
                     className="pointer-events-none absolute inset-0"
                     style={{
                       background:
-                        'radial-gradient(circle, rgba(108,92,231,0.55) 0%, transparent 70%)',
+                        'radial-gradient(circle, rgba(200,98,63,0.55) 0%, transparent 70%)',
                       filter: 'blur(9px)',
                       transform: 'scale(1.5)',
                       opacity: isActive ? 1 : 0,
@@ -161,7 +161,7 @@ export function BottomNav({ previewRole }: { previewRole?: string }) {
                   className="mt-1.5 text-[10px] font-semibold leading-none tracking-wide"
                   style={{
                     color: isActive
-                      ? 'var(--tg-theme-button-color, #6C5CE7)'
+                      ? 'var(--tg-theme-button-color, #C8623F)'
                       : 'var(--tg-theme-hint-color, #8E8E93)',
                     opacity: isActive ? 1 : 0.7,
                     transform: isActive ? 'translateY(0)' : 'translateY(1px)',

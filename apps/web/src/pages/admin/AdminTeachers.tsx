@@ -261,7 +261,7 @@ function TeacherForm({
           onClick={handleSave}
           disabled={isPending || !firstName.trim() || (!isEdit && !email.trim())}
           className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+          style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
         >
           {isPending ? '...' : isEdit ? t('admin.teachers.save') : t('admin.teachers.create')}
         </button>
@@ -297,7 +297,7 @@ function TeacherCard({ teacher, canDelete }: { teacher: AdminTeacher; canDelete:
         <div className="flex items-center gap-3">
           <div
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#6C5CE7,#8B5CF6)' }}
+            style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
           >
             {teacher.user.avatar_url ? (
               <img
@@ -384,7 +384,7 @@ export function AdminTeachersPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="press rounded-xl px-3 py-1.5 text-sm font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+            style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
           >
             {t('admin.teachers.add')}
           </button>

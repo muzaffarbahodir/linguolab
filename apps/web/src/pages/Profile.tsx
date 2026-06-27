@@ -73,7 +73,7 @@ const ROLE_BADGE_STYLE: Record<string, { tKey: string; color: string; bg: string
   },
   PARENT: { tKey: 'profile.role_parent', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
   TEACHER: { tKey: 'profile.role_teacher', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
-  MANAGER: { tKey: 'profile.role_manager', color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
+  MANAGER: { tKey: 'profile.role_manager', color: '#E0875A', bg: 'rgba(224,135,90,0.15)' },
   ADMIN: { tKey: 'profile.role_admin', color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
   SUPER_ADMIN: { tKey: 'profile.role_super_admin', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
 };
@@ -270,7 +270,7 @@ function StudentStatsCard() {
 
   const subject = progress?.classes?.[0];
   const level = progress?.placement_test?.level_assigned ?? subject?.level ?? null;
-  const accent = subject?.language.color ?? '#8B5CF6';
+  const accent = subject?.language.color ?? '#E0875A';
 
   const skills = [
     {
@@ -376,7 +376,7 @@ function StudentStatsCard() {
             Icon={Star}
             label={t('profile.dash_m_grade')}
             value={gradeNo ? '—' : String(avg)}
-            color={gradeNo ? NEUTRAL : '#A78BFA'}
+            color={gradeNo ? NEUTRAL : '#ECA985'}
             onClick={() => go('/achievements')}
           />
           <HeaderStat
@@ -1220,13 +1220,13 @@ export function ProfilePage() {
                 ? 'rgba(245,158,11,0.12)'
                 : role === 'ADMIN'
                   ? 'rgba(239,68,68,0.12)'
-                  : 'rgba(139,92,246,0.12)',
+                  : 'rgba(224,135,90,0.12)',
             border: `1px solid ${
               role === 'SUPER_ADMIN'
                 ? 'rgba(245,158,11,0.3)'
                 : role === 'ADMIN'
                   ? 'rgba(239,68,68,0.3)'
-                  : 'rgba(139,92,246,0.3)'
+                  : 'rgba(224,135,90,0.3)'
             }`,
           }}
         >

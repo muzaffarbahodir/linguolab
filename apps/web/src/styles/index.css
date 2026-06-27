@@ -226,11 +226,11 @@
 .shimmer-brand-text {
   background: linear-gradient(
     90deg,
-    #a78bfa 0%,
-    #6c5ce7 30%,
-    #8b5cf6 50%,
-    #6c5ce7 70%,
-    #a78bfa 100%
+    #eca985 0%,
+    #c8623f 30%,
+    #e0875a 50%,
+    #c8623f 70%,
+    #eca985 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -351,49 +351,58 @@
    Элегантная тёмная (default) + светлая. Переключение через html.light
    (см. store/theme.ts). Все семантические токены Tailwind ссылаются сюда. */
 :root {
-  /* Мягкая тёмная тема — пониженный контраст, тёплый сине-серый, без черноты.
-     Цель: эстетично, чисто, элегантно, не режет глаз. */
-  --bg: #1a1e27;
-  --bg-1: rgba(132, 121, 214, 0.06);
-  --bg-2: rgba(150, 135, 220, 0.045);
-  --bg-3: rgba(110, 190, 175, 0.03);
-  --text: #e3e7ee;
-  --muted: rgba(227, 231, 238, 0.56);
-  --faint: rgba(227, 231, 238, 0.36);
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-2: rgba(255, 255, 255, 0.08);
-  --secondary-bg: #232834;
-  --hairline: rgba(255, 255, 255, 0.07);
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-card-bg: rgba(255, 255, 255, 0.042);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-hi: rgba(255, 255, 255, 0.045);
+  /* Clay & Linen — тёмная. Тёплый эспрессо + терракотовый акцент.
+     brand-rgb / brand-400-rgb — каналы для Tailwind (opacity-модификаторы). */
+  --bg: #1b1815;
+  --bg-1: rgba(217, 121, 78, 0.05);
+  --bg-2: rgba(111, 168, 158, 0.035);
+  --bg-3: rgba(217, 121, 78, 0.025);
+  --text: #ece6dc;
+  --muted: rgba(236, 230, 220, 0.56);
+  --faint: rgba(236, 230, 220, 0.36);
+  --surface: rgba(255, 250, 244, 0.05);
+  --surface-2: rgba(255, 250, 244, 0.08);
+  --secondary-bg: #251f18;
+  --hairline: rgba(255, 250, 244, 0.08);
+  --glass-bg: rgba(255, 250, 244, 0.03);
+  --glass-card-bg: rgba(255, 250, 244, 0.045);
+  --glass-border: rgba(255, 250, 244, 0.07);
+  --glass-hi: rgba(255, 250, 244, 0.045);
   --glass-lo: rgba(0, 0, 0, 0.05);
-  --glass-shadow: rgba(0, 0, 0, 0.16);
-  --pill-bg: rgba(28, 33, 43, 0.74);
+  --glass-shadow: rgba(0, 0, 0, 0.18);
+  --pill-bg: rgba(27, 24, 21, 0.76);
   --glass-bright: 1.01;
+  --brand-rgb: 200 98 63;
+  --brand-400-rgb: 229 144 105;
+  --brand: rgb(var(--brand-rgb));
+  --on-brand: #ffffff;
+  --accent2: #6fa89e;
 }
 html.light {
-  /* Приглушённая дневная тема — мягкий серо-голубой, не белит глаза.
-     Раньше #f3f5fa + чисто-белые поверхности = слишком ярко. */
-  --bg: #dde2ec;
-  --bg-1: rgba(108, 92, 231, 0.08);
-  --bg-2: rgba(139, 92, 246, 0.06);
-  --bg-3: rgba(16, 185, 129, 0.05);
-  --text: #1b2536;
-  --muted: rgba(27, 37, 54, 0.62);
-  --faint: rgba(27, 37, 54, 0.42);
-  --surface: rgba(27, 37, 54, 0.05);
-  --surface-2: rgba(27, 37, 54, 0.08);
-  --secondary-bg: #eef1f7;
-  --hairline: rgba(27, 37, 54, 0.11);
-  --glass-bg: rgba(252, 253, 255, 0.55);
-  --glass-card-bg: rgba(252, 253, 255, 0.66);
-  --glass-border: rgba(27, 37, 54, 0.09);
-  --glass-hi: rgba(255, 255, 255, 0.55);
-  --glass-lo: rgba(27, 37, 54, 0.025);
-  --glass-shadow: rgba(27, 37, 54, 0.12);
-  --pill-bg: rgba(248, 250, 253, 0.78);
+  /* Clay & Linen — светлая. Льняной фон + тёплая терракота. */
+  --bg: #f4f1ea;
+  --bg-1: rgba(190, 95, 60, 0.05);
+  --bg-2: rgba(78, 138, 130, 0.04);
+  --bg-3: rgba(190, 95, 60, 0.03);
+  --text: #2b2722;
+  --muted: rgba(43, 39, 34, 0.6);
+  --faint: rgba(43, 39, 34, 0.4);
+  --surface: rgba(43, 39, 34, 0.04);
+  --surface-2: rgba(43, 39, 34, 0.07);
+  --secondary-bg: #fcfaf5;
+  --hairline: rgba(43, 39, 34, 0.1);
+  --glass-bg: rgba(255, 253, 249, 0.6);
+  --glass-card-bg: rgba(255, 253, 249, 0.72);
+  --glass-border: rgba(43, 39, 34, 0.08);
+  --glass-hi: rgba(255, 255, 255, 0.6);
+  --glass-lo: rgba(43, 39, 34, 0.02);
+  --glass-shadow: rgba(43, 39, 34, 0.1);
+  --pill-bg: rgba(252, 250, 245, 0.8);
+  --brand-rgb: 190 95 60;
+  --brand-400-rgb: 168 81 46;
+  --brand: rgb(var(--brand-rgb));
+  --on-brand: #ffffff;
+  --accent2: #4e8a82;
   --glass-bright: 0.98;
 }
 
@@ -515,21 +524,21 @@ html.light {
 }
 
 .glass-violet {
-  background: rgba(108, 92, 231, 0.1);
+  background: rgba(200, 98, 63, 0.1);
   backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
   -webkit-backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
-  border: 1px solid rgba(139, 92, 246, 0.18);
+  border: 1px solid rgba(224, 135, 90, 0.18);
   box-shadow:
-    0 8px 36px rgba(108, 92, 231, 0.12),
+    0 8px 36px rgba(200, 98, 63, 0.12),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.11),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 
 .glass-btn {
-  background: #8479d6;
-  color: #ffffff;
+  background: var(--brand);
+  color: var(--on-brand);
   box-shadow:
-    0 4px 16px rgba(132, 121, 214, 0.26),
+    0 4px 16px rgb(var(--brand-rgb) / 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   transition:
@@ -556,12 +565,12 @@ html.light {
 }
 
 .glass-option-violet {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(224, 135, 90, 0.2);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(139, 92, 246, 0.38);
+  border: 1px solid rgba(224, 135, 90, 0.38);
   box-shadow:
-    0 4px 18px rgba(139, 92, 246, 0.22),
+    0 4px 18px rgba(224, 135, 90, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -690,11 +699,11 @@ html.light .ll-ann-info {
 }
 /* promo — фиолетовый бренд */
 .ll-ann-promo {
-  background: linear-gradient(90deg, #6c5ce7, #8b5cf6);
+  background: linear-gradient(90deg, #c8623f, #e0875a);
   color: #ffffff;
 }
 html.light .ll-ann-promo {
-  background: linear-gradient(90deg, #7c6cf0, #a78bfa);
+  background: linear-gradient(90deg, #d9794e, #eca985);
 }
 
 /* ── Form inputs — themed, used in admin forms ───────────────────────────── */
@@ -713,7 +722,7 @@ html.light .ll-ann-promo {
   color: var(--faint);
 }
 .input:focus {
-  border-color: rgba(108, 92, 231, 0.55);
+  border-color: rgba(200, 98, 63, 0.55);
 }
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */

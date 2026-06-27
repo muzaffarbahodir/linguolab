@@ -53,7 +53,7 @@ export function AdminPaymentSettingsPage() {
           const info = PROVIDER_INFO[p.provider] ?? {
             label: p.provider,
             logo: '💰',
-            color: '#6C5CE7',
+            color: '#C8623F',
           };
           return (
             <div

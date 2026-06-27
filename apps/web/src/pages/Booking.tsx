@@ -19,7 +19,7 @@ const LEVEL_COLORS: Record<string, string> = {
   A2: '#3B82F6',
   B1: '#F59E0B',
   B2: '#EF4444',
-  C1: '#8B5CF6',
+  C1: '#E0875A',
   C2: '#EC4899',
 };
 
@@ -50,7 +50,7 @@ function StepLanguage({ onSelect }: { onSelect: (lang: Language) => void }) {
             key={lang.id}
             onClick={() => onSelect(lang)}
             className="press shadow-e1 flex flex-col items-center justify-center gap-2 rounded-2xl p-5 font-semibold text-white"
-            style={{ backgroundColor: lang.color ?? '#6C5CE7' }}
+            style={{ backgroundColor: lang.color ?? '#C8623F' }}
           >
             <span className="text-4xl">{lang.flag_emoji}</span>
             <span className="text-sm">{lang.name_ru}</span>
@@ -100,7 +100,7 @@ function StepClass({
 
       <div className="stagger flex flex-col gap-3">
         {classes?.map((cls) => {
-          const levelColor = LEVEL_COLORS[cls.level] ?? '#6C5CE7';
+          const levelColor = LEVEL_COLORS[cls.level] ?? '#C8623F';
           const isFull = cls.spots_left <= 0;
           const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
 
@@ -111,7 +111,7 @@ function StepClass({
               disabled={isFull}
               className="bg-tg-secondary-bg press shadow-e1 overflow-hidden rounded-2xl text-left disabled:opacity-50"
             >
-              <div className="h-1" style={{ backgroundColor: language.color ?? '#6C5CE7' }} />
+              <div className="h-1" style={{ backgroundColor: language.color ?? '#C8623F' }} />
               <div className="p-4">
                 <div className="mb-1 flex items-center justify-between">
                   <span className="font-semibold leading-tight">{cls.title}</span>
@@ -133,7 +133,7 @@ function StepClass({
                   ) : (
                     <div
                       className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{ backgroundColor: language.color ?? '#6C5CE7' }}
+                      style={{ backgroundColor: language.color ?? '#C8623F' }}
                     >
                       {cls.teacher.user.first_name[0]}
                     </div>
@@ -189,7 +189,7 @@ function StepConfirm({
   const navigate = useNavigate();
   const { mutate: enroll, isPending } = useEnrollClass();
   const { fmt, currency } = useCurrency();
-  const levelColor = LEVEL_COLORS[cls.level] ?? '#6C5CE7';
+  const levelColor = LEVEL_COLORS[cls.level] ?? '#C8623F';
   const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
   const priceDisplay =
     currency === 'USD' && cls.price_usd > 0 ? `$${cls.price_usd}` : fmt(cls.price_uzs);
@@ -225,7 +225,7 @@ function StepConfirm({
 
       {/* Class card */}
       <div className="bg-tg-secondary-bg overflow-hidden rounded-2xl">
-        <div className="h-1.5" style={{ backgroundColor: language.color ?? '#6C5CE7' }} />
+        <div className="h-1.5" style={{ backgroundColor: language.color ?? '#C8623F' }} />
         <div className="p-5">
           <div className="mb-3 flex items-center gap-3">
             <span className="text-4xl">{language.flag_emoji}</span>

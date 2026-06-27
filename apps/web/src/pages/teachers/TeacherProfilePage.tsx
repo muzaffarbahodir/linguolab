@@ -225,7 +225,7 @@ function RateTeacherSheet({
               onClick={handleSubmit}
               disabled={!canSubmit || rateTeacher.isPending}
               className="press w-full rounded-2xl py-3 text-sm font-bold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+              style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
             >
               {rateTeacher.isPending
                 ? '...'
@@ -348,7 +348,7 @@ function ClassCard({
           onClick={handleEnroll}
           disabled={enroll.isPending}
           className="press w-full rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #6C5CE7, #A78BFA)', color: '#fff' }}
+          style={{ background: 'linear-gradient(135deg, #C8623F, #ECA985)', color: '#fff' }}
         >
           {enroll.isPending ? '...' : t('teacher.enroll_btn')}
         </button>
@@ -394,7 +394,7 @@ export function TeacherProfilePage() {
       <div
         className="relative px-4 pb-6 pt-6"
         style={{
-          background: 'linear-gradient(180deg, rgba(108,92,231,0.18) 0%, rgba(22,32,46,0.0) 100%)',
+          background: 'linear-gradient(180deg, rgba(200,98,63,0.18) 0%, rgba(22,32,46,0.0) 100%)',
         }}
       >
         <div className="flex items-start gap-4">
@@ -405,7 +405,7 @@ export function TeacherProfilePage() {
                 src={teacher.photo_url}
                 alt={fullName}
                 className="h-20 w-20 rounded-2xl object-cover"
-                style={{ border: '2px solid rgba(108,92,231,0.4)' }}
+                style={{ border: '2px solid rgba(200,98,63,0.4)' }}
               />
             ) : (
               <div className="bg-brand/20 text-brand-400 flex h-20 w-20 items-center justify-center rounded-2xl text-3xl font-bold">

@@ -40,7 +40,7 @@ const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const LEVEL_COLOR: Record<string, string> = {
   A1: '#10B981',
   A2: '#3B82F6',
-  B1: '#8B5CF6',
+  B1: '#E0875A',
   B2: '#F59E0B',
   C1: '#EF4444',
   C2: '#F97316',
@@ -198,7 +198,7 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
           />
           <DonutChart
             pct={gradePct}
-            color="#8B5CF6"
+            color="#E0875A"
             label={tl('parent.grade_label')}
             sublabel={stats.avg_grade != null ? `${stats.avg_grade}/100` : undefined}
           />
@@ -297,14 +297,14 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
         <div
           className="rounded-2xl p-4"
           style={{
-            background: 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(59,130,246,0.08))',
-            border: '1px solid rgba(139,92,246,0.25)',
+            background: 'linear-gradient(135deg,rgba(224,135,90,0.15),rgba(59,130,246,0.08))',
+            border: '1px solid rgba(224,135,90,0.25)',
           }}
         >
           <div className="mb-2 flex items-center justify-between">
             <p
               className="text-xs font-semibold uppercase tracking-wide"
-              style={{ color: 'rgba(139,92,246,0.9)' }}
+              style={{ color: 'rgba(224,135,90,0.9)' }}
             >
               {tl('parent.level_rank')}
               {child.active_classes[0]?.level ? ` (${child.active_classes[0].level})` : ''}
@@ -325,7 +325,7 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
               className="h-1.5 rounded-full"
               style={{
                 width: `${100 - ((level_ranking.rank - 1) / Math.max(level_ranking.total - 1, 1)) * 100}%`,
-                background: 'linear-gradient(90deg,#8B5CF6,#3B82F6)',
+                background: 'linear-gradient(90deg,#E0875A,#3B82F6)',
               }}
             />
           </div>
@@ -337,13 +337,13 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
         <div
           className="rounded-2xl p-4"
           style={{
-            background: `linear-gradient(135deg,${LEVEL_COLOR[level.level] ?? '#6C5CE7'}22,${LEVEL_COLOR[level.level] ?? '#6C5CE7'}08)`,
-            border: `1px solid ${LEVEL_COLOR[level.level] ?? '#6C5CE7'}33`,
+            background: `linear-gradient(135deg,${LEVEL_COLOR[level.level] ?? '#C8623F'}22,${LEVEL_COLOR[level.level] ?? '#C8623F'}08)`,
+            border: `1px solid ${LEVEL_COLOR[level.level] ?? '#C8623F'}33`,
           }}
         >
           <p
             className="mb-3 text-xs font-semibold uppercase tracking-wide"
-            style={{ color: `${LEVEL_COLOR[level.level] ?? '#6C5CE7'}cc` }}
+            style={{ color: `${LEVEL_COLOR[level.level] ?? '#C8623F'}cc` }}
           >
             {tl('parent.lang_level')}
           </p>
@@ -351,8 +351,8 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl font-black"
               style={{
-                background: `${LEVEL_COLOR[level.level] ?? '#6C5CE7'}22`,
-                color: LEVEL_COLOR[level.level] ?? '#6C5CE7',
+                background: `${LEVEL_COLOR[level.level] ?? '#C8623F'}22`,
+                color: LEVEL_COLOR[level.level] ?? '#C8623F',
               }}
             >
               {level.level}
@@ -369,7 +369,7 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
                       style={{
                         background:
                           LEVEL_ORDER.indexOf(l) <= LEVEL_ORDER.indexOf(level.level)
-                            ? (LEVEL_COLOR[l] ?? '#6C5CE7')
+                            ? (LEVEL_COLOR[l] ?? '#C8623F')
                             : 'var(--surface-2)',
                       }}
                     />
@@ -408,7 +408,7 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
                 >
                   <div
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg,#6C5CE7,#8B5CF6)' }}
+                    style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
                   >
                     {t.user.avatar_url ? (
                       <img

@@ -29,7 +29,7 @@ export function CourseDetailPage() {
   const guard = (fn: () => void) => () => (needsOnboard ? navigate('/onboard') : fn());
 
   const course = data?.course;
-  const accent = course?.color ?? '#6C5CE7';
+  const accent = course?.color ?? '#C8623F';
 
   const startTrial = (type: 'ONLINE' | 'OFFLINE') => {
     if (!languageId || requestTrial.isPending) return;

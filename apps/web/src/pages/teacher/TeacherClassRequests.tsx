@@ -111,7 +111,7 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
               className={`press rounded-xl px-3 py-1.5 text-sm font-medium ${
                 langId === l.id ? 'text-white' : 'bg-surface-2 text-white/60'
               }`}
-              style={langId === l.id ? { background: l.color ?? '#6C5CE7' } : undefined}
+              style={langId === l.id ? { background: l.color ?? '#C8623F' } : undefined}
             >
               {l.flag_emoji} {l.name_ru}
             </button>
@@ -137,7 +137,7 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
               className={`press flex-1 rounded-xl py-2 text-xs font-bold ${
                 level === l ? 'text-white' : 'bg-surface-2 text-muted'
               }`}
-              style={level === l ? { background: LEVEL_COLOR[l] ?? '#6C5CE7' } : undefined}
+              style={level === l ? { background: LEVEL_COLOR[l] ?? '#C8623F' } : undefined}
             >
               {l}
             </button>
@@ -252,7 +252,7 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
           onClick={handleSubmit}
           disabled={create.isPending || !langId || !title.trim()}
           className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+          style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
         >
           {create.isPending ? '...' : t('class_req.submit')}
         </button>
@@ -279,7 +279,7 @@ export function TeacherClassRequestsPage() {
           <button
             onClick={() => setShowForm(true)}
             className="press rounded-xl px-3 py-1.5 text-sm font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+            style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
           >
             + {t('class_req.new_btn')}
           </button>
@@ -302,7 +302,7 @@ export function TeacherClassRequestsPage() {
             <button
               onClick={() => setShowForm(true)}
               className="press rounded-xl px-6 py-2.5 font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+              style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
             >
               {t('class_req.create_btn')}
             </button>
@@ -323,8 +323,8 @@ export function TeacherClassRequestsPage() {
                     <span
                       className="rounded-full px-1.5 py-0.5 text-xs font-bold"
                       style={{
-                        background: `${LEVEL_COLOR[req.level] ?? '#6C5CE7'}22`,
-                        color: LEVEL_COLOR[req.level] ?? '#A78BFA',
+                        background: `${LEVEL_COLOR[req.level] ?? '#C8623F'}22`,
+                        color: LEVEL_COLOR[req.level] ?? '#ECA985',
                       }}
                     >
                       {req.level}

@@ -133,8 +133,8 @@ const ATTEND_CONFIG = {
   EXCUSED: {
     icon: '📝',
     tKey: 'schedule.attendance_EXCUSED',
-    color: '#8B5CF6',
-    bg: 'rgba(139,92,246,0.12)',
+    color: '#E0875A',
+    bg: 'rgba(224,135,90,0.12)',
   },
   NONE: {
     icon: '❓',
@@ -205,7 +205,7 @@ function UpcomingLessonCard({ lesson }: { lesson: UpcomingLessonItem }) {
   return (
     <div
       className="glass-card flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3"
-      style={{ borderLeft: `3px solid ${lang.color ?? '#6C5CE7'}` }}
+      style={{ borderLeft: `3px solid ${lang.color ?? '#C8623F'}` }}
     >
       {/* Date block */}
       <div className="bg-surface-2 flex min-w-[52px] flex-col items-center justify-center rounded-xl py-2 text-center">
@@ -315,7 +315,7 @@ function TeacherRatingBlock({ classId }: { classId: string }) {
             onClick={() => handleRate(current)}
             disabled={rateMutation.isPending}
             className="press mt-1 w-full rounded-xl py-2 text-xs font-semibold text-white disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg,#6C5CE7,#8B5CF6)' }}
+            style={{ background: 'linear-gradient(135deg,#C8623F,#E0875A)' }}
           >
             {rateMutation.isPending ? t('schedule.rating_saving') : t('schedule.rate_teacher')}
           </button>
@@ -420,7 +420,7 @@ function TransferModal({
               onClick={handleSubmit}
               disabled={!toClassId.trim() || requestTransfer.isPending}
               className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg,#6C5CE7,#A78BFA)' }}
+              style={{ background: 'linear-gradient(135deg,#C8623F,#ECA985)' }}
             >
               {requestTransfer.isPending ? '...' : t('schedule.transfer_sending')}
             </button>
@@ -440,7 +440,7 @@ function EnrollmentCard({ enrollment }: { enrollment: MyEnrollment }) {
   const [showTransfer, setShowTransfer] = useState(false);
   const lang = cls.language;
   const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
-  const levelColor = LEVEL_COLOR[cls.level] ?? '#6C5CE7';
+  const levelColor = LEVEL_COLOR[cls.level] ?? '#C8623F';
   const statusColor = STATUS_COLOR[status];
 
   const STATUS_LABEL: Record<MyEnrollment['status'], string> = {
@@ -462,7 +462,7 @@ function EnrollmentCard({ enrollment }: { enrollment: MyEnrollment }) {
 
   return (
     <div className="glass-card overflow-hidden rounded-2xl">
-      <div className="h-1" style={{ backgroundColor: lang.color ?? '#6C5CE7' }} />
+      <div className="h-1" style={{ backgroundColor: lang.color ?? '#C8623F' }} />
       <div className="p-4">
         {/* Header */}
         <div className="mb-2 flex items-start justify-between gap-2">

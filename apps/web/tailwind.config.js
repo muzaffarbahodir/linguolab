@@ -14,20 +14,21 @@ export default {
           'secondary-bg': 'var(--secondary-bg)',
           text: 'var(--text)',
           hint: 'var(--muted)',
-          link: 'var(--tg-theme-link-color, #8B5CF6)',
-          button: 'var(--tg-theme-button-color, #6C5CE7)',
+          link: 'var(--tg-theme-link-color, #C8623F)',
+          button: 'var(--tg-theme-button-color, #C8623F)',
           'button-text': 'var(--tg-theme-button-text-color, #ffffff)',
           destructive: 'var(--tg-theme-destructive-text-color, #ff453a)',
         },
-        // Бренд-цвет LinguoLab — мягкая лаванда (приглушённый фиолетовый)
+        // Бренд — терракота (Clay & Linen). Тема-зависимый через CSS-переменные
+        // (каналы RGB), чтобы работали opacity-модификаторы bg-brand/15 и т.д.
         brand: {
-          DEFAULT: '#8479D6',
-          50: '#F3F1FB',
-          100: '#E7E3F6',
-          400: '#A99FE6',
-          500: '#8479D6',
-          600: '#6F63C4',
-          700: '#574CA0',
+          DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          50: '#FBF0EA',
+          100: '#F4DCD0',
+          400: 'rgb(var(--brand-400-rgb) / <alpha-value>)',
+          500: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          600: '#A8512E',
+          700: '#823D22',
         },
         // Семантические токены поверхностей/границ/текста (тёмная тема).
         // Юзать вместо повторяющихся rgba(255,255,255,0.0x):

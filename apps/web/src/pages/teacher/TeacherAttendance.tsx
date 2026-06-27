@@ -83,7 +83,7 @@ export function TeacherAttendancePage() {
       <div className="flex min-h-screen items-center justify-center">
         <div
           className="h-7 w-7 animate-spin rounded-full border-4 border-t-transparent"
-          style={{ borderColor: 'rgba(108,92,231,0.3)', borderTopColor: '#6C5CE7' }}
+          style={{ borderColor: 'rgba(200,98,63,0.3)', borderTopColor: '#C8623F' }}
         />
       </div>
     );
@@ -122,7 +122,7 @@ export function TeacherAttendancePage() {
               <div className="mb-3 flex items-center gap-3">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white"
-                  style={{ background: '#6C5CE7' }}
+                  style={{ background: '#C8623F' }}
                 >
                   {student.first_name[0]}
                   {student.last_name?.[0] ?? ''}
