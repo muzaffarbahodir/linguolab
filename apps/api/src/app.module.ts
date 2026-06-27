@@ -36,6 +36,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { ConfigAppModule } from './modules/config-app/config-app.module';
 import { ClassRequestsModule } from './modules/class-requests/class-requests.module';
+import { TeacherOffersModule } from './modules/teacher-offers/teacher-offers.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { HrModule } from './modules/hr/hr.module';
 
@@ -112,6 +113,7 @@ import { HrModule } from './modules/hr/hr.module';
     ReportsModule,
     ConfigAppModule,
     ClassRequestsModule,
+    TeacherOffersModule,
     AnnouncementsModule,
     HrModule,
     ScheduleModule.forRoot(),

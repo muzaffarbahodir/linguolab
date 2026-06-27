@@ -70,10 +70,29 @@ export interface CourseClass {
   };
 }
 
+/** Оффер учителя — «готов учить» ещё до открытия группы. */
+export interface TeacherOffer {
+  id: string;
+  level: string | null;
+  format: 'ONLINE' | 'OFFLINE' | null;
+  price_uzs: number;
+  price_usd: number;
+  note: string | null;
+  teacher: {
+    id: string;
+    bio: string | null;
+    photo_url: string | null;
+    user: { first_name: string; last_name: string | null; avatar_url: string | null };
+    avg_rating: number | null;
+    ratings_count: number;
+  };
+}
+
 export interface CourseDetail {
   course: Language;
   classes: CourseClass[];
   recommended_class_id: string | null;
+  offers: TeacherOffer[];
 }
 
 async function fetchLanguages(): Promise<Language[]> {

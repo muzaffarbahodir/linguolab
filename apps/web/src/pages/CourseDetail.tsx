@@ -8,7 +8,7 @@ import { Clock, Check, Star, Sparkles, Users, GraduationCap, School } from 'luci
 
 import { useBackButton } from '../hooks/useBackButton';
 import { useCurrency } from '../hooks/useCurrency';
-import { useCourseDetail, type CourseClass } from '../api/languages';
+import { useCourseDetail, type CourseClass, type TeacherOffer } from '../api/languages';
 import { useRequestTrial } from '../api/trial-lessons';
 import { useAuthStore } from '../store/auth';
 import { LEVEL_COLOR } from '../lib/status';
@@ -190,7 +190,77 @@ export function CourseDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Готовы учить (офферы учителей без группы) */}
+        {data.offers.length > 0 && (
+          <div>
+            <p className="text-muted mb-2 text-xs font-semibold uppercase tracking-wide">
+              Готовы учить
+            </p>
+            <div className="flex flex-col gap-3">
+              {data.offers.map((o) => (
+                <OfferCard
+                  key={o.id}
+                  offer={o}
+                  onApply={guard(() => startTrial('ONLINE'))}
+                  pending={requestTrial.isPending}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function OfferCard({
+  offer,
+  onApply,
+  pending,
+}: {
+  offer: TeacherOffer;
+  onApply: () => void;
+  pending: boolean;
+}) {
+  const { fmt } = useCurrency();
+  const name = `${offer.teacher.user.first_name}${offer.teacher.user.last_name ? ' ' + offer.teacher.user.last_name : ''}`;
+  const avatar = offer.teacher.photo_url ?? offer.teacher.user.avatar_url ?? null;
+  return (
+    <div className="glass-card rounded-2xl p-4">
+      <div className="flex items-center gap-3">
+        {avatar ? (
+          <img src={avatar} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+        ) : (
+          <div className="bg-brand/15 text-brand flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-bold">
+            {name[0]?.toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold">{name}</p>
+          <div className="text-muted flex items-center gap-2 text-xs">
+            {offer.teacher.avg_rating != null && (
+              <span className="flex items-center gap-0.5">
+                <Star size={12} className="fill-current" style={{ color: '#F5B301' }} />
+                {offer.teacher.avg_rating}
+              </span>
+            )}
+            {offer.level && <span>· {offer.level}</span>}
+            {offer.format && <span>· {offer.format === 'ONLINE' ? 'онлайн' : 'очно'}</span>}
+          </div>
+        </div>
+        {offer.price_uzs > 0 && (
+          <span className="text-brand shrink-0 text-sm font-bold">{fmt(offer.price_uzs)}</span>
+        )}
+      </div>
+      {offer.note && <p className="text-muted mt-2 text-xs leading-relaxed">{offer.note}</p>}
+      <button
+        onClick={onApply}
+        disabled={pending}
+        className="glass-btn press mt-3 w-full rounded-xl py-2 text-sm font-semibold disabled:opacity-50"
+      >
+        Оставить заявку
+      </button>
     </div>
   );
 }

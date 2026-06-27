@@ -86,6 +86,9 @@ const TeacherClassRequestsPage = lazy(() =>
     default: m.TeacherClassRequestsPage,
   })),
 );
+const TeacherOffersPage = lazy(() =>
+  import('./pages/teacher/TeacherOffers').then((m) => ({ default: m.TeacherOffersPage })),
+);
 // Parent
 const ParentHomePage = lazy(() =>
   import('./pages/parent/ParentHome').then((m) => ({ default: m.ParentHomePage })),
@@ -425,6 +428,7 @@ function AuthenticatedApp() {
             <Route path="/admin/class-requests" element={<AdminClassRequestsPage />} />
             <Route path="/teacher/stats" element={<TeacherStatsPage />} />
             <Route path="/teacher/class-requests" element={<TeacherClassRequestsPage />} />
+            <Route path="/teacher/offers" element={<TeacherOffersPage />} />
 
             {/* fallback */}
             <Route

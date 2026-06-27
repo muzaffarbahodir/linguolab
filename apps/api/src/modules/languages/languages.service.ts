@@ -160,7 +160,52 @@ export class LanguagesService {
             b.spots_left - a.spots_left,
         )[0] ?? null;
 
-    return { course, classes: mapped, recommended_class_id: recommended?.id ?? null };
+    // Офферы учителей — «готов учить» ещё до открытия группы.
+    const offersRaw = await this.prisma.teacherOffer.findMany({
+      where: { language_id: id, is_active: true },
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        level: true,
+        format: true,
+        price_uzs: true,
+        price_usd: true,
+        note: true,
+        teacher: {
+          select: {
+            id: true,
+            bio: true,
+            photo_url: true,
+            user: { select: { first_name: true, last_name: true, avatar_url: true } },
+            ratings: { select: { rating: true } },
+          },
+        },
+      },
+    });
+    const offers = offersRaw.map((o) => {
+      const r = o.teacher.ratings;
+      const avg = r.length
+        ? Math.round((r.reduce((s, x) => s + x.rating, 0) / r.length) * 10) / 10
+        : null;
+      return {
+        id: o.id,
+        level: o.level,
+        format: o.format,
+        price_uzs: o.price_uzs,
+        price_usd: o.price_usd,
+        note: o.note,
+        teacher: {
+          id: o.teacher.id,
+          bio: o.teacher.bio,
+          photo_url: o.teacher.photo_url,
+          user: o.teacher.user,
+          avg_rating: avg,
+          ratings_count: r.length,
+        },
+      };
+    });
+
+    return { course, classes: mapped, recommended_class_id: recommended?.id ?? null, offers };
   }
 
   // ─── Admin (SUPER_ADMIN) ──────────────────────────────────────────────────────

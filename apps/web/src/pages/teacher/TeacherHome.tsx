@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
+import { Briefcase } from 'lucide-react';
 import {
   useMyClasses,
   useTeacherToday,
@@ -179,6 +180,13 @@ export function TeacherHomePage() {
           {todayFetching && (
             <div className="border-brand/30 border-t-brand h-4 w-4 animate-spin rounded-full border-2" />
           )}
+          <button
+            onClick={() => navigate('/teacher/offers')}
+            className="bg-surface-2 press flex h-8 w-8 items-center justify-center rounded-full"
+            title="Готов учить"
+          >
+            <Briefcase size={16} />
+          </button>
           <button
             onClick={() => navigate('/teacher/class-requests')}
             className="bg-surface-2 press flex h-8 w-8 items-center justify-center rounded-full text-sm"
