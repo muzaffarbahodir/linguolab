@@ -16,13 +16,13 @@
 
 ## Стек
 
-| Часть | Технологии |
-|---|---|
-| Фронтенд (TWA) | React, Vite, Tailwind CSS |
-| API | NestJS, Prisma, PostgreSQL, Redis |
-| Админка | Next.js, NextAuth |
-| Хранилище | Cloudflare R2 |
-| Инфраструктура | Docker, GitHub Actions, Nginx |
+| Часть          | Технологии                        |
+| -------------- | --------------------------------- |
+| Фронтенд (TWA) | React, Vite, Tailwind CSS         |
+| API            | NestJS, Prisma, PostgreSQL, Redis |
+| Админка        | Next.js, NextAuth                 |
+| Хранилище      | Cloudflare R2                     |
+| Инфраструктура | Docker, GitHub Actions, Nginx     |
 
 ## Запуск
 
