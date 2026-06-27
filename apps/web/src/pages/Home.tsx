@@ -40,6 +40,9 @@ function ProgressCard() {
     return () => cancelAnimationFrame(id);
   }, [percent]);
 
+  // Прячем прогресс пока студент не начал курс (нет активной записи).
+  if (isLoading || !progress || progress.active_enrollments === 0) return null;
+
   const done = percent >= 100;
 
   return (
