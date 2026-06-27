@@ -10,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.types';
+import { assertClassTransition } from '../classes/class-status.machine';
 
 @Injectable()
 export class AdminService {
@@ -364,8 +365,14 @@ export class AdminService {
   }
 
   async updateClassStatus(classId: string, status: ClassStatus) {
-    const cls = await this.prisma.class.findUnique({ where: { id: classId } });
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, status: true },
+    });
     if (!cls) throw new NotFoundException('Class not found');
+
+    // Валидируем переход (стейт-машина, портирована из flowershop).
+    assertClassTransition(cls.status, status);
 
     const updated = await this.prisma.class.update({
       where: { id: classId },
@@ -374,6 +381,15 @@ export class AdminService {
         is_active: status === ClassStatus.ENROLLMENT_OPEN || status === ClassStatus.ACTIVE,
       },
     });
+
+    // Отмена класса — освобождаем места: активные/ожидающие записи → DROPPED.
+    if (status === ClassStatus.CANCELLED) {
+      await this.prisma.enrollment.updateMany({
+        where: { class_id: classId, status: { in: ['ACTIVE', 'PENDING', 'WAITLIST'] } },
+        data: { status: 'DROPPED' },
+      });
+    }
+
     return updated;
   }
 
