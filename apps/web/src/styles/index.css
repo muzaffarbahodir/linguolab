@@ -351,25 +351,27 @@
    Элегантная тёмная (default) + светлая. Переключение через html.light
    (см. store/theme.ts). Все семантические токены Tailwind ссылаются сюда. */
 :root {
-  --bg: #0e141e;
-  --bg-1: rgba(108, 92, 231, 0.1);
-  --bg-2: rgba(139, 92, 246, 0.07);
-  --bg-3: rgba(16, 185, 129, 0.05);
-  --text: #eef1f6;
-  --muted: rgba(236, 240, 247, 0.52);
-  --faint: rgba(236, 240, 247, 0.32);
-  --surface: rgba(255, 255, 255, 0.045);
-  --surface-2: rgba(255, 255, 255, 0.075);
-  --secondary-bg: #1a2433;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(255, 255, 255, 0.022);
-  --glass-card-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hi: rgba(255, 255, 255, 0.06);
-  --glass-lo: rgba(0, 0, 0, 0.06);
-  --glass-shadow: rgba(0, 0, 0, 0.28);
-  --pill-bg: rgba(16, 22, 32, 0.78);
-  --glass-bright: 1.02;
+  /* Мягкая тёмная тема — пониженный контраст, тёплый сине-серый, без черноты.
+     Цель: эстетично, чисто, элегантно, не режет глаз. */
+  --bg: #1a1e27;
+  --bg-1: rgba(132, 121, 214, 0.06);
+  --bg-2: rgba(150, 135, 220, 0.045);
+  --bg-3: rgba(110, 190, 175, 0.03);
+  --text: #e3e7ee;
+  --muted: rgba(227, 231, 238, 0.56);
+  --faint: rgba(227, 231, 238, 0.36);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --secondary-bg: #232834;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-card-bg: rgba(255, 255, 255, 0.042);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-hi: rgba(255, 255, 255, 0.045);
+  --glass-lo: rgba(0, 0, 0, 0.05);
+  --glass-shadow: rgba(0, 0, 0, 0.16);
+  --pill-bg: rgba(28, 33, 43, 0.74);
+  --glass-bright: 1.01;
 }
 html.light {
   /* Приглушённая дневная тема — мягкий серо-голубой, не белит глаза.
@@ -458,8 +460,8 @@ html.light {
    saturate 230% → 170%. Fallback без blur — внизу, @media reduced-transparency. */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(150%) brightness(var(--glass-bright));
-  -webkit-backdrop-filter: blur(20px) saturate(150%) brightness(var(--glass-bright));
+  backdrop-filter: blur(20px) saturate(120%) brightness(var(--glass-bright));
+  -webkit-backdrop-filter: blur(20px) saturate(120%) brightness(var(--glass-bright));
   border: 1px solid var(--glass-border);
   box-shadow:
     0 4px 24px var(--glass-shadow),
@@ -469,12 +471,12 @@ html.light {
 
 .glass-card {
   background: var(--glass-card-bg);
-  backdrop-filter: blur(22px) saturate(155%) brightness(var(--glass-bright));
-  -webkit-backdrop-filter: blur(22px) saturate(155%) brightness(var(--glass-bright));
+  backdrop-filter: blur(22px) saturate(125%) brightness(var(--glass-bright));
+  -webkit-backdrop-filter: blur(22px) saturate(125%) brightness(var(--glass-bright));
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 8px 40px var(--glass-shadow),
-    inset 0 1.5px 0 var(--glass-hi),
+    0 4px 22px var(--glass-shadow),
+    inset 0 1px 0 var(--glass-hi),
     inset 0 -1px 0 var(--glass-lo);
 }
 
@@ -524,12 +526,12 @@ html.light {
 }
 
 .glass-btn {
-  background: #6c5ce7;
+  background: #8479d6;
   color: #ffffff;
   box-shadow:
-    0 6px 28px rgba(108, 92, 231, 0.42),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+    0 4px 16px rgba(132, 121, 214, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   transition:
     transform 0.12s ease,
     opacity 0.12s ease;
@@ -544,11 +546,11 @@ html.light {
 
 .glass-option {
   background: var(--surface);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(125%);
+  -webkit-backdrop-filter: blur(24px) saturate(125%);
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 2px 10px var(--glass-shadow),
+    0 1px 6px var(--glass-shadow),
     inset 0 1px 0 var(--glass-hi);
   transition: all 0.2s ease;
 }

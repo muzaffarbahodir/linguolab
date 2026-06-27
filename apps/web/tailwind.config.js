@@ -19,15 +19,15 @@ export default {
           'button-text': 'var(--tg-theme-button-text-color, #ffffff)',
           destructive: 'var(--tg-theme-destructive-text-color, #ff453a)',
         },
-        // Бренд-цвет LinguoLab — фиолетовый
+        // Бренд-цвет LinguoLab — мягкая лаванда (приглушённый фиолетовый)
         brand: {
-          DEFAULT: '#6C5CE7',
-          50: '#F0EEFC',
-          100: '#E1DDF9',
-          400: '#8B5CF6',
-          500: '#6C5CE7',
-          600: '#5849D1',
-          700: '#4438A3',
+          DEFAULT: '#8479D6',
+          50: '#F3F1FB',
+          100: '#E7E3F6',
+          400: '#A99FE6',
+          500: '#8479D6',
+          600: '#6F63C4',
+          700: '#574CA0',
         },
         // Семантические токены поверхностей/границ/текста (тёмная тема).
         // Юзать вместо повторяющихся rgba(255,255,255,0.0x):

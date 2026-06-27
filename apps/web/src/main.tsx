@@ -120,7 +120,7 @@ function AppCrash() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
-        background: '#16202e',
+        background: '#1a1e27',
         color: 'rgba(255,255,255,0.7)',
         padding: 24,
         textAlign: 'center',
