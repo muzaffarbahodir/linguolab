@@ -407,6 +407,27 @@ export class PaymentsService {
     };
   }
 
+  /** GET /payments/admin/:id — карточка платежа для менеджера (скан QR наличного чека). */
+  async adminGetPayment(paymentId: string) {
+    const p = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        user: { select: { first_name: true, last_name: true, telegram_username: true } },
+        class: { select: { title: true, level: true } },
+      },
+    });
+    if (!p) throw new NotFoundException('Payment not found');
+    return {
+      id: p.id,
+      amount_tiyin: p.amount_tiyin.toString(),
+      provider: p.provider,
+      status: p.status,
+      created_at: p.created_at,
+      user: p.user,
+      class: p.class,
+    };
+  }
+
   /**
    * Подтверждение наличной оплаты (MANAGER+). Идемпотентно.
    * Студент выбрал «Наличные» → создан PENDING-платёж с provider=CASH.

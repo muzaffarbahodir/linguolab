@@ -150,6 +150,13 @@ export class PaymentsController {
     return this.paymentsService.adminListPayments(page, limit, status);
   }
 
+  /** GET /payments/admin/:id — карточка платежа (скан QR наличного чека), MANAGER+ */
+  @Get('admin/:id')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  adminGet(@Param('id') id: string) {
+    return this.paymentsService.adminGetPayment(id);
+  }
+
   /** POST /payments/admin/:id/confirm-cash — MANAGER+ (приём наличных) */
   @Post('admin/:id/confirm-cash')
   @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)

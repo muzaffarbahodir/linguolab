@@ -381,7 +381,18 @@
     "cash_pending_hint": "O'quv markazida naqd pul bilan to'lang. Menejer tasdiqlagach, kursga yozilishingiz faollashadi.",
     "cash_pending_ok": "Tushunarli",
     "receipt_btn": "Fiskal chek",
-    "receipt_pending": "Chek hali shakllanmoqda. Keyinroq urinib ko'ring."
+    "receipt_pending": "Chek hali shakllanmoqda. Keyinroq urinib ko'ring.",
+    "check_title": "To'lov cheki",
+    "order_no": "Buyurtma №",
+    "cash_show_to_manager": "Naqd to'lov uchun ushbu QR-ni menejerga ko'rsating",
+    "cash_paid_closed": "To'landi · buyurtma yopildi",
+    "show_check": "Chekni ko'rsatish",
+    "confirm_title": "To'lovni tasdiqlash",
+    "confirm_cash_btn": "Naqd qabul qilinganini tasdiqlash",
+    "confirm_done": "Buyurtma yopildi · to'lov qabul qilindi",
+    "manager_only": "Faqat menejerlar uchun",
+    "student": "Talaba",
+    "course": "Kurs"
   },
   "quick_actions": {
     "sheet_title": "Tezkor amallar",

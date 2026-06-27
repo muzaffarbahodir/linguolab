@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
-import { Banknote, CheckCircle2, Receipt } from 'lucide-react';
+import { Banknote, Receipt } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useBackButton } from '../hooks/useBackButton';
 
@@ -40,7 +40,6 @@ export default function Payment() {
 
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('PAYME');
   const [redirected, setRedirected] = useState(false);
-  const [cashPending, setCashPending] = useState(false);
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const { fmt } = useCurrency();
 
@@ -69,9 +68,9 @@ export default function Payment() {
         ...(trialId ? { trial_id: trialId } : {}),
         ...(offlineTrialLanguageId ? { offline_trial_language_id: offlineTrialLanguageId } : {}),
       });
-      // Наличные — нет редиректа в кассу, ждём подтверждения менеджера.
+      // Наличные — нет редиректа в кассу: показываем чек с QR для менеджера.
       if (selectedProvider === 'CASH' || !result.redirect_url) {
-        setCashPending(true);
+        navigate(`/cash-check/${result.payment_id}`);
         return;
       }
       WebApp.openLink(result.redirect_url);
@@ -96,26 +95,6 @@ export default function Payment() {
       setReceiptId(null);
     }
   };
-
-  // ── Cash pending screen ────────────────────────────────────────────────────────
-
-  if (cashPending) {
-    return (
-      <div className="glass-fade-in flex flex-col items-center gap-5 p-6 text-center">
-        <div className="bg-brand/12 flex h-16 w-16 items-center justify-center rounded-full">
-          <CheckCircle2 className="text-brand h-8 w-8" />
-        </div>
-        <h1 className="text-xl font-bold">{t('payment.cash_pending_title')}</h1>
-        <p className="text-muted text-sm">{t('payment.cash_pending_hint')}</p>
-        <button
-          onClick={() => navigate('/courses')}
-          className="glass-btn press mt-2 w-full rounded-2xl py-3 font-semibold"
-        >
-          {t('payment.cash_pending_ok')}
-        </button>
-      </div>
-    );
-  }
 
   // ── Checkout screen ──────────────────────────────────────────────────────────
 
@@ -286,6 +265,15 @@ export default function Payment() {
                 >
                   <Receipt className="h-4 w-4" />
                   {t('payment.receipt_btn')}
+                </button>
+              )}
+              {p.provider === 'CASH' && p.status === 'PENDING' && (
+                <button
+                  onClick={() => navigate(`/cash-check/${p.id}`)}
+                  className="bg-brand/15 text-brand-400 press mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold"
+                >
+                  <Banknote className="h-4 w-4" />
+                  {t('payment.show_check')}
                 </button>
               )}
             </div>

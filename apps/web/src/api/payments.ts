@@ -84,6 +84,44 @@ export function useFetchReceipt() {
   });
 }
 
+export interface PaymentDetail {
+  id: string;
+  amount_tiyin: string;
+  provider: PaymentProvider;
+  status: PaymentStatus;
+  created_at: string;
+  class?: { title: string; level: string; language?: { flag_emoji: string } } | null;
+}
+
+/** Платёж студента по id (владелец) — для экрана чека наличной оплаты. */
+export function usePaymentDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: ['payment', id],
+    enabled: !!id,
+    queryFn: async () => (await apiClient.get<PaymentDetail>(`/payments/${id}`)).data,
+  });
+}
+
+export interface AdminPaymentDetail {
+  id: string;
+  amount_tiyin: string;
+  provider: PaymentProvider;
+  status: PaymentStatus;
+  created_at: string;
+  user: { first_name: string; last_name: string | null; telegram_username: string | null };
+  class: { title: string; level: string } | null;
+}
+
+/** Платёж по id для менеджера (скан QR наличного чека). */
+export function useAdminPaymentDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: ['admin', 'payment', id],
+    enabled: !!id,
+    retry: false,
+    queryFn: async () => (await apiClient.get<AdminPaymentDetail>(`/payments/admin/${id}`)).data,
+  });
+}
+
 /** История платежей студента */
 export function useMyPayments() {
   return useQuery<Payment[]>({

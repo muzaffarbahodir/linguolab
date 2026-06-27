@@ -1,5 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { withSentryReactRouterV6Routing } from '@sentry/react';
 import WebApp from '@twa-dev/sdk';
@@ -52,6 +52,12 @@ const NotificationsPage = lazy(() =>
 const SupportPage = lazy(() => import('./pages/Support').then((m) => ({ default: m.SupportPage })));
 const MyRequestsPage = lazy(() =>
   import('./pages/MyRequests').then((m) => ({ default: m.MyRequestsPage })),
+);
+const CashCheckPage = lazy(() =>
+  import('./pages/CashCheck').then((m) => ({ default: m.CashCheckPage })),
+);
+const CashConfirmPage = lazy(() =>
+  import('./pages/CashConfirm').then((m) => ({ default: m.CashConfirmPage })),
 );
 const AttendancePage = lazy(() =>
   import('./pages/Attendance').then((m) => ({ default: m.AttendancePage })),
@@ -244,6 +250,7 @@ export default function App() {
 /** Вынесено чтобы использовать useLocation внутри Router-контекста */
 function AuthenticatedApp() {
   const location = useLocation();
+  const navigate = useNavigate();
   const realRole = useAuthStore((s) => s.user?.role);
   const isActive = useAuthStore((s) => s.user?.is_active);
   const previewRole = useAuthStore((s) => s.previewRole);
@@ -261,6 +268,18 @@ function AuthenticatedApp() {
 
   // Профиль (для гейта опроса подбора при старте).
   const { data: me, refetch: refetchMe } = useMe();
+
+  // Deep-link из QR наличного чека: t.me/bot/app?startapp=cash_<id>
+  // Менеджер сканирует QR → открывается экран подтверждения заказа.
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (deepLinkDone.current) return;
+    const sp = WebApp.initDataUnsafe?.start_param;
+    if (sp?.startsWith('cash_')) {
+      deepLinkDone.current = true;
+      navigate(`/cash-confirm/${sp.slice(5)}`);
+    }
+  }, [navigate]);
 
   useEffect(() => {
     if (realRole && realRole !== 'STUDENT' && realRole !== 'PARENT') {
@@ -291,6 +310,8 @@ function AuthenticatedApp() {
       '/attendance',
       '/settings',
     ].includes(location.pathname) ||
+    location.pathname.startsWith('/cash-check/') ||
+    location.pathname.startsWith('/cash-confirm/') ||
     location.pathname.startsWith('/teacher') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/parent/child/') ||
@@ -384,6 +405,8 @@ function AuthenticatedApp() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/requests" element={<MyRequestsPage />} />
+            <Route path="/cash-check/:id" element={<CashCheckPage />} />
+            <Route path="/cash-confirm/:id" element={<CashConfirmPage />} />
             <Route path="/attendance" element={<AttendancePage />} />
 
             {/* ── Parent cabinet ── */}

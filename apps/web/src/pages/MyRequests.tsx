@@ -14,6 +14,7 @@ import { useMyClassRequests } from '../api/class-requests';
 import { useMyTickets } from '../api/support';
 import { useLanguages } from '../api/languages';
 import { TRIAL_STATUS, SUPPORT_STATUS } from '../lib/status';
+import { orderNo } from '../lib/orderNumber';
 import { toast } from '../store/toast';
 
 const REQ_STATUS: Record<string, { color: string; key: string }> = {
@@ -26,13 +27,6 @@ function fmtDate(iso: string): string {
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
-}
-
-/** Стабильный 6-значный номер из id (как номер чека): T-000123 / G-... / S-... */
-function reqNo(prefix: string, id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return `${prefix}-${String(h % 1_000_000).padStart(6, '0')}`;
 }
 
 interface Row {
@@ -107,7 +101,7 @@ export function MyRequestsPage() {
             : t('profile.next_wait_link');
       return {
         id: `t-${tr.id}`,
-        code: reqNo('T', tr.id),
+        code: orderNo('T', tr.id),
         icon: <span className="text-lg">{tr.language.flag_emoji}</span>,
         title: tr.language.name_ru,
         sub: tr.type === 'OFFLINE' ? t('profile.trial_offline') : t('profile.trial_online'),
@@ -133,7 +127,7 @@ export function MyRequestsPage() {
             : t('profile.next_wait');
       return {
         id: `c-${cr.id}`,
-        code: reqNo('G', cr.id),
+        code: orderNo('G', cr.id),
         icon: <span className="text-lg">{cr.language.flag_emoji}</span>,
         title: cr.title,
         sub: cr.level,
@@ -151,7 +145,7 @@ export function MyRequestsPage() {
       const next = tk.status === 'CLOSED' ? t('profile.next_closed') : t('profile.next_wait');
       return {
         id: `s-${tk.id}`,
-        code: reqNo('S', tk.id),
+        code: orderNo('S', tk.id),
         icon: <LifeBuoy size={18} className="text-brand-400" strokeWidth={2.2} />,
         title: tk.subject,
         sub: t('profile.support_request'),

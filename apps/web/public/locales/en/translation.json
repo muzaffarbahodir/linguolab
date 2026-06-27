@@ -381,7 +381,18 @@
     "cash_pending_hint": "Pay in cash at the center. Your enrollment activates once a manager confirms it.",
     "cash_pending_ok": "Got it",
     "receipt_btn": "Fiscal receipt",
-    "receipt_pending": "Receipt is still being generated. Try again later."
+    "receipt_pending": "Receipt is still being generated. Try again later.",
+    "check_title": "Payment check",
+    "order_no": "Order #",
+    "cash_show_to_manager": "Show this QR to a manager to pay in cash",
+    "cash_paid_closed": "Paid · order closed",
+    "show_check": "Show check",
+    "confirm_title": "Confirm payment",
+    "confirm_cash_btn": "Confirm cash received",
+    "confirm_done": "Order closed · payment accepted",
+    "manager_only": "Managers only",
+    "student": "Student",
+    "course": "Course"
   },
   "quick_actions": {
     "sheet_title": "Quick actions",
