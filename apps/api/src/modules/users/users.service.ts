@@ -284,6 +284,56 @@ export class UsersService {
   }
 
   /**
+   * GET /users/leaderboard — рейтинг студентов.
+   * Очки = достижения×50 + посещения×5 + проверенные ДЗ×3. Считаем дёшево
+   * через groupBy. Возвращаем топ-30 + позицию текущего пользователя.
+   */
+  async getLeaderboard(currentUserId: string) {
+    const students = await this.prisma.user.findMany({
+      where: { role: 'STUDENT', is_active: true },
+      select: { id: true, first_name: true, last_name: true, avatar_url: true },
+    });
+    if (students.length === 0) {
+      return { top: [], me: null };
+    }
+
+    const [ach, att, hw] = await Promise.all([
+      this.prisma.userAchievement.groupBy({ by: ['user_id'], _count: { _all: true } }),
+      this.prisma.lessonAttendance.groupBy({
+        by: ['student_id'],
+        where: { status: { in: ['PRESENT', 'LATE'] } },
+        _count: { _all: true },
+      }),
+      this.prisma.homeworkSubmission.groupBy({
+        by: ['student_id'],
+        where: { status: 'GRADED' },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const achMap = new Map(ach.map((a) => [a.user_id, a._count._all]));
+    const attMap = new Map(att.map((a) => [a.student_id, a._count._all]));
+    const hwMap = new Map(hw.map((h) => [h.student_id, h._count._all]));
+
+    const ranked = students
+      .map((s) => {
+        const points =
+          (achMap.get(s.id) ?? 0) * 50 + (attMap.get(s.id) ?? 0) * 5 + (hwMap.get(s.id) ?? 0) * 3;
+        return {
+          id: s.id,
+          name: `${s.first_name}${s.last_name ? ' ' + s.last_name[0] + '.' : ''}`,
+          avatar_url: s.avatar_url,
+          points,
+        };
+      })
+      .sort((a, b) => b.points - a.points)
+      .map((s, i) => ({ ...s, rank: i + 1, is_me: s.id === currentUserId }));
+
+    const me = ranked.find((r) => r.is_me) ?? null;
+    return { top: ranked.slice(0, 30), me, total: ranked.length };
+  }
+
+  /**
    * PATCH /users/me/onboard — self-service выбор роли при первом входе.
    * Юзер сам выбирает STUDENT (учусь сам) или PARENT (записываю ребёнка)
    * и сразу активируется — без ожидания менеджера (убираем трение для клиентов).

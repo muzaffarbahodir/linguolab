@@ -184,6 +184,20 @@
     "att_absent": "kelmadi",
     "att_excused": "sababli"
   },
+  "leaderboard": {
+    "title": "Reyting",
+    "subtitle": "Faollik uchun ochkolar: yutuqlar, davomat, uy vazifasi",
+    "empty": "Reyting hozircha bo'sh",
+    "you": "Siz",
+    "me": "siz",
+    "points_hint": "Ochkolar: yutuq +50, qatnashilgan dars +5, tekshirilgan uy vazifasi +3"
+  },
+  "games": {
+    "title": "Mini-o'yinlar",
+    "soon": "Tez orada",
+    "desc": "Tez orada yangi so'zlarni o'zingiz sezmagan holda yodlatadigan qiziqarli mini-o'yinlar paydo bo'ladi — hatto eng dangasalar uchun ham.",
+    "back": "Orqaga"
+  },
   "profile": {
     "progress": "Umumiy jarayon",
     "dash_subject": "O‘rganyapman",
@@ -241,6 +255,8 @@
     "my_courses": "Mening kurslarim",
     "my_classes": "Mening guruhlarim",
     "my_classes_hint": "Darslar va jarayon",
+    "rating": "Reyting",
+    "games": "Mini-o'yinlar",
     "schedule": "Jadval",
     "homework": "Uy vazifalari",
     "achievements": "Yutuqlar",

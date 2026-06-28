@@ -24,6 +24,8 @@ import {
   Palette,
   Inbox,
   ScanLine,
+  Award,
+  Gamepad2,
   UserRound,
   Cake,
   type LucideIcon,
@@ -673,61 +675,23 @@ export function ProfilePage() {
   ];
 
   // ── Student quick links ───────────────────────────────────────────────────
+  // Пункты кабинета — без объяснительных подсказок, только название.
   const studentQuickLinks: MenuItem[] = [
-    {
-      Icon: GraduationCap,
-      label: t('profile.my_classes'),
-      hint: t('profile.my_classes_hint'),
-      onClick: () => navigate('/schedule'),
-    },
-    {
-      Icon: Inbox,
-      label: t('profile.requests_title'),
-      hint: t('profile.requests_hint'),
-      onClick: () => navigate('/requests'),
-    },
-    {
-      Icon: Calendar,
-      label: t('profile.schedule'),
-      hint: t('profile.schedule_hint'),
-      onClick: () => navigate('/schedule'),
-    },
-    {
-      Icon: PencilLine,
-      label: t('profile.homework'),
-      hint: t('profile.homework_hint'),
-      onClick: () => navigate('/homework'),
-    },
-    {
-      Icon: BookOpen,
-      label: t('profile.my_courses'),
-      hint: t('profile.courses_hint'),
-      onClick: () => navigate('/courses'),
-    },
-    {
-      Icon: Trophy,
-      label: t('profile.achievements'),
-      hint: t('profile.achievements_hint'),
-      onClick: () => navigate('/achievements'),
-    },
+    { Icon: Award, label: t('profile.rating'), onClick: () => navigate('/leaderboard') },
+    { Icon: Gamepad2, label: t('profile.games'), onClick: () => navigate('/mini-games') },
+    { Icon: GraduationCap, label: t('profile.my_classes'), onClick: () => navigate('/schedule') },
+    { Icon: Inbox, label: t('profile.requests_title'), onClick: () => navigate('/requests') },
+    { Icon: Calendar, label: t('profile.schedule'), onClick: () => navigate('/schedule') },
+    { Icon: PencilLine, label: t('profile.homework'), onClick: () => navigate('/homework') },
+    { Icon: BookOpen, label: t('profile.my_courses'), onClick: () => navigate('/courses') },
+    { Icon: Trophy, label: t('profile.achievements'), onClick: () => navigate('/achievements') },
     {
       Icon: GraduationCap,
       label: t('profile.certificates'),
-      hint: t('profile.certificates_hint'),
       onClick: () => navigate('/certificates'),
     },
-    {
-      Icon: BarChart3,
-      label: t('profile.attendance'),
-      hint: t('profile.attendance_hint'),
-      onClick: () => navigate('/attendance'),
-    },
-    {
-      Icon: Ticket,
-      label: t('profile.support'),
-      hint: t('profile.support_hint'),
-      onClick: () => navigate('/support'),
-    },
+    { Icon: BarChart3, label: t('profile.attendance'), onClick: () => navigate('/attendance') },
+    { Icon: Ticket, label: t('profile.support'), onClick: () => navigate('/support') },
   ];
 
   // Admin menu items — shown only for MANAGER / ADMIN / SUPER_ADMIN

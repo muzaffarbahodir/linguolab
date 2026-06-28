@@ -85,6 +85,12 @@ export class UsersController {
     return this.usersService.getRecentLessons(user.id);
   }
 
+  /** GET /users/leaderboard — рейтинг студентов по очкам активности. */
+  @Get('leaderboard')
+  leaderboard(@CurrentUser() user: RequestUser) {
+    return this.usersService.getLeaderboard(user.id);
+  }
+
   /** PATCH /users/me/notification-channels */
   @Patch('me/notification-channels')
   notificationChannels(

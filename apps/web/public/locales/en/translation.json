@@ -184,6 +184,20 @@
     "att_absent": "absent",
     "att_excused": "excused"
   },
+  "leaderboard": {
+    "title": "Rating",
+    "subtitle": "Points for activity: achievements, attendance, homework",
+    "empty": "Leaderboard is empty",
+    "you": "You",
+    "me": "you",
+    "points_hint": "Points: achievement +50, attended lesson +5, graded homework +3"
+  },
+  "games": {
+    "title": "Mini-games",
+    "soon": "Coming soon",
+    "desc": "Addictive mini-games are coming that make you pick up new words without noticing — even the laziest learners.",
+    "back": "Back"
+  },
   "profile": {
     "progress": "Overall progress",
     "dash_subject": "Studying",
@@ -241,6 +255,8 @@
     "my_courses": "My courses",
     "my_classes": "My classes",
     "my_classes_hint": "Lessons and progress",
+    "rating": "Rating",
+    "games": "Mini-games",
     "schedule": "Schedule",
     "homework": "Homework",
     "achievements": "Achievements",

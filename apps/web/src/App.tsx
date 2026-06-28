@@ -57,6 +57,12 @@ const CashCheckPage = lazy(() =>
   import('./pages/CashCheck').then((m) => ({ default: m.CashCheckPage })),
 );
 const MyClassPage = lazy(() => import('./pages/MyClass').then((m) => ({ default: m.MyClassPage })));
+const LeaderboardPage = lazy(() =>
+  import('./pages/Leaderboard').then((m) => ({ default: m.LeaderboardPage })),
+);
+const MiniGamesPage = lazy(() =>
+  import('./pages/MiniGames').then((m) => ({ default: m.MiniGamesPage })),
+);
 const CashConfirmPage = lazy(() =>
   import('./pages/CashConfirm').then((m) => ({ default: m.CashConfirmPage })),
 );
@@ -417,6 +423,8 @@ function AuthenticatedApp() {
             <Route path="/support" element={<SupportPage />} />
             <Route path="/requests" element={<MyRequestsPage />} />
             <Route path="/my-class/:id" element={<MyClassPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/mini-games" element={<MiniGamesPage />} />
             <Route path="/cash-check/:id" element={<CashCheckPage />} />
             <Route path="/cash-confirm/:id" element={<CashConfirmPage />} />
             <Route path="/attendance" element={<AttendancePage />} />

@@ -119,6 +119,29 @@ export function useStudentStats() {
   });
 }
 
+export interface LeaderboardEntry {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  points: number;
+  rank: number;
+  is_me: boolean;
+}
+
+export interface Leaderboard {
+  top: LeaderboardEntry[];
+  me: LeaderboardEntry | null;
+  total: number;
+}
+
+export function useLeaderboard() {
+  return useQuery<Leaderboard>({
+    queryKey: ['users', 'leaderboard'],
+    queryFn: async () => (await apiClient.get<Leaderboard>('/users/leaderboard')).data,
+    staleTime: 60_000,
+  });
+}
+
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 
 export interface RecentLesson {
