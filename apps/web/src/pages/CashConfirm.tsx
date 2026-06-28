@@ -13,6 +13,7 @@ import { useAdminPaymentDetail } from '../api/payments';
 import { useConfirmCashPayment } from '../api/admin';
 import { formatUzs } from '../lib/money';
 import { orderNo } from '../lib/orderNumber';
+import { toast } from '../store/toast';
 
 export function CashConfirmPage() {
   const { t } = useTranslation();
@@ -33,7 +34,14 @@ export function CashConfirmPage() {
 
   const handleConfirm = () => {
     if (!id) return;
-    confirm.mutate(id, { onSuccess: () => setDone(true) });
+    confirm.mutate(id, {
+      onSuccess: () => setDone(true),
+      onError: (e: unknown) => {
+        const msg =
+          (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? null;
+        toast.error(msg ?? t('payment.manager_only'));
+      },
+    });
   };
 
   return (

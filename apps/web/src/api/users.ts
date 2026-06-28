@@ -82,13 +82,14 @@ async function fetchProgress(): Promise<UserProgress> {
  *   +10  за пройденный тест уровня
  */
 export function calcProgress(p: UserProgress): number {
+  // Прогресс отражает реальную учёбу, а не сам факт записи на курс.
+  // Запись без ДЗ/достижений/теста уровня = 0%.
   let score = 0;
-  if (p.active_enrollments > 0) score += 20;
   if (p.homework.total > 0) {
-    score += Math.round((p.homework.graded / p.homework.total) * 50);
+    score += Math.round((p.homework.graded / p.homework.total) * 60);
   }
-  score += Math.min(p.achievements_count * 4, 20);
-  if (p.placement_test) score += 10;
+  score += Math.min(p.achievements_count * 5, 25);
+  if (p.placement_test) score += 15;
   return Math.min(score, 100);
 }
 

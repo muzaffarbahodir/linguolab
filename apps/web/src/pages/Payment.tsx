@@ -167,15 +167,15 @@ export default function Payment() {
 
       <h1 className="text-xl font-bold">{t('payment.history_title')}</h1>
 
-      {/* ── Invoice — активные записи ── */}
-      {enrollments && enrollments.filter((e) => e.status === 'ACTIVE').length > 0 && (
+      {/* ── Счёт к оплате — неоплаченные (PENDING) записи ── */}
+      {enrollments && enrollments.filter((e) => e.status === 'PENDING').length > 0 && (
         <div>
           <p className="text-muted mb-2 text-xs font-semibold uppercase tracking-wide">
             {t('payment.invoice_title')}
           </p>
           <div className="stagger flex flex-col gap-2">
             {enrollments
-              .filter((e) => e.status === 'ACTIVE')
+              .filter((e) => e.status === 'PENDING')
               .map((e) => {
                 const color = e.class.language.color ?? '#6366f1';
                 return (

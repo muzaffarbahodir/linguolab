@@ -515,8 +515,9 @@ function EnrollmentCard({ enrollment }: { enrollment: MyEnrollment }) {
           </span>
         </div>
 
-        {/* Pay course — подтверждённая (ACTIVE) запись */}
-        {status === 'ACTIVE' && (
+        {/* Оплата — только для неоплаченной (PENDING) записи. После оплаты статус
+            становится ACTIVE и кнопка пропадает. */}
+        {status === 'PENDING' && (
           <button
             onClick={() =>
               navigate('/payment', {
