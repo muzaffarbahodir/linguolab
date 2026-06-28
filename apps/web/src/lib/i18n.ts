@@ -21,8 +21,14 @@ import en from '../../public/locales/en/translation.json';
 const SUPPORTED = ['ru', 'uz', 'en'];
 
 function getInitialLocale(): string {
-  // 1. Ранее сохранённый пользователем язык
-  const cached = sessionStorage.getItem('user_language');
+  // 1. Ранее сохранённый пользователем язык (localStorage — durable между
+  //    перезагрузками TWA; sessionStorage сбрасывался и язык «слетал»).
+  let cached: string | null = null;
+  try {
+    cached = localStorage.getItem('user_language');
+  } catch {
+    cached = null;
+  }
   if (cached && SUPPORTED.includes(cached)) return cached;
   // 2. Язык Telegram (TWA — window.Telegram.WebApp доступен синхронно)
   try {

@@ -239,6 +239,8 @@
     "lvl_high": "High",
     "role_student": "Student",
     "my_courses": "My courses",
+    "my_classes": "My classes",
+    "my_classes_hint": "Lessons and progress",
     "schedule": "Schedule",
     "homework": "Homework",
     "achievements": "Achievements",

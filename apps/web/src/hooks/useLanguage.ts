@@ -20,15 +20,31 @@ export const LANGUAGES: LangOption[] = [
 const STORAGE_KEY = 'user_language';
 const EVENT = 'linguolab:locale-change';
 
+// localStorage — durable между перезагрузками TWA (как тема). sessionStorage
+// раньше сбрасывался при reload и язык «слетал». Обёртки — TWA может бросать.
+function readLocal(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+function writeLocal(v: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, v);
+  } catch {
+    /* TWA блокирует localStorage — полагаемся на CloudStorage */
+  }
+}
+
 // ─── module-level locale (singleton) ─────────────────────────────────────────
 
 /** Текущий locale — инициализируется один раз при загрузке модуля */
 let _locale = 'ru';
 
 function resolveInitial(): string {
-  // CloudStorage недоступен синхронно — читаем из sessionStorage как кеш
-  const cached = sessionStorage.getItem(STORAGE_KEY);
-  if (cached) return cached;
+  const cached = readLocal();
+  if (cached && LANGUAGES.some((l) => l.code === cached)) return cached;
   // Fallback: язык Telegram
   const tgLang = WebApp.initDataUnsafe?.user?.language_code ?? 'ru';
   return LANGUAGES.some((l) => l.code === tgLang) ? tgLang : 'ru';
@@ -37,23 +53,21 @@ function resolveInitial(): string {
 _locale = resolveInitial();
 document.documentElement.lang = _locale;
 
-// Синхронизируем i18next с resolved locale.
-// i18n.ts инициализируется с fallback 'ru', но useLanguage может
-// определить другой язык из Telegram. Синхронизируем сразу.
 if (i18n.language !== _locale) {
   void i18n.changeLanguage(_locale);
 }
 
-// При старте читаем из CloudStorage (асинхронно) и обновляем если отличается
+// CloudStorage (кросс-девайс) применяем ТОЛЬКО если локального выбора ещё нет —
+// иначе асинхронный ответ мог перетереть только что выбранный язык (язык «менялся»).
+const hadLocal = !!readLocal();
 WebApp.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
-  if (!err && value && value !== _locale) {
-    _locale = value;
-    sessionStorage.setItem(STORAGE_KEY, value);
-    document.documentElement.lang = value;
-    // Синхронизируем i18next при восстановлении из CloudStorage
-    void i18n.changeLanguage(value);
-    window.dispatchEvent(new Event(EVENT));
-  }
+  if (err || !value || hadLocal || value === _locale) return;
+  if (!LANGUAGES.some((l) => l.code === value)) return;
+  _locale = value;
+  writeLocal(value);
+  document.documentElement.lang = value;
+  void i18n.changeLanguage(value);
+  window.dispatchEvent(new Event(EVENT));
 });
 
 // ─── public API ───────────────────────────────────────────────────────────────
@@ -64,7 +78,7 @@ WebApp.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
  */
 export function applyLocale(code: string): void {
   _locale = code;
-  sessionStorage.setItem(STORAGE_KEY, code);
+  writeLocal(code);
   document.documentElement.lang = code;
   WebApp.CloudStorage.setItem(STORAGE_KEY, code);
   void i18n.changeLanguage(code);

@@ -331,36 +331,6 @@ function StudentStatsCard() {
           </div>
         </div>
       )}
-
-      {/* Мои классы */}
-      {progress && progress.classes.length > 0 && (
-        <div className="glass-card rounded-2xl p-4">
-          <p className="text-muted mb-3 text-xs font-semibold uppercase tracking-wide">
-            {t('profile.dash_classes')}
-          </p>
-          <div className="flex flex-col gap-2">
-            {progress.classes.map((c, i) => (
-              <button
-                key={i}
-                onClick={() => go('/schedule')}
-                className="press bg-surface-2/60 flex items-center gap-3 rounded-xl px-3 py-2.5 text-left"
-              >
-                <span className="text-xl">{c.language.flag_emoji}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{c.class_title}</p>
-                  <p className="text-faint text-xs">{c.language.name_ru}</p>
-                </div>
-                <span
-                  className="shrink-0 rounded-md px-2 py-0.5 text-xs font-bold"
-                  style={{ background: `${c.language.color}22`, color: c.language.color }}
-                >
-                  {c.level}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -704,6 +674,12 @@ export function ProfilePage() {
 
   // ── Student quick links ───────────────────────────────────────────────────
   const studentQuickLinks: MenuItem[] = [
+    {
+      Icon: GraduationCap,
+      label: t('profile.my_classes'),
+      hint: t('profile.my_classes_hint'),
+      onClick: () => navigate('/schedule'),
+    },
     {
       Icon: Inbox,
       label: t('profile.requests_title'),
