@@ -449,6 +449,9 @@ model Enrollment {
   is_trial    Boolean          @default(false)
   /// Дата истечения пробного периода (cron проверяет ежедневно)
   trial_expires_at DateTime?
+  /// До какой даты оплачено обучение. null = ещё не оплачивалось (PENDING).
+  /// paid_until < now → доступ просрочен (нужно продлить).
+  paid_until       DateTime?
   enrolled_at      DateTime   @default(now())
 
   student  User      @relation(fields: [student_id], references: [id])
@@ -645,6 +648,8 @@ model Payment {
   amount_tiyin      BigInt                                // сумма в тийинах (1 UZS = 100 tiyin)
   vat_amount_tiyin  BigInt          @default(0)           // НДС в тийинах
   vat_rate          Int             @default(12)          // ставка НДС %
+  /// За сколько месяцев обучения платёж (план/рассрочка). 1 = месяц.
+  period_months     Int             @default(1)
   currency          String          @default("UZS")
   provider          PaymentProvider
   provider_txn_id   String?                               // ID транзакции провайдера

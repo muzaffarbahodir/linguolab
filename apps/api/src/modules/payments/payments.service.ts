@@ -24,6 +24,8 @@ export interface CheckoutDto {
   trial_id?: string;
   /** Язык очного пробного — заявка создастся CONFIRMED после оплаты (новый флоу). */
   offline_trial_language_id?: string;
+  /** За сколько месяцев платим (план/рассрочка). 1..12, по умолчанию 1. */
+  period_months?: number;
 }
 
 @Injectable()
@@ -62,7 +64,9 @@ export class PaymentsService {
     });
     if (!cls) throw new NotFoundException('Class not found or inactive');
 
-    const amountTiyin = BigInt(uzsToTiyin(cls.price_uzs));
+    // План оплаты: 1..12 месяцев. Сумма = цена/мес × месяцы.
+    const months = Math.min(Math.max(Math.round(dto.period_months ?? 1), 1), 12);
+    const amountTiyin = BigInt(uzsToTiyin(cls.price_uzs * months));
     // Ставка НДС из env. 0 = режим без НДС (налог с оборота). По умолчанию 0 —
     // безопаснее, пока режим не подтверждён бухгалтером. См. VAT_RATE в .env.
     const vatRate = Number(this.config.get<string>('VAT_RATE') ?? 0) || 0;
@@ -84,6 +88,7 @@ export class PaymentsService {
         status: PaymentStatus.PENDING,
         idempotency_key: dto.idempotency_key,
         trial_language_id: dto.offline_trial_language_id ?? null,
+        period_months: months,
       },
       update: {}, // уже существует — возвращаем как есть
     });
@@ -240,12 +245,31 @@ export class PaymentsService {
       // ── Оплата курса ──
       if (!payment.class || !payment.user) return;
 
+      // Продление оплаченного периода: от max(now, текущий paid_until) + N месяцев.
+      // Так доплата за следующий месяц прибавляется к остатку, а не сгорает.
+      const existingEnr = await this.prisma.enrollment.findUnique({
+        where: {
+          student_id_class_id: { student_id: payment.user_id, class_id: payment.class.id },
+        },
+        select: { paid_until: true },
+      });
+      const now = new Date();
+      const base =
+        existingEnr?.paid_until && existingEnr.paid_until > now ? existingEnr.paid_until : now;
+      const paidUntil = new Date(base);
+      paidUntil.setMonth(paidUntil.getMonth() + (payment.period_months || 1));
+
       await this.prisma.enrollment.upsert({
         where: {
           student_id_class_id: { student_id: payment.user_id, class_id: payment.class.id },
         },
-        update: { status: 'ACTIVE' },
-        create: { student_id: payment.user_id, class_id: payment.class.id, status: 'ACTIVE' },
+        update: { status: 'ACTIVE', paid_until: paidUntil },
+        create: {
+          student_id: payment.user_id,
+          class_id: payment.class.id,
+          status: 'ACTIVE',
+          paid_until: paidUntil,
+        },
       });
 
       // Авто-открытие группы: первый оплативший студент → класс ACTIVE и виден.

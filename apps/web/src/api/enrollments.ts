@@ -5,6 +5,8 @@ export interface MyEnrollment {
   id: string;
   status: 'PENDING' | 'ACTIVE' | 'DROPPED';
   enrolled_at: string;
+  /** До какой даты оплачено (помесячная оплата). null = ещё не оплачивалось. */
+  paid_until: string | null;
   class: {
     id: string;
     title: string;

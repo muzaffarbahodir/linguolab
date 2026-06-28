@@ -51,6 +51,8 @@ export function useCheckout() {
       trial_id?: string;
       /** Язык очного пробного — заявка создастся после оплаты. */
       offline_trial_language_id?: string;
+      /** За сколько месяцев платим (план/рассрочка). */
+      period_months?: number;
     }) => {
       const { data } = await apiClient.post<CheckoutResponse>('/payments/checkout', {
         provider: params.provider,
@@ -61,6 +63,7 @@ export function useCheckout() {
         ...(params.offline_trial_language_id
           ? { offline_trial_language_id: params.offline_trial_language_id }
           : {}),
+        ...(params.period_months ? { period_months: params.period_months } : {}),
       });
       return data;
     },

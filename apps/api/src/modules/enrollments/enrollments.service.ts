@@ -17,6 +17,7 @@ const enrollmentFullSelect = {
   id: true,
   status: true,
   enrolled_at: true,
+  paid_until: true,
   student: {
     select: {
       id: true,

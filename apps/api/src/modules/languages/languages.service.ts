@@ -246,10 +246,16 @@ export class LanguagesService {
     });
 
     // Программа курса + доступ к материалам.
-    // Записан (ACTIVE) на любую группу этого направления → материалы открыты.
+    // Доступ: ACTIVE-запись на группу курса И оплачено (paid_until в будущем
+    // или null — старые записи до введения помесячной оплаты).
     const enrolled = userId
       ? (await this.prisma.enrollment.count({
-          where: { student_id: userId, status: 'ACTIVE', class: { language_id: id } },
+          where: {
+            student_id: userId,
+            status: 'ACTIVE',
+            class: { language_id: id },
+            OR: [{ paid_until: null }, { paid_until: { gte: new Date() } }],
+          },
         })) > 0
       : false;
 

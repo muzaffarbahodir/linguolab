@@ -436,9 +436,19 @@ function TransferModal({
 function EnrollmentCard({ enrollment }: { enrollment: MyEnrollment }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { class: cls, status, enrolled_at } = enrollment;
+  const { class: cls, status, enrolled_at, paid_until } = enrollment;
   const [showTransfer, setShowTransfer] = useState(false);
   const lang = cls.language;
+
+  // Помесячная оплата: статус оплаченного периода.
+  const paidUntil = paid_until ? new Date(paid_until) : null;
+  const daysLeft = paidUntil ? Math.ceil((paidUntil.getTime() - Date.now()) / 86400000) : null;
+  const overdue = paidUntil != null && paidUntil.getTime() < Date.now();
+  const expiringSoon = daysLeft != null && daysLeft >= 0 && daysLeft <= 5;
+  const goPay = () =>
+    navigate('/payment', {
+      state: { classId: cls.id, classTitle: cls.title, priceUzs: cls.price_uzs },
+    });
   const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
   const levelColor = LEVEL_COLOR[cls.level] ?? '#6366f1';
   const statusColor = STATUS_COLOR[status];
@@ -515,24 +525,52 @@ function EnrollmentCard({ enrollment }: { enrollment: MyEnrollment }) {
           </span>
         </div>
 
-        {/* Оплата — только для неоплаченной (PENDING) записи. После оплаты статус
-            становится ACTIVE и кнопка пропадает. */}
+        {/* Первая оплата — неоплаченная (PENDING) запись. */}
         {status === 'PENDING' && (
           <button
-            onClick={() =>
-              navigate('/payment', {
-                state: {
-                  classId: cls.id,
-                  classTitle: cls.title,
-                  priceUzs: cls.price_uzs,
-                },
-              })
-            }
+            onClick={goPay}
             className="press mt-3 w-full rounded-xl py-2.5 text-sm font-semibold text-white"
             style={{ background: 'linear-gradient(135deg,#10B981,#059669)' }}
           >
             💳 {t('schedule.pay_course')}
           </button>
+        )}
+
+        {/* Помесячная оплата — статус периода + продление. */}
+        {status === 'ACTIVE' && paidUntil && (
+          <div className="mt-3">
+            <div
+              className="flex items-center justify-between rounded-xl px-3 py-2 text-xs"
+              style={{
+                background: overdue ? 'rgba(239,68,68,0.1)' : 'var(--surface)',
+                color: overdue ? '#EF4444' : 'var(--muted)',
+              }}
+            >
+              <span>
+                {overdue
+                  ? t('schedule.payment_overdue', { date: formatDate(paid_until!) })
+                  : t('schedule.paid_until', { date: formatDate(paid_until!) })}
+              </span>
+              {!overdue && expiringSoon && (
+                <span className="text-warn font-semibold">
+                  {t('schedule.days_left', { n: daysLeft })}
+                </span>
+              )}
+            </div>
+            {(overdue || expiringSoon) && (
+              <button
+                onClick={goPay}
+                className="press mt-2 w-full rounded-xl py-2.5 text-sm font-semibold text-white"
+                style={{
+                  background: overdue
+                    ? 'linear-gradient(135deg,#EF4444,#DC2626)'
+                    : 'linear-gradient(135deg,#10B981,#059669)',
+                }}
+              >
+                💳 {t('schedule.renew')}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Teacher rating — only for active enrollments */}

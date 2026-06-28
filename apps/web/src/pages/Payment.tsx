@@ -41,6 +41,7 @@ export default function Payment() {
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('PAYME');
   const [redirected, setRedirected] = useState(false);
   const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [months, setMonths] = useState(1);
   const { fmt } = useCurrency();
 
   useBackButton(() => navigate(-1));
@@ -50,11 +51,15 @@ export default function Payment() {
   const { data: history, isLoading: historyLoading } = useMyPayments();
   const { data: enrollments } = useMyEnrollments();
 
-  // Стабильный idempotency_key на пару (класс, провайдер) — повтор/двойной клик
-  // не плодит дубли PENDING. Смена провайдера → новый ключ → новый платёж с верным провайдером.
+  // План помесячной оплаты доступен только для оплаты курса (не пробного).
+  const isCoursePayment = priceUzs !== undefined && !offlineTrialLanguageId && !trialId;
+  const total = (priceUzs ?? 0) * (isCoursePayment ? months : 1);
+
+  // Стабильный idempotency_key на пару (класс, провайдер, план) — повтор/двойной
+  // клик не плодит дубли PENDING. Смена параметров → новый ключ → новый платёж.
   const idempotencyKey = useMemo(
     () => crypto.randomUUID(),
-    [classId, selectedProvider, studentId, trialId, offlineTrialLanguageId],
+    [classId, selectedProvider, studentId, trialId, offlineTrialLanguageId, months],
   );
 
   const handlePay = async () => {
@@ -67,6 +72,7 @@ export default function Payment() {
         ...(studentId ? { student_id: studentId } : {}),
         ...(trialId ? { trial_id: trialId } : {}),
         ...(offlineTrialLanguageId ? { offline_trial_language_id: offlineTrialLanguageId } : {}),
+        ...(isCoursePayment ? { period_months: months } : {}),
       });
       // Наличные — нет редиректа в кассу: показываем чек с QR для менеджера.
       if (selectedProvider === 'CASH' || !result.redirect_url) {
@@ -108,9 +114,39 @@ export default function Payment() {
           <div className="text-tg-hint mb-1 text-sm">{t('payment.class')}</div>
           <div className="font-semibold">{classTitle}</div>
           {priceUzs !== undefined && (
-            <div className="text-brand mt-1 text-lg font-bold">{fmt(priceUzs)}</div>
+            <div className="text-brand mt-1 text-lg font-bold">
+              {fmt(priceUzs)}
+              {isCoursePayment && (
+                <span className="text-faint text-xs font-normal">{t('payment.per_month')}</span>
+              )}
+            </div>
           )}
         </div>
+
+        {/* План оплаты (помесячно) */}
+        {isCoursePayment && (
+          <div>
+            <div className="text-tg-hint mb-2 text-sm">{t('payment.plan_title')}</div>
+            <div className="flex gap-2">
+              {[1, 3, 6].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMonths(m)}
+                  className={`press flex-1 rounded-2xl border-2 py-2.5 text-center transition-colors ${
+                    months === m ? 'bg-brand/15 border-brand' : 'bg-surface border-hairline'
+                  }`}
+                >
+                  <div className="text-sm font-bold">{t('payment.months_n', { n: m })}</div>
+                  <div className="text-faint text-[11px]">{fmt(priceUzs! * m)}</div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between px-1">
+              <span className="text-muted text-sm">{t('payment.total')}</span>
+              <span className="text-brand text-lg font-bold">{fmt(total)}</span>
+            </div>
+          </div>
+        )}
 
         {/* Provider select */}
         <div>
