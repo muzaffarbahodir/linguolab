@@ -7,9 +7,10 @@ import { BillingReminderService } from './billing-reminder.service';
 import { TelegramModule } from '../telegram/telegram.module';
 import { FiscalModule } from '../fiscal/fiscal.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PromoModule } from '../promo/promo.module';
 
 @Module({
-  imports: [TelegramModule, FiscalModule, NotificationsModule],
+  imports: [TelegramModule, FiscalModule, NotificationsModule, PromoModule],
   controllers: [PaymentsController],
   providers: [PaymentsService, PaymeService, ClickService, BillingReminderService],
   exports: [PaymentsService],

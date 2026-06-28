@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { useBackButton } from '../hooks/useBackButton';
 
 import { useCheckout, useMyPayments, useFetchReceipt, type PaymentProvider } from '../api/payments';
+import { useValidatePromo } from '../api/promo';
 import { useMyEnrollments } from '../api/enrollments';
 import { formatUzs } from '../lib/money';
 import { useCurrency } from '../hooks/useCurrency';
@@ -42,25 +43,46 @@ export default function Payment() {
   const [redirected, setRedirected] = useState(false);
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [months, setMonths] = useState(1);
+  const [promoInput, setPromoInput] = useState('');
+  const [applied, setApplied] = useState<{ code: string; pct: number } | null>(null);
   const { fmt } = useCurrency();
 
   useBackButton(() => navigate(-1));
 
   const checkout = useCheckout();
+  const validatePromo = useValidatePromo();
   const fetchReceipt = useFetchReceipt();
   const { data: history, isLoading: historyLoading } = useMyPayments();
   const { data: enrollments } = useMyEnrollments();
 
   // План помесячной оплаты доступен только для оплаты курса (не пробного).
   const isCoursePayment = priceUzs !== undefined && !offlineTrialLanguageId && !trialId;
-  const total = (priceUzs ?? 0) * (isCoursePayment ? months : 1);
+  const baseTotal = (priceUzs ?? 0) * (isCoursePayment ? months : 1);
+  const total = applied ? Math.round(baseTotal * (1 - applied.pct / 100)) : baseTotal;
 
-  // Стабильный idempotency_key на пару (класс, провайдер, план) — повтор/двойной
-  // клик не плодит дубли PENDING. Смена параметров → новый ключ → новый платёж.
+  // Стабильный idempotency_key на пару (класс, провайдер, план, промокод) — повтор/
+  // двойной клик не плодит дубли PENDING. Смена параметров → новый ключ → новый платёж.
   const idempotencyKey = useMemo(
     () => crypto.randomUUID(),
-    [classId, selectedProvider, studentId, trialId, offlineTrialLanguageId, months],
+    [classId, selectedProvider, studentId, trialId, offlineTrialLanguageId, months, applied?.code],
   );
+
+  const handleApplyPromo = () => {
+    const code = promoInput.trim();
+    if (!code) return;
+    validatePromo.mutate(code, {
+      onSuccess: (r) => {
+        if (r.valid) {
+          setApplied({ code: r.code ?? code.toUpperCase(), pct: r.discount_percent });
+          toast.success(t('payment.promo_applied', { pct: r.discount_percent }));
+        } else {
+          setApplied(null);
+          toast.error(t('payment.promo_invalid'));
+        }
+      },
+      onError: () => toast.error(t('payment.promo_invalid')),
+    });
+  };
 
   const handlePay = async () => {
     if (!classId) return;
@@ -73,6 +95,7 @@ export default function Payment() {
         ...(trialId ? { trial_id: trialId } : {}),
         ...(offlineTrialLanguageId ? { offline_trial_language_id: offlineTrialLanguageId } : {}),
         ...(isCoursePayment ? { period_months: months } : {}),
+        ...(isCoursePayment && applied ? { promo_code: applied.code } : {}),
       });
       // Наличные — нет редиректа в кассу: показываем чек с QR для менеджера.
       if (selectedProvider === 'CASH' || !result.redirect_url) {
@@ -141,9 +164,40 @@ export default function Payment() {
                 </button>
               ))}
             </div>
+
+            {/* Промокод */}
+            <div className="mt-3 flex gap-2">
+              <input
+                value={promoInput}
+                onChange={(e) => {
+                  setPromoInput(e.target.value.toUpperCase());
+                  if (applied) setApplied(null);
+                }}
+                placeholder={t('payment.promo_ph')}
+                className="bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2 text-sm uppercase text-[color:var(--text)] outline-none"
+              />
+              <button
+                onClick={handleApplyPromo}
+                disabled={validatePromo.isPending || promoInput.trim().length < 2}
+                className="bg-brand/15 text-brand-400 press shrink-0 rounded-xl px-4 text-sm font-semibold disabled:opacity-40"
+              >
+                {validatePromo.isPending ? '…' : t('payment.promo_apply')}
+              </button>
+            </div>
+            {applied && (
+              <p className="text-ok mt-1 px-1 text-xs font-semibold">
+                ✓ {t('payment.promo_active', { code: applied.code, pct: applied.pct })}
+              </p>
+            )}
+
             <div className="mt-3 flex items-center justify-between px-1">
               <span className="text-muted text-sm">{t('payment.total')}</span>
-              <span className="text-brand text-lg font-bold">{fmt(total)}</span>
+              <span className="flex items-baseline gap-2">
+                {applied && (
+                  <span className="text-faint text-sm line-through">{fmt(baseTotal)}</span>
+                )}
+                <span className="text-brand text-lg font-bold">{fmt(total)}</span>
+              </span>
             </div>
           </div>
         )}

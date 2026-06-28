@@ -636,6 +636,20 @@ enum ReceiptType {
   REFUND
 }
 
+/// Промокод-скидка на оплату курса (процент).
+model PromoCode {
+  id               String    @id @default(cuid())
+  code             String    @unique // в верхнем регистре
+  discount_percent Int       @default(0) // 1..100
+  max_uses         Int? // null = без лимита
+  used_count       Int       @default(0)
+  valid_until      DateTime?
+  is_active        Boolean   @default(true)
+  created_at       DateTime  @default(now())
+
+  @@map("promo_codes")
+}
+
 /// Платёж студента за класс/курс
 model Payment {
   id                String          @id @default(cuid())
@@ -650,6 +664,8 @@ model Payment {
   vat_rate          Int             @default(12)          // ставка НДС %
   /// За сколько месяцев обучения платёж (план/рассрочка). 1 = месяц.
   period_months     Int             @default(1)
+  /// Применённый промокод (для записи/аналитики). Скидка уже в amount_tiyin.
+  promo_code        String?
   currency          String          @default("UZS")
   provider          PaymentProvider
   provider_txn_id   String?                               // ID транзакции провайдера

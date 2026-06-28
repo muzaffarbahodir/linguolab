@@ -13,6 +13,7 @@ import { uzsToTiyin, calcVatTiyin } from '../../common/money';
 import { FiscalService } from '../fiscal/fiscal.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramService } from '../telegram/telegram.service';
+import { PromoService } from '../promo/promo.service';
 
 export interface CheckoutDto {
   provider: PaymentProvider;
@@ -26,6 +27,8 @@ export interface CheckoutDto {
   offline_trial_language_id?: string;
   /** За сколько месяцев платим (план/рассрочка). 1..12, по умолчанию 1. */
   period_months?: number;
+  /** Промокод-скидка (опционально). */
+  promo_code?: string;
 }
 
 @Injectable()
@@ -38,6 +41,7 @@ export class PaymentsService {
     private readonly fiscal: FiscalService,
     private readonly notifications: NotificationsService,
     private readonly telegram: TelegramService,
+    private readonly promo: PromoService,
   ) {}
 
   /**
@@ -64,20 +68,41 @@ export class PaymentsService {
     });
     if (!cls) throw new NotFoundException('Class not found or inactive');
 
+    // Идемпотентность по ключу: если платёж с этим ключом уже есть — возвращаем
+    // его (не списываем промокод повторно при двойном клике/возврате на чекаут).
+    const existingByKey = await this.prisma.payment.findUnique({
+      where: { idempotency_key: dto.idempotency_key },
+    });
+    if (existingByKey) {
+      const owner = existingByKey.payer_user_id ?? existingByKey.user_id;
+      if (owner !== payerId) {
+        throw new BadRequestException('Idempotency key belongs to another user');
+      }
+      if (dto.trial_id) {
+        await this.prisma.trialLessonRequest.updateMany({
+          where: { id: dto.trial_id, student_id: studentId, payment_id: null },
+          data: { payment_id: existingByKey.id },
+        });
+      }
+      return this.buildCheckoutResponse(existingByKey);
+    }
+
     // План оплаты: 1..12 месяцев. Сумма = цена/мес × месяцы.
     const months = Math.min(Math.max(Math.round(dto.period_months ?? 1), 1), 12);
-    const amountTiyin = BigInt(uzsToTiyin(cls.price_uzs * months));
+    // Промокод — списываем одно использование и применяем скидку к сумме.
+    const promo = dto.promo_code ? await this.promo.consume(dto.promo_code) : null;
+    const discountPct = promo?.discount_percent ?? 0;
+    const finalUzs = Math.round(cls.price_uzs * months * (1 - discountPct / 100));
+    const amountTiyin = BigInt(uzsToTiyin(finalUzs));
     // Ставка НДС из env. 0 = режим без НДС (налог с оборота). По умолчанию 0 —
     // безопаснее, пока режим не подтверждён бухгалтером. См. VAT_RATE в .env.
     const vatRate = Number(this.config.get<string>('VAT_RATE') ?? 0) || 0;
     const vatTiyin = BigInt(calcVatTiyin(Number(amountTiyin), vatRate));
 
-    // Upsert вместо findUnique+create — атомарно, без race condition.
     // user_id = студент-бенефициар (на него запишется курс при PAID),
     // payer_user_id = родитель-плательщик (если платит за ребёнка).
-    const payment = await this.prisma.payment.upsert({
-      where: { idempotency_key: dto.idempotency_key },
-      create: {
+    const payment = await this.prisma.payment.create({
+      data: {
         user_id: studentId,
         payer_user_id: studentId === payerId ? null : payerId,
         class_id: dto.class_id,
@@ -89,15 +114,9 @@ export class PaymentsService {
         idempotency_key: dto.idempotency_key,
         trial_language_id: dto.offline_trial_language_id ?? null,
         period_months: months,
+        promo_code: promo?.code ?? null,
       },
-      update: {}, // уже существует — возвращаем как есть
     });
-
-    // Ключ идемпотентности должен принадлежать этому плательщику.
-    const owner = payment.payer_user_id ?? payment.user_id;
-    if (owner !== payerId) {
-      throw new BadRequestException('Idempotency key belongs to another user');
-    }
 
     // Привязка к очному пробному уроку — после PAID заявка авто-подтвердится.
     // updateMany + payment_id:null = идемпотентно при повторном checkout.

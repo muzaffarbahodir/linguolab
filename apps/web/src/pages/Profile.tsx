@@ -769,6 +769,12 @@ export function ProfilePage() {
       onClick: () => navigate('/admin/scan'),
     },
     {
+      Icon: Ticket,
+      label: t('admin.promos.title'),
+      hint: t('admin.promos.menu_hint'),
+      onClick: () => navigate('/admin/promos'),
+    },
+    {
       Icon: Users,
       label: t('profile.admin_users_lbl'),
       onClick: () => navigate('/admin/users'),

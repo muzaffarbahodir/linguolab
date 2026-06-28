@@ -28,6 +28,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PlacementTestsModule } from './modules/placement-tests/placement-tests.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { PromoModule } from './modules/promo/promo.module';
 import { FiscalModule } from './modules/fiscal/fiscal.module';
 import { ParentsModule } from './modules/parents/parents.module';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -106,6 +107,7 @@ import { HrModule } from './modules/hr/hr.module';
     PlacementTestsModule,
     AdminModule,
     PaymentsModule,
+    PromoModule,
     FiscalModule,
     ParentsModule,
     TeachersModule,
