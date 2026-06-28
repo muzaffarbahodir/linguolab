@@ -92,6 +92,8 @@
     "title": "Kurslar",
     "search_ph": "Kurs qidirish...",
     "filter_open": "Yozilish ochiq",
+    "sort_popular": "Ommabop",
+    "sort_rating": "Reyting bo'yicha",
     "groups_open": "{{n}} guruh",
     "no_groups_short": "Tez orada",
     "all": "Barchasi",
@@ -139,7 +141,17 @@
     "preview_free": "Bepul",
     "watch_video": "Videoni ko'rish",
     "locked_hint": "Bu dars kursni to'lagandan keyin ochiladi",
-    "curriculum_locked_hint": "🔒 To'liq dastur va materiallar — yozilgandan keyin"
+    "curriculum_locked_hint": "🔒 To'liq dastur va materiallar — yozilgandan keyin",
+    "reviews_title": "Sharhlar",
+    "reviews_n": "{{n}} ta sharh",
+    "reviews_empty": "Hozircha sharhlar yo'q",
+    "review_add": "Kursni baholang",
+    "review_edit": "Sizning sharhingiz",
+    "review_ph": "Kurs haqida taassurotlaringizni yozing…",
+    "review_submit": "Sharh yuborish",
+    "review_saved": "Sharhingiz uchun rahmat!",
+    "review_deleted": "Sharh o'chirildi",
+    "review_hide": "Sharhni yashirish"
   },
   "profile": {
     "progress": "Umumiy jarayon",

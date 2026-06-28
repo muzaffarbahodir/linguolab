@@ -92,6 +92,8 @@
     "title": "Courses",
     "search_ph": "Search a course...",
     "filter_open": "Enrollment open",
+    "sort_popular": "Popular",
+    "sort_rating": "Top rated",
     "groups_open": "{{n}} groups",
     "no_groups_short": "Opening soon",
     "all": "All",
@@ -139,7 +141,17 @@
     "preview_free": "Free",
     "watch_video": "Watch video",
     "locked_hint": "This lesson opens after you pay for the course",
-    "curriculum_locked_hint": "🔒 Full curriculum and materials — after enrolling"
+    "curriculum_locked_hint": "🔒 Full curriculum and materials — after enrolling",
+    "reviews_title": "Reviews",
+    "reviews_n": "{{n}} reviews",
+    "reviews_empty": "No reviews yet",
+    "review_add": "Rate this course",
+    "review_edit": "Your review",
+    "review_ph": "Share your experience with the course…",
+    "review_submit": "Submit review",
+    "review_saved": "Thanks for your review!",
+    "review_deleted": "Review deleted",
+    "review_hide": "Hide review"
   },
   "profile": {
     "progress": "Overall progress",

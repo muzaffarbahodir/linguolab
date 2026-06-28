@@ -18,15 +18,22 @@ import {
   PlayCircle,
   FileText,
   ChevronDown,
+  Trash2,
+  EyeOff,
 } from 'lucide-react';
 
 import { useBackButton } from '../hooks/useBackButton';
 import { useCurrency } from '../hooks/useCurrency';
 import {
   useCourseDetail,
+  useUpsertReview,
+  useDeleteReview,
+  useHideReview,
   type CourseClass,
   type TeacherOffer,
   type CourseLesson,
+  type CourseReviewItem,
+  type MyReview,
 } from '../api/languages';
 import { useRequestTrial } from '../api/trial-lessons';
 import { useAuthStore } from '../store/auth';
@@ -120,6 +127,14 @@ export function CourseDetailPage() {
           <span className="text-3xl">{course.flag_emoji}</span>
           <h1 className="text-2xl font-bold">{course.name_ru}</h1>
         </div>
+
+        {data.rating.count > 0 && (
+          <div className="-mt-1 flex items-center gap-1.5 text-sm">
+            <Star size={15} className="text-warn fill-current" />
+            <span className="font-bold">{data.rating.avg}</span>
+            <span className="text-faint">({t('course.reviews_n', { n: data.rating.count })})</span>
+          </div>
+        )}
 
         {course.description && (
           <p className="text-muted text-sm leading-relaxed">{course.description}</p>
@@ -231,7 +246,185 @@ export function CourseDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Отзывы */}
+        <ReviewsSection
+          languageId={languageId!}
+          reviews={data.reviews}
+          myReview={data.my_review}
+          canReview={data.can_review}
+          ratingAvg={data.rating.avg}
+          ratingCount={data.rating.count}
+        />
       </div>
+    </div>
+  );
+}
+
+function Stars({
+  value,
+  onPick,
+  size = 22,
+}: {
+  value: number;
+  onPick?: (n: number) => void;
+  size?: number;
+}) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button
+          key={s}
+          type="button"
+          disabled={!onPick}
+          onClick={() => onPick?.(s)}
+          className={onPick ? 'press' : ''}
+        >
+          <Star
+            size={size}
+            className={s <= value ? 'text-warn fill-current' : 'text-faint'}
+            strokeWidth={2}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReviewsSection({
+  languageId,
+  reviews,
+  myReview,
+  canReview,
+  ratingAvg,
+  ratingCount,
+}: {
+  languageId: string;
+  reviews: CourseReviewItem[];
+  myReview: MyReview | null;
+  canReview: boolean;
+  ratingAvg: number | null;
+  ratingCount: number;
+}) {
+  const { t } = useTranslation();
+  const role = useAuthStore((s) => s.user?.role);
+  const isAdmin = role === 'MANAGER' || role === 'ADMIN' || role === 'SUPER_ADMIN';
+
+  const upsert = useUpsertReview(languageId);
+  const del = useDeleteReview(languageId);
+  const hide = useHideReview(languageId);
+
+  const [rating, setRating] = useState(myReview?.rating ?? 0);
+  const [comment, setComment] = useState(myReview?.comment ?? '');
+
+  const submit = () => {
+    if (rating < 1) return;
+    upsert.mutate(
+      { rating, comment: comment.trim() || undefined },
+      {
+        onSuccess: () => toast.success(t('course.review_saved')),
+        onError: (e: unknown) => {
+          const msg =
+            (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? null;
+          toast.error(msg ?? t('app.server_error'));
+        },
+      },
+    );
+  };
+
+  const removeMine = () => {
+    if (!myReview) return;
+    del.mutate(myReview.id, {
+      onSuccess: () => {
+        setRating(0);
+        setComment('');
+        toast.success(t('course.review_deleted'));
+      },
+    });
+  };
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-muted text-xs font-semibold uppercase tracking-wide">
+          {t('course.reviews_title')}
+        </p>
+        {ratingCount > 0 && (
+          <span className="flex items-center gap-1 text-sm font-semibold">
+            <Star size={14} className="text-warn fill-current" /> {ratingAvg}
+          </span>
+        )}
+      </div>
+
+      {/* Своя оценка — только для записанных */}
+      {canReview && (
+        <div className="glass-card mb-3 rounded-2xl p-4">
+          <p className="mb-2 text-sm font-semibold">
+            {myReview ? t('course.review_edit') : t('course.review_add')}
+          </p>
+          <Stars value={rating} onPick={setRating} />
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder={t('course.review_ph')}
+            className="bg-surface-2 border-hairline mt-3 w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
+          />
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={submit}
+              disabled={rating < 1 || upsert.isPending}
+              className="glass-btn press flex-1 rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
+            >
+              {upsert.isPending ? '…' : t('course.review_submit')}
+            </button>
+            {myReview && (
+              <button
+                onClick={removeMine}
+                disabled={del.isPending}
+                className="bg-danger/10 text-danger border-danger/25 press rounded-xl border px-4 text-sm font-semibold disabled:opacity-50"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {reviews.length === 0 ? (
+        <p className="text-faint py-2 text-sm">{t('course.reviews_empty')}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {reviews.map((r) => (
+            <div key={r.id} className="bg-surface border-hairline rounded-2xl border p-3">
+              <div className="flex items-center gap-2.5">
+                {r.avatar_url ? (
+                  <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="bg-brand/15 text-brand flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold">
+                    {r.author[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{r.author}</p>
+                  <Stars value={r.rating} size={12} />
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => hide.mutate({ reviewId: r.id, hidden: true })}
+                    className="text-faint press shrink-0"
+                    title={t('course.review_hide')}
+                  >
+                    <EyeOff size={15} />
+                  </button>
+                )}
+              </div>
+              {r.comment && <p className="text-muted mt-2 text-sm leading-relaxed">{r.comment}</p>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

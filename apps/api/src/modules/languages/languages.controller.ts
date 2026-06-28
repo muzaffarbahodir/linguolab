@@ -85,4 +85,31 @@ export class LanguagesController {
   deleteLesson(@Param('lessonId') lessonId: string) {
     return this.languagesService.deleteLesson(lessonId);
   }
+
+  // ─── Отзывы на курс ───────────────────────────────────────────────────────────
+
+  /** POST /languages/:id/reviews — оставить/обновить отзыв (записанный студент). */
+  @Post(':id/reviews')
+  upsertReview(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() body: { rating: number; comment?: string },
+  ) {
+    return this.languagesService.upsertReview(user.id, id, body.rating, body.comment);
+  }
+
+  /** DELETE /languages/reviews/:reviewId — удалить свой отзыв (или любой — ADMIN+). */
+  @Delete('reviews/:reviewId')
+  deleteReview(@CurrentUser() user: RequestUser, @Param('reviewId') reviewId: string) {
+    const isAdmin =
+      user.role === Role.MANAGER || user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN;
+    return this.languagesService.deleteReview(reviewId, user.id, isAdmin);
+  }
+
+  /** PATCH /languages/reviews/:reviewId/hide — скрыть/показать отзыв (модерация). */
+  @Patch('reviews/:reviewId/hide')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  setReviewHidden(@Param('reviewId') reviewId: string, @Body('hidden') hidden: boolean) {
+    return this.languagesService.setReviewHidden(reviewId, hidden ?? true);
+  }
 }

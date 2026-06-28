@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Star } from 'lucide-react';
 
 import {
   useLanguages,
@@ -28,6 +28,7 @@ export function CoursesPage() {
 
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<CatFilter>('all');
+  const [sort, setSort] = useState<'popular' | 'rating'>('popular');
 
   // Категории, у которых есть направления (для чипсов).
   const categories = useMemo(() => {
@@ -41,20 +42,23 @@ export function CoursesPage() {
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (
-      (languages ?? [])
-        .filter((l) => {
-          const matchQ =
-            !q ||
-            l.name_ru.toLowerCase().includes(q) ||
-            (l.description ?? '').toLowerCase().includes(q);
-          const matchCat = effectiveCat === 'all' || (l.category ?? 'LANGUAGES') === effectiveCat;
-          return matchQ && matchCat;
-        })
-        // Популярные (больше открытых групп) — выше: маркетплейс-логика.
-        .sort((a, b) => (b.groups_count ?? 0) - (a.groups_count ?? 0))
-    );
-  }, [languages, query, effectiveCat]);
+    return (languages ?? [])
+      .filter((l) => {
+        const matchQ =
+          !q ||
+          l.name_ru.toLowerCase().includes(q) ||
+          (l.description ?? '').toLowerCase().includes(q);
+        const matchCat = effectiveCat === 'all' || (l.category ?? 'LANGUAGES') === effectiveCat;
+        return matchQ && matchCat;
+      })
+      .sort((a, b) =>
+        sort === 'rating'
+          ? (b.avg_rating ?? -1) - (a.avg_rating ?? -1) ||
+            (b.reviews_count ?? 0) - (a.reviews_count ?? 0)
+          : // Популярные (больше открытых групп) — выше.
+            (b.groups_count ?? 0) - (a.groups_count ?? 0),
+      );
+  }, [languages, query, effectiveCat, sort]);
 
   return (
     <div className="glass-fade-in flex flex-col gap-4 px-4 pt-6">
@@ -82,6 +86,20 @@ export function CoursesPage() {
             label={CATEGORY_LABEL[c]}
           />
         ))}
+      </div>
+
+      {/* Сортировка */}
+      <div className="flex gap-2">
+        <Chip
+          active={sort === 'popular'}
+          onClick={() => setSort('popular')}
+          label={t('courses.sort_popular')}
+        />
+        <Chip
+          active={sort === 'rating'}
+          onClick={() => setSort('rating')}
+          label={t('courses.sort_rating')}
+        />
       </div>
 
       {isLoading && (
@@ -152,10 +170,17 @@ function CourseBanner({ lang, onClick }: { lang: Language; onClick: () => void }
         {lang.duration_label && (
           <p className="text-faint truncate text-xs">{lang.duration_label}</p>
         )}
-        <p className="text-muted mt-1 flex items-center gap-1 text-xs">
-          <Users size={12} />
-          {groups > 0 ? t('courses.groups_open', { n: groups }) : t('courses.no_groups_short')}
-        </p>
+        <div className="mt-1 flex items-center gap-2 text-xs">
+          {lang.avg_rating != null && (
+            <span className="flex items-center gap-0.5 font-semibold">
+              <Star size={11} className="text-warn fill-current" /> {lang.avg_rating}
+            </span>
+          )}
+          <span className="text-muted flex items-center gap-1">
+            <Users size={12} />
+            {groups > 0 ? t('courses.groups_open', { n: groups }) : t('courses.no_groups_short')}
+          </span>
+        </div>
       </div>
     </button>
   );

@@ -92,6 +92,8 @@
     "title": "Курсы",
     "search_ph": "Поиск курса...",
     "filter_open": "С открытой записью",
+    "sort_popular": "Популярные",
+    "sort_rating": "По рейтингу",
     "groups_open": "{{n}} групп",
     "no_groups_short": "Скоро открытие",
     "all": "Все",
@@ -139,7 +141,17 @@
     "preview_free": "Бесплатно",
     "watch_video": "Смотреть видео",
     "locked_hint": "Урок откроется после оплаты курса",
-    "curriculum_locked_hint": "🔒 Полная программа и материалы — после записи на курс"
+    "curriculum_locked_hint": "🔒 Полная программа и материалы — после записи на курс",
+    "reviews_title": "Отзывы",
+    "reviews_n": "{{n}} отзывов",
+    "reviews_empty": "Пока нет отзывов",
+    "review_add": "Оцените курс",
+    "review_edit": "Ваш отзыв",
+    "review_ph": "Поделитесь впечатлениями о курсе…",
+    "review_submit": "Отправить отзыв",
+    "review_saved": "Спасибо за отзыв!",
+    "review_deleted": "Отзыв удалён",
+    "review_hide": "Скрыть отзыв"
   },
   "profile": {
     "progress": "Общий прогресс",

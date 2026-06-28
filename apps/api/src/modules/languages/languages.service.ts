@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Prisma, type LanguageCategory } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
@@ -70,14 +75,24 @@ export class LanguagesService {
         _count: {
           select: { classes: { where: { is_active: true, status: { in: [...JOINABLE] } } } },
         },
+        reviews: { where: { is_hidden: false }, select: { rating: true } },
       },
     });
 
-    const result = languages.map((l) => ({
-      ...l,
-      groups_count: l._count.classes,
-      _count: undefined,
-    }));
+    const result = languages.map((l) => {
+      const ratings = l.reviews;
+      const avg = ratings.length
+        ? Math.round((ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) * 10) / 10
+        : null;
+      return {
+        ...l,
+        groups_count: l._count.classes,
+        avg_rating: avg,
+        reviews_count: ratings.length,
+        _count: undefined,
+        reviews: undefined,
+      };
+    });
 
     // Кэшируем на 5 минут (fire-and-forget)
     void this.redis.setex(CACHE_KEY, CACHE_TTL, JSON.stringify(result));
@@ -252,6 +267,52 @@ export class LanguagesService {
       };
     });
 
+    // Отзывы на курс: агрегат + последние + свой отзыв + право оставить.
+    const reviewsRaw = await this.prisma.courseReview.findMany({
+      where: { language_id: id, is_hidden: false },
+      orderBy: { created_at: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        created_at: true,
+        student_id: true,
+        student: { select: { first_name: true, last_name: true, avatar_url: true } },
+      },
+    });
+    const agg = await this.prisma.courseReview.aggregate({
+      where: { language_id: id, is_hidden: false },
+      _avg: { rating: true },
+      _count: true,
+    });
+    const myReview = userId
+      ? await this.prisma.courseReview.findUnique({
+          where: { language_id_student_id: { language_id: id, student_id: userId } },
+          select: { id: true, rating: true, comment: true, is_hidden: true },
+        })
+      : null;
+    // Оставлять отзыв может тот, кто записан/был записан (ACTIVE/DROPPED).
+    const canReview = userId
+      ? (await this.prisma.enrollment.count({
+          where: {
+            student_id: userId,
+            status: { in: ['ACTIVE', 'DROPPED'] },
+            class: { language_id: id },
+          },
+        })) > 0
+      : false;
+
+    const reviews = reviewsRaw.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      created_at: r.created_at,
+      author: `${r.student.first_name}${r.student.last_name ? ' ' + r.student.last_name[0] + '.' : ''}`,
+      avatar_url: r.student.avatar_url,
+      is_mine: r.student_id === userId,
+    }));
+
     return {
       course,
       classes: mapped,
@@ -259,7 +320,63 @@ export class LanguagesService {
       offers,
       lessons,
       enrolled,
+      rating: {
+        avg: agg._avg.rating ? Math.round(agg._avg.rating * 10) / 10 : null,
+        count: agg._count,
+      },
+      reviews,
+      my_review: myReview,
+      can_review: canReview,
     };
+  }
+
+  // ─── Отзывы на курс (CourseReview) ─────────────────────────────────────────────
+
+  async upsertReview(userId: string, languageId: string, rating: number, comment?: string | null) {
+    const r = Math.round(rating);
+    if (!Number.isFinite(r) || r < 1 || r > 5) {
+      throw new BadRequestException('Rating must be 1..5');
+    }
+    const canReview =
+      (await this.prisma.enrollment.count({
+        where: {
+          student_id: userId,
+          status: { in: ['ACTIVE', 'DROPPED'] },
+          class: { language_id: languageId },
+        },
+      })) > 0;
+    if (!canReview) {
+      throw new ForbiddenException('Отзыв можно оставить только после записи на курс');
+    }
+    return this.prisma.courseReview.upsert({
+      where: { language_id_student_id: { language_id: languageId, student_id: userId } },
+      create: {
+        language_id: languageId,
+        student_id: userId,
+        rating: r,
+        comment: comment?.trim() || null,
+      },
+      update: { rating: r, comment: comment?.trim() || null, is_hidden: false },
+      select: { id: true, rating: true, comment: true },
+    });
+  }
+
+  async deleteReview(reviewId: string, userId: string, isAdmin: boolean) {
+    const review = await this.prisma.courseReview.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    if (!isAdmin && review.student_id !== userId) {
+      throw new ForbiddenException('Not your review');
+    }
+    await this.prisma.courseReview.delete({ where: { id: reviewId } });
+    return { ok: true };
+  }
+
+  /** Скрыть/показать отзыв (модерация, MANAGER+). */
+  async setReviewHidden(reviewId: string, hidden: boolean) {
+    const review = await this.prisma.courseReview.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    await this.prisma.courseReview.update({ where: { id: reviewId }, data: { is_hidden: hidden } });
+    return { ok: true, is_hidden: hidden };
   }
 
   // ─── Программа курса (CourseLesson) — admin CRUD ───────────────────────────────

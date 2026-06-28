@@ -44,6 +44,10 @@ export interface Language {
   requirements?: string[];
   /** Кол-во открытых групп (для баннера). */
   groups_count?: number;
+  /** Средний рейтинг курса по отзывам. */
+  avg_rating?: number | null;
+  /** Кол-во отзывов. */
+  reviews_count?: number;
 }
 
 /** Класс (группа учителя) внутри курса. */
@@ -122,6 +126,23 @@ export interface AdminCourseLesson {
   is_active: boolean;
 }
 
+export interface CourseReviewItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  author: string;
+  avatar_url: string | null;
+  is_mine: boolean;
+}
+
+export interface MyReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  is_hidden: boolean;
+}
+
 export interface CourseDetail {
   course: Language;
   classes: CourseClass[];
@@ -129,6 +150,10 @@ export interface CourseDetail {
   offers: TeacherOffer[];
   lessons: CourseLesson[];
   enrolled: boolean;
+  rating: { avg: number | null; count: number };
+  reviews: CourseReviewItem[];
+  my_review: MyReview | null;
+  can_review: boolean;
 }
 
 async function fetchLanguages(): Promise<Language[]> {
@@ -188,6 +213,43 @@ export function useDeleteLesson(languageId: string) {
     mutationFn: async (id: string) => (await apiClient.delete(`/languages/lessons/${id}`)).data,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'lessons', languageId] });
+      void qc.invalidateQueries({ queryKey: ['course-detail', languageId] });
+    },
+  });
+}
+
+// ─── Отзывы на курс ────────────────────────────────────────────────────────────
+
+export function useUpsertReview(languageId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { rating: number; comment?: string }) =>
+      (await apiClient.post(`/languages/${languageId}/reviews`, body)).data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['course-detail', languageId] });
+      void qc.invalidateQueries({ queryKey: ['languages'] });
+    },
+  });
+}
+
+export function useDeleteReview(languageId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (reviewId: string) =>
+      (await apiClient.delete(`/languages/reviews/${reviewId}`)).data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['course-detail', languageId] });
+      void qc.invalidateQueries({ queryKey: ['languages'] });
+    },
+  });
+}
+
+export function useHideReview(languageId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ reviewId, hidden }: { reviewId: string; hidden: boolean }) =>
+      (await apiClient.patch(`/languages/reviews/${reviewId}/hide`, { hidden })).data,
+    onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['course-detail', languageId] });
     },
   });

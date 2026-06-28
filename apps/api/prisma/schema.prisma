@@ -196,6 +196,7 @@ model User {
   transfer_requests    ClassTransferRequest[]
   analytics_events     AnalyticsEvent[]
   employee             Employee?          @relation("EmployeeUser")
+  course_reviews       CourseReview[]
 
   @@index([role])
   @@index([last_active_at])
@@ -241,6 +242,27 @@ model Language {
   class_requests   ClassRequest[]
   teacher_offers   TeacherOffer[]
   course_lessons   CourseLesson[]
+  reviews          CourseReview[]
+}
+
+/// Отзыв студента на курс (направление). Один отзыв на студента+курс.
+/// Оставлять может тот, кто записан (или был записан) на группу этого курса.
+model CourseReview {
+  id          String   @id @default(cuid())
+  language_id String
+  student_id  String
+  rating      Int // 1..5
+  comment     String?
+  is_hidden   Boolean  @default(false) // скрыт модератором
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  language Language @relation(fields: [language_id], references: [id], onDelete: Cascade)
+  student  User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([language_id, student_id])
+  @@index([language_id, is_hidden])
+  @@map("course_reviews")
 }
 
 /// Программа курса (силлабус): упорядоченный список уроков/тем направления.
