@@ -150,6 +150,13 @@ export class PaymentsController {
     return this.paymentsService.adminListPayments(page, limit, status);
   }
 
+  /** GET /payments/admin/resolve/:number — найти заказ по номеру (ручной ввод), MANAGER+ */
+  @Get('admin/resolve/:number')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  adminResolve(@Param('number') number: string) {
+    return this.paymentsService.adminResolveOrder(number);
+  }
+
   /** GET /payments/admin/:id — карточка платежа (скан QR наличного чека), MANAGER+ */
   @Get('admin/:id')
   @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)

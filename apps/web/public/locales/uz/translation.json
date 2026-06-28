@@ -394,6 +394,19 @@
     "student": "Talaba",
     "course": "Kurs"
   },
+  "scan": {
+    "title": "Skanerlash",
+    "subtitle": "Tezkor amallar uchun QR-ni skanerlang",
+    "menu_hint": "QR · to'lovni qabul qilish",
+    "cash_title": "Naqd to'lov",
+    "cash_desc": "Talaba chekini skanerlab buyurtmani yoping",
+    "cash_hint": "Talaba chekidagi QR-ga qarating",
+    "scan_btn": "QR skanerlash",
+    "manual_link": "Kamera ishlamayaptimi? Raqamni kiriting",
+    "manual_label": "Buyurtma raqami",
+    "manual_hint": "Chekdagi raqamni kiriting (masalan, 000123)",
+    "not_found": "Buyurtma topilmadi"
+  },
   "quick_actions": {
     "sheet_title": "Tezkor amallar",
     "back": "← Orqaga",

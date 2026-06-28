@@ -407,6 +407,35 @@ export class PaymentsService {
     };
   }
 
+  /**
+   * Номер заказа (как номер чека) из id — детерминированный хэш.
+   * ВАЖНО: должен совпадать с фронтовым orderNo() (apps/web/src/lib/orderNumber.ts).
+   */
+  private orderNo(prefix: string, id: string): string {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return `${prefix}-${String(h % 1_000_000).padStart(6, '0')}`;
+  }
+
+  /**
+   * GET /payments/admin/resolve/:number — ручной ввод номера заказа (если камера
+   * не сработала). Номер необратим, поэтому пересчитываем хэш по наличным платежам.
+   */
+  async adminResolveOrder(number: string) {
+    const digits = number.replace(/\D/g, '').padStart(6, '0');
+    if (digits.length !== 6) throw new BadRequestException('Invalid order number');
+
+    const candidates = await this.prisma.payment.findMany({
+      where: { provider: PaymentProvider.CASH },
+      select: { id: true },
+      orderBy: { created_at: 'desc' },
+      take: 1000,
+    });
+    const match = candidates.find((c) => this.orderNo('P', c.id) === `P-${digits}`);
+    if (!match) throw new NotFoundException('Order not found');
+    return { id: match.id };
+  }
+
   /** GET /payments/admin/:id — карточка платежа для менеджера (скан QR наличного чека). */
   async adminGetPayment(paymentId: string) {
     const p = await this.prisma.payment.findUnique({

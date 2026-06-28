@@ -112,6 +112,14 @@ export interface AdminPaymentDetail {
   class: { title: string; level: string } | null;
 }
 
+/** Найти заказ по номеру (ручной ввод вместо скана QR). */
+export function useResolveOrder() {
+  return useMutation({
+    mutationFn: async (digits: string) =>
+      (await apiClient.get<{ id: string }>(`/payments/admin/resolve/${digits}`)).data,
+  });
+}
+
 /** Платёж по id для менеджера (скан QR наличного чека). */
 export function useAdminPaymentDetail(id: string | undefined) {
   return useQuery({

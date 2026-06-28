@@ -127,6 +127,9 @@ const AdminStudentsPage = lazy(() =>
 const AdminFinancePage = lazy(() =>
   import('./pages/admin/AdminFinance').then((m) => ({ default: m.AdminFinancePage })),
 );
+const AdminScanPage = lazy(() =>
+  import('./pages/admin/AdminScan').then((m) => ({ default: m.AdminScanPage })),
+);
 const AdminTransfersPage = lazy(() =>
   import('./pages/admin/AdminTransfers').then((m) => ({ default: m.AdminTransfersPage })),
 );
@@ -439,6 +442,7 @@ function AuthenticatedApp() {
             <Route path="/admin/broadcast" element={<AdminBroadcastPage />} />
             <Route path="/admin/audit" element={<AdminAuditPage />} />
             <Route path="/admin/finance" element={<AdminFinancePage />} />
+            <Route path="/admin/scan" element={<AdminScanPage />} />
             <Route path="/admin/transfers" element={<AdminTransfersPage />} />
             <Route path="/admin/trials" element={<AdminTrialsPage />} />
             <Route path="/admin/support" element={<AdminSupportPage />} />

@@ -23,6 +23,7 @@ import {
   Coins,
   Palette,
   Inbox,
+  ScanLine,
   UserRound,
   Cake,
   type LucideIcon,
@@ -760,6 +761,12 @@ export function ProfilePage() {
       label: t('profile.admin_dashboard'),
       hint: badge?.label,
       onClick: () => navigate('/admin'),
+    },
+    {
+      Icon: ScanLine,
+      label: t('scan.title'),
+      hint: t('scan.menu_hint'),
+      onClick: () => navigate('/admin/scan'),
     },
     {
       Icon: Users,

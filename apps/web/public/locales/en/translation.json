@@ -394,6 +394,19 @@
     "student": "Student",
     "course": "Course"
   },
+  "scan": {
+    "title": "Scan",
+    "subtitle": "Scan a QR for quick actions",
+    "menu_hint": "QR · accept payment",
+    "cash_title": "Cash payment",
+    "cash_desc": "Scan the student's check to close the order",
+    "cash_hint": "Point at the QR on the student's check",
+    "scan_btn": "Scan QR",
+    "manual_link": "Camera not working? Enter number",
+    "manual_label": "Order number",
+    "manual_hint": "Enter the number from the check (e.g. 000123)",
+    "not_found": "Order not found"
+  },
   "quick_actions": {
     "sheet_title": "Quick actions",
     "back": "← Back",
