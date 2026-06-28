@@ -85,6 +85,7 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             'docker exec linguolab_api npx prisma migrate resolve --rolled-back "20260612110000_analytics_partition_and_views" 2>/dev/null || true
              docker exec linguolab_api npx prisma migrate resolve --rolled-back "20260621050000_payment_refund_fields" 2>/dev/null || true
+             docker exec linguolab_api npx prisma migrate resolve --rolled-back "20260628000000_course_lessons" 2>/dev/null || true
              docker exec linguolab_api npx prisma migrate deploy'
 
       - name: Verify container running

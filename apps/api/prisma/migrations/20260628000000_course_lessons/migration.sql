@@ -1,5 +1,6 @@
 -- Программа курса (силлабус): уроки/темы направления с материалами и превью.
-CREATE TABLE "course_lessons" (
+-- Идемпотентно (IF NOT EXISTS + guard), т.к. деплой может переприменять миграцию.
+CREATE TABLE IF NOT EXISTS "course_lessons" (
     "id" TEXT NOT NULL,
     "language_id" TEXT NOT NULL,
     "order" INTEGER NOT NULL DEFAULT 0,
@@ -16,7 +17,16 @@ CREATE TABLE "course_lessons" (
     CONSTRAINT "course_lessons_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "course_lessons_language_id_order_idx" ON "course_lessons"("language_id", "order");
+CREATE INDEX IF NOT EXISTS "course_lessons_language_id_order_idx"
+    ON "course_lessons"("language_id", "order");
 
-ALTER TABLE "course_lessons" ADD CONSTRAINT "course_lessons_language_id_fkey"
-    FOREIGN KEY ("language_id") REFERENCES "languages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- Таблица направлений называется "Language" (без @@map).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'course_lessons_language_id_fkey'
+  ) THEN
+    ALTER TABLE "course_lessons" ADD CONSTRAINT "course_lessons_language_id_fkey"
+      FOREIGN KEY ("language_id") REFERENCES "Language"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
