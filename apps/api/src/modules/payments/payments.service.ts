@@ -192,7 +192,9 @@ export class PaymentsService {
               status: true,
             },
           },
-          trial: { select: { id: true, language: { select: { name_ru: true } } } },
+          trial: {
+            select: { id: true, class_id: true, language: { select: { name_ru: true } } },
+          },
         },
       });
       if (!payment) return;
@@ -203,6 +205,27 @@ export class PaymentsService {
           where: { id: payment.trial.id },
           data: { status: 'CONFIRMED' },
         });
+        // «Сразу записывало»: пробная запись в класс заявки.
+        const trialClassId = payment.trial.class_id ?? payment.class_id;
+        if (trialClassId) {
+          const enr = await this.prisma.enrollment.findUnique({
+            where: {
+              student_id_class_id: { student_id: payment.user_id, class_id: trialClassId },
+            },
+            select: { id: true },
+          });
+          if (!enr) {
+            await this.prisma.enrollment.create({
+              data: {
+                student_id: payment.user_id,
+                class_id: trialClassId,
+                status: 'ACTIVE',
+                is_trial: true,
+                trial_expires_at: new Date(Date.now() + 7 * 86_400_000),
+              },
+            });
+          }
+        }
         void this.notifications.scheduleTrialConfirmed(
           payment.user_id,
           payment.trial.language.name_ru,
@@ -211,7 +234,7 @@ export class PaymentsService {
         return;
       }
 
-      // ── Очный пробный урок (новый флоу): заявка создаётся CONFIRMED после оплаты ──
+      // ── Очный пробный урок (новый флоу): после оплаты заявка авто-подтверждается ──
       if (payment.trial_language_id) {
         const existing = await this.prisma.trialLessonRequest.findFirst({
           where: {
@@ -219,9 +242,23 @@ export class PaymentsService {
             language_id: payment.trial_language_id,
             status: { in: ['PENDING', 'CONFIRMED'] },
           },
-          select: { id: true },
+          select: { id: true, status: true, language: { select: { name_ru: true } } },
         });
-        if (!existing) {
+        if (existing) {
+          // Уже есть заявка — если ещё не подтверждена, подтверждаем (был баг:
+          // PENDING-заявка оставалась «ждёт оплату» навсегда).
+          if (existing.status !== 'CONFIRMED') {
+            await this.prisma.trialLessonRequest.update({
+              where: { id: existing.id },
+              data: { status: 'CONFIRMED', payment_id: payment.id, class_id: payment.class_id },
+            });
+            void this.notifications.scheduleTrialConfirmed(
+              payment.user_id,
+              existing.language.name_ru,
+              existing.id,
+            );
+          }
+        } else {
           const tr = await this.prisma.trialLessonRequest.create({
             data: {
               student_id: payment.user_id,
@@ -238,6 +275,27 @@ export class PaymentsService {
             tr.language.name_ru,
             tr.id,
           );
+        }
+
+        // «Сразу записывало»: пробная запись в открытый класс (доступ к занятиям).
+        if (payment.class_id) {
+          const enr = await this.prisma.enrollment.findUnique({
+            where: {
+              student_id_class_id: { student_id: payment.user_id, class_id: payment.class_id },
+            },
+            select: { id: true },
+          });
+          if (!enr) {
+            await this.prisma.enrollment.create({
+              data: {
+                student_id: payment.user_id,
+                class_id: payment.class_id,
+                status: 'ACTIVE',
+                is_trial: true,
+                trial_expires_at: new Date(Date.now() + 7 * 86_400_000),
+              },
+            });
+          }
         }
         return;
       }
