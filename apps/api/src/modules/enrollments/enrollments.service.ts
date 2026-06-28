@@ -86,6 +86,125 @@ export class EnrollmentsService {
   }
 
   /**
+   * GET /enrollments/:id/journey — «путь обучения» студента в классе:
+   * статистика (уроки/часы/посещаемость/рейтинг) + узлы-дорожная карта по урокам.
+   */
+  async getJourney(enrollmentId: string, studentId: string) {
+    const enr = await this.prisma.enrollment.findFirst({
+      where: { id: enrollmentId, student_id: studentId },
+      select: {
+        id: true,
+        status: true,
+        is_trial: true,
+        paid_until: true,
+        enrolled_at: true,
+        class: {
+          select: {
+            id: true,
+            title: true,
+            level: true,
+            status: true,
+            max_students: true,
+            schedule_days: true,
+            schedule_time: true,
+            schedule_duration: true,
+            language: { select: { name_ru: true, flag_emoji: true, color: true } },
+            teacher: {
+              select: {
+                id: true,
+                user: { select: { first_name: true, last_name: true, avatar_url: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!enr) throw new NotFoundException('Enrollment not found');
+    const classId = enr.class.id;
+
+    const lessonsRaw = await this.prisma.lesson.findMany({
+      where: { class_id: classId, status: { not: 'CANCELLED' } },
+      orderBy: { scheduled_at: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        scheduled_at: true,
+        duration_min: true,
+        status: true,
+        attendances: { where: { student_id: studentId }, select: { status: true } },
+      },
+    });
+
+    const studentsCount = await this.prisma.enrollment.count({
+      where: { class_id: classId, status: 'ACTIVE' },
+    });
+    const myRating = await this.prisma.teacherRating.findUnique({
+      where: { student_id_class_id: { student_id: studentId, class_id: classId } },
+      select: { rating: true },
+    });
+
+    let lessonsDone = 0;
+    let hoursDoneMin = 0;
+    let hoursTotalMin = 0;
+    let attended = 0;
+    let attendable = 0;
+    let currentMarked = false;
+
+    const lessons = lessonsRaw.map((l) => {
+      const done = l.status === 'COMPLETED';
+      hoursTotalMin += l.duration_min;
+      if (done) {
+        lessonsDone++;
+        hoursDoneMin += l.duration_min;
+      }
+      const att = l.attendances[0]?.status ?? null;
+      if (done) {
+        attendable++;
+        if (att === 'PRESENT' || att === 'LATE') attended++;
+      }
+      let node: 'done' | 'current' | 'upcoming';
+      if (done) {
+        node = 'done';
+      } else if (!currentMarked) {
+        node = 'current';
+        currentMarked = true;
+      } else {
+        node = 'upcoming';
+      }
+      return {
+        id: l.id,
+        title: l.title,
+        scheduled_at: l.scheduled_at,
+        duration_min: l.duration_min,
+        status: l.status,
+        attendance: att,
+        node,
+      };
+    });
+
+    return {
+      enrollment: {
+        id: enr.id,
+        status: enr.status,
+        is_trial: enr.is_trial,
+        paid_until: enr.paid_until,
+        enrolled_at: enr.enrolled_at,
+      },
+      class: enr.class,
+      students_count: studentsCount,
+      my_rating: myRating?.rating ?? null,
+      stats: {
+        lessons_total: lessons.length,
+        lessons_done: lessonsDone,
+        hours_done: Math.round((hoursDoneMin / 60) * 10) / 10,
+        hours_total: Math.round((hoursTotalMin / 60) * 10) / 10,
+        attendance_pct: attendable > 0 ? Math.round((attended / attendable) * 100) : null,
+      },
+      lessons,
+    };
+  }
+
+  /**
    * GET /enrollments — все записи для менеджера.
    * Фильтр по статусу (опционально).
    */

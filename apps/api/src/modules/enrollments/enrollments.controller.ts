@@ -36,6 +36,12 @@ export class EnrollmentsController {
     return this.enrollmentsService.findMyTransfers(user.id);
   }
 
+  /** GET /enrollments/:id/journey — путь обучения студента в классе. */
+  @Get(':id/journey')
+  getJourney(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.enrollmentsService.getJourney(id, user.id);
+  }
+
   /**
    * GET /enrollments/transfer — все запросы (менеджер). ?status=PENDING|APPROVED|REJECTED|CANCELLED
    */

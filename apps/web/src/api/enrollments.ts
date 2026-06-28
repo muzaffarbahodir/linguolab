@@ -46,6 +46,62 @@ export function useMyEnrollments() {
   });
 }
 
+// ─── Journey (путь обучения в классе) ───────────────────────────────────────────
+
+export interface JourneyLesson {
+  id: string;
+  title: string | null;
+  scheduled_at: string;
+  duration_min: number;
+  status: 'SCHEDULED' | 'COMPLETED';
+  attendance: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | null;
+  node: 'done' | 'current' | 'upcoming';
+}
+
+export interface Journey {
+  enrollment: {
+    id: string;
+    status: 'PENDING' | 'ACTIVE' | 'DROPPED';
+    is_trial: boolean;
+    paid_until: string | null;
+    enrolled_at: string;
+  };
+  class: {
+    id: string;
+    title: string;
+    level: string;
+    status: string;
+    max_students: number;
+    schedule_days: string[];
+    schedule_time: string | null;
+    schedule_duration: number | null;
+    language: { name_ru: string; flag_emoji: string; color: string | null };
+    teacher: {
+      id: string;
+      user: { first_name: string; last_name: string | null; avatar_url: string | null };
+    };
+  };
+  students_count: number;
+  my_rating: number | null;
+  stats: {
+    lessons_total: number;
+    lessons_done: number;
+    hours_done: number;
+    hours_total: number;
+    attendance_pct: number | null;
+  };
+  lessons: JourneyLesson[];
+}
+
+export function useJourney(enrollmentId: string | undefined) {
+  return useQuery({
+    queryKey: ['enrollment', 'journey', enrollmentId],
+    enabled: !!enrollmentId,
+    queryFn: async () =>
+      (await apiClient.get<Journey>(`/enrollments/${enrollmentId}/journey`)).data,
+  });
+}
+
 // ─── Manager: all enrollments ────────────────────────────────────────────────
 
 export interface ManagerEnrollment {

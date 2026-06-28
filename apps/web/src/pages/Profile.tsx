@@ -342,7 +342,7 @@ function StudentStatsCard() {
             {progress.classes.map((c, i) => (
               <button
                 key={i}
-                onClick={() => go('/courses')}
+                onClick={() => go('/schedule')}
                 className="press bg-surface-2/60 flex items-center gap-3 rounded-xl px-3 py-2.5 text-left"
               >
                 <span className="text-xl">{c.language.flag_emoji}</span>

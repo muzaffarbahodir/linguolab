@@ -488,7 +488,13 @@ function EnrollmentCard({ enrollment }: { enrollment: MyEnrollment }) {
           </span>
         </div>
 
-        <h3 className="mb-1 font-semibold leading-tight">{cls.title}</h3>
+        <button
+          onClick={() => navigate(`/my-class/${enrollment.id}`)}
+          className="press mb-1 flex w-full items-center justify-between gap-2 text-left"
+        >
+          <h3 className="font-semibold leading-tight">{cls.title}</h3>
+          <span className="text-faint shrink-0 text-xs">{t('schedule.open_journey')} ›</span>
+        </button>
         <button
           className="text-tg-hint mb-2 flex items-center gap-1 text-xs"
           onClick={() => navigate(`/teachers/${cls.teacher.id}`)}

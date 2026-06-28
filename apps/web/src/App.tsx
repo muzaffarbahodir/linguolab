@@ -56,6 +56,7 @@ const MyRequestsPage = lazy(() =>
 const CashCheckPage = lazy(() =>
   import('./pages/CashCheck').then((m) => ({ default: m.CashCheckPage })),
 );
+const MyClassPage = lazy(() => import('./pages/MyClass').then((m) => ({ default: m.MyClassPage })));
 const CashConfirmPage = lazy(() =>
   import('./pages/CashConfirm').then((m) => ({ default: m.CashConfirmPage })),
 );
@@ -318,6 +319,7 @@ function AuthenticatedApp() {
     ].includes(location.pathname) ||
     location.pathname.startsWith('/cash-check/') ||
     location.pathname.startsWith('/cash-confirm/') ||
+    location.pathname.startsWith('/my-class/') ||
     location.pathname.startsWith('/teacher') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/parent/child/') ||
@@ -411,6 +413,7 @@ function AuthenticatedApp() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/requests" element={<MyRequestsPage />} />
+            <Route path="/my-class/:id" element={<MyClassPage />} />
             <Route path="/cash-check/:id" element={<CashCheckPage />} />
             <Route path="/cash-confirm/:id" element={<CashConfirmPage />} />
             <Route path="/attendance" element={<AttendancePage />} />
