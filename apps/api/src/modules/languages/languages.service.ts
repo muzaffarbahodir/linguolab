@@ -76,6 +76,11 @@ export class LanguagesService {
           select: { classes: { where: { is_active: true, status: { in: [...JOINABLE] } } } },
         },
         reviews: { where: { is_hidden: false }, select: { rating: true } },
+        classes: {
+          select: {
+            _count: { select: { enrollments: { where: { status: 'ACTIVE' } } } },
+          },
+        },
       },
     });
 
@@ -84,13 +89,16 @@ export class LanguagesService {
       const avg = ratings.length
         ? Math.round((ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) * 10) / 10
         : null;
+      const studentsCount = l.classes.reduce((s, c) => s + c._count.enrollments, 0);
       return {
         ...l,
         groups_count: l._count.classes,
+        students_count: studentsCount,
         avg_rating: avg,
         reviews_count: ratings.length,
         _count: undefined,
         reviews: undefined,
+        classes: undefined,
       };
     });
 

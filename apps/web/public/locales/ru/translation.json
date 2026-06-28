@@ -94,6 +94,8 @@
     "filter_open": "С открытой записью",
     "sort_popular": "Популярные",
     "sort_rating": "По рейтингу",
+    "bestseller": "🔥 Хит",
+    "students_n": "{{n}} учеников",
     "groups_open": "{{n}} групп",
     "no_groups_short": "Скоро открытие",
     "all": "Все",

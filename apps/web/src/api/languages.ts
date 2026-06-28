@@ -44,6 +44,8 @@ export interface Language {
   requirements?: string[];
   /** Кол-во открытых групп (для баннера). */
   groups_count?: number;
+  /** Кол-во активных студентов курса (соц-доказательство). */
+  students_count?: number;
   /** Средний рейтинг курса по отзывам. */
   avg_rating?: number | null;
   /** Кол-во отзывов. */

@@ -94,6 +94,8 @@
     "filter_open": "Enrollment open",
     "sort_popular": "Popular",
     "sort_rating": "Top rated",
+    "bestseller": "🔥 Bestseller",
+    "students_n": "{{n}} students",
     "groups_open": "{{n}} groups",
     "no_groups_short": "Opening soon",
     "all": "All",

@@ -60,6 +60,14 @@ export function CoursesPage() {
       );
   }, [languages, query, effectiveCat, sort]);
 
+  // Бестселлер: курс с наибольшим числом студентов (от 3) — соц-доказательство.
+  const bestsellerId = useMemo(() => {
+    const top = [...(languages ?? [])]
+      .filter((l) => (l.students_count ?? 0) >= 3)
+      .sort((a, b) => (b.students_count ?? 0) - (a.students_count ?? 0))[0];
+    return top?.id ?? null;
+  }, [languages]);
+
   return (
     <div className="glass-fade-in flex flex-col gap-4 px-4 pt-6">
       <h1 className="text-xl font-bold">{t('courses.title')}</h1>
@@ -122,6 +130,7 @@ export function CoursesPage() {
             <CourseBanner
               key={lang.id}
               lang={lang}
+              bestseller={lang.id === bestsellerId}
               onClick={() => navigate(`/course/${lang.id}`)}
             />
           ))}
@@ -144,10 +153,19 @@ function Chip({ active, label, onClick }: { active: boolean; label: string; onCl
   );
 }
 
-function CourseBanner({ lang, onClick }: { lang: Language; onClick: () => void }) {
+function CourseBanner({
+  lang,
+  bestseller,
+  onClick,
+}: {
+  lang: Language;
+  bestseller?: boolean;
+  onClick: () => void;
+}) {
   const { t } = useTranslation();
   const accent = lang.color ?? '#6366f1';
   const groups = lang.groups_count ?? 0;
+  const students = lang.students_count ?? 0;
 
   return (
     <button onClick={onClick} className="press glass-card overflow-hidden rounded-2xl text-left">
@@ -161,6 +179,11 @@ function CourseBanner({ lang, onClick }: { lang: Language; onClick: () => void }
           >
             {lang.flag_emoji}
           </div>
+        )}
+        {bestseller && (
+          <span className="bg-warn absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-black">
+            {t('courses.bestseller')}
+          </span>
         )}
       </div>
       <div className="p-3">
@@ -178,7 +201,11 @@ function CourseBanner({ lang, onClick }: { lang: Language; onClick: () => void }
           )}
           <span className="text-muted flex items-center gap-1">
             <Users size={12} />
-            {groups > 0 ? t('courses.groups_open', { n: groups }) : t('courses.no_groups_short')}
+            {students > 0
+              ? t('courses.students_n', { n: students })
+              : groups > 0
+                ? t('courses.groups_open', { n: groups })
+                : t('courses.no_groups_short')}
           </span>
         </div>
       </div>
