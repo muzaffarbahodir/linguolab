@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { LanguageCategory } from '@prisma/client';
+import { Prisma, type LanguageCategory } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
@@ -18,6 +18,23 @@ export interface UpsertLanguageDto {
   duration_label?: string | null;
   includes?: string[];
   requirements?: string[];
+  is_active?: boolean;
+}
+
+export interface LessonMaterial {
+  title: string;
+  url: string;
+  type?: string;
+}
+
+export interface UpsertLessonDto {
+  order?: number;
+  title?: string;
+  description?: string | null;
+  duration_min?: number | null;
+  is_preview?: boolean;
+  video_url?: string | null;
+  materials?: LessonMaterial[];
   is_active?: boolean;
 }
 
@@ -72,7 +89,7 @@ export class LanguagesService {
    * GET /languages/:id/course — детальная страница курса (направления):
    * инфо о курсе + классы (учителя) под ним + рекомендованный (свободный, лучший рейтинг).
    */
-  async getCourseDetail(id: string) {
+  async getCourseDetail(id: string, userId?: string) {
     const course = await this.prisma.language.findUnique({
       where: { id },
       select: {
@@ -205,7 +222,105 @@ export class LanguagesService {
       };
     });
 
-    return { course, classes: mapped, recommended_class_id: recommended?.id ?? null, offers };
+    // Программа курса + доступ к материалам.
+    // Записан (ACTIVE) на любую группу этого направления → материалы открыты.
+    const enrolled = userId
+      ? (await this.prisma.enrollment.count({
+          where: { student_id: userId, status: 'ACTIVE', class: { language_id: id } },
+        })) > 0
+      : false;
+
+    const lessonsRaw = await this.prisma.courseLesson.findMany({
+      where: { language_id: id, is_active: true },
+      orderBy: { order: 'asc' },
+    });
+    const lessons = lessonsRaw.map((l) => {
+      const unlocked = enrolled || l.is_preview;
+      const mats = Array.isArray(l.materials) ? l.materials : [];
+      return {
+        id: l.id,
+        order: l.order,
+        title: l.title,
+        description: l.description,
+        duration_min: l.duration_min,
+        is_preview: l.is_preview,
+        unlocked,
+        // URL отдаём только при доступе — не светим ссылки незаписанным.
+        video_url: unlocked ? l.video_url : null,
+        materials: unlocked ? mats : [],
+        materials_count: mats.length,
+      };
+    });
+
+    return {
+      course,
+      classes: mapped,
+      recommended_class_id: recommended?.id ?? null,
+      offers,
+      lessons,
+      enrolled,
+    };
+  }
+
+  // ─── Программа курса (CourseLesson) — admin CRUD ───────────────────────────────
+
+  /** Все уроки направления (включая выключенные/скрытые) — для редактора. */
+  listLessonsAdmin(languageId: string) {
+    return this.prisma.courseLesson.findMany({
+      where: { language_id: languageId },
+      orderBy: { order: 'asc' },
+    });
+  }
+
+  async createLesson(languageId: string, dto: UpsertLessonDto) {
+    const lang = await this.prisma.language.findUnique({ where: { id: languageId } });
+    if (!lang) throw new NotFoundException('Language not found');
+    // По умолчанию ставим в конец программы.
+    const last = await this.prisma.courseLesson.findFirst({
+      where: { language_id: languageId },
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    });
+    return this.prisma.courseLesson.create({
+      data: {
+        language_id: languageId,
+        order: dto.order ?? (last ? last.order + 1 : 0),
+        title: dto.title ?? '',
+        description: dto.description ?? null,
+        duration_min: dto.duration_min ?? null,
+        is_preview: dto.is_preview ?? false,
+        video_url: dto.video_url ?? null,
+        materials: (dto.materials ?? []) as unknown as Prisma.InputJsonValue,
+        is_active: dto.is_active ?? true,
+      },
+    });
+  }
+
+  async updateLesson(lessonId: string, dto: UpsertLessonDto) {
+    const existing = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!existing) throw new NotFoundException('Lesson not found');
+    return this.prisma.courseLesson.update({
+      where: { id: lessonId },
+      data: {
+        ...(dto.order !== undefined ? { order: dto.order } : {}),
+        ...(dto.title !== undefined ? { title: dto.title } : {}),
+        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        ...(dto.duration_min !== undefined ? { duration_min: dto.duration_min } : {}),
+        ...(dto.is_preview !== undefined ? { is_preview: dto.is_preview } : {}),
+        ...(dto.video_url !== undefined ? { video_url: dto.video_url } : {}),
+        ...(dto.materials !== undefined
+          ? { materials: dto.materials as unknown as Prisma.InputJsonValue }
+          : {}),
+        ...(dto.is_active !== undefined ? { is_active: dto.is_active } : {}),
+      },
+    });
+  }
+
+  async deleteLesson(lessonId: string) {
+    const existing = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!existing) throw new NotFoundException('Lesson not found');
+    await this.prisma.courseLesson.delete({ where: { id: lessonId } });
+    return { ok: true };
   }
 
   // ─── Admin (SUPER_ADMIN) ──────────────────────────────────────────────────────

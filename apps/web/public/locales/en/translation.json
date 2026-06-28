@@ -131,7 +131,15 @@
     "no_groups": "No open groups yet",
     "no_rating": "No ratings",
     "recommended": "Recommended",
-    "enroll_pay": "Enroll"
+    "enroll_pay": "Enroll",
+    "curriculum_title": "Course content",
+    "lessons_n": "{{n}} lessons",
+    "min_n": "{{n}} min",
+    "materials_n": "{{n}} materials",
+    "preview_free": "Free",
+    "watch_video": "Watch video",
+    "locked_hint": "This lesson opens after you pay for the course",
+    "curriculum_locked_hint": "🔒 Full curriculum and materials — after enrolling"
   },
   "profile": {
     "progress": "Overall progress",
@@ -827,6 +835,28 @@
       "f_includes": "What's included (one per line)",
       "f_requirements": "What you need (one per line)",
       "f_active": "Show to students"
+    },
+    "curriculum": {
+      "open": "Course content",
+      "title": "Course content",
+      "desc": "Lessons, materials and preview",
+      "add": "Lesson",
+      "edit": "Edit lesson",
+      "save": "Save",
+      "delete": "Delete",
+      "delete_confirm": "Remove this lesson from the curriculum?",
+      "empty": "No lessons yet — add the first one",
+      "title_required": "Enter a lesson title",
+      "f_title": "Lesson title",
+      "f_title_ph": "Lesson 1. Greetings and the alphabet",
+      "f_desc": "Description",
+      "f_duration": "Duration, min",
+      "f_video": "Video link",
+      "f_materials": "Materials",
+      "f_materials_ph": "Notes | https://...\nSlides | https://...",
+      "f_materials_hint": "One per line: Title | url",
+      "f_preview": "Free preview lesson",
+      "f_active": "Show in curriculum"
     },
     "announce": {
       "title": "Marquee",

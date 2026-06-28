@@ -131,7 +131,15 @@
     "no_groups": "Hozircha ochiq guruhlar yo'q",
     "no_rating": "Bahosiz",
     "recommended": "Tavsiya etamiz",
-    "enroll_pay": "Yozilish"
+    "enroll_pay": "Yozilish",
+    "curriculum_title": "Kurs dasturi",
+    "lessons_n": "{{n}} dars",
+    "min_n": "{{n}} daq",
+    "materials_n": "{{n}} material",
+    "preview_free": "Bepul",
+    "watch_video": "Videoni ko'rish",
+    "locked_hint": "Bu dars kursni to'lagandan keyin ochiladi",
+    "curriculum_locked_hint": "🔒 To'liq dastur va materiallar — yozilgandan keyin"
   },
   "profile": {
     "progress": "Umumiy jarayon",
@@ -827,6 +835,28 @@
       "f_includes": "Kursga nimalar kiradi (har bir qatorga bittadan)",
       "f_requirements": "Nima kerak bo'ladi (har bir qatorga bittadan)",
       "f_active": "Talabalarga ko'rsatish"
+    },
+    "curriculum": {
+      "open": "Kurs dasturi",
+      "title": "Kurs dasturi",
+      "desc": "Darslar, materiallar va preview",
+      "add": "Dars",
+      "edit": "Darsni tahrirlash",
+      "save": "Saqlash",
+      "delete": "O'chirish",
+      "delete_confirm": "Darsni dasturdan o'chirasizmi?",
+      "empty": "Hozircha dars yo'q — birinchisini qo'shing",
+      "title_required": "Dars nomini kiriting",
+      "f_title": "Dars nomi",
+      "f_title_ph": "1-dars. Salomlashish va alifbo",
+      "f_desc": "Tavsif",
+      "f_duration": "Davomiyligi, daq",
+      "f_video": "Video havola",
+      "f_materials": "Materiallar",
+      "f_materials_ph": "Konspekt | https://...\nTaqdimot | https://...",
+      "f_materials_hint": "Har qatorda: Nomi | havola",
+      "f_preview": "Bepul preview dars",
+      "f_active": "Dasturda ko'rsatish"
     },
     "announce": {
       "title": "Yuguruvchi satr",

@@ -2,13 +2,32 @@
  * CourseDetail — страница курса (направления): инфо + что входит + что нужно иметь
  * + список учителей/групп с рекомендованным вариантом. Route: /course/:languageId
  */
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Clock, Check, Star, Sparkles, Users, GraduationCap, School } from 'lucide-react';
+import WebApp from '@twa-dev/sdk';
+import {
+  Clock,
+  Check,
+  Star,
+  Sparkles,
+  Users,
+  GraduationCap,
+  School,
+  Lock,
+  PlayCircle,
+  FileText,
+  ChevronDown,
+} from 'lucide-react';
 
 import { useBackButton } from '../hooks/useBackButton';
 import { useCurrency } from '../hooks/useCurrency';
-import { useCourseDetail, type CourseClass, type TeacherOffer } from '../api/languages';
+import {
+  useCourseDetail,
+  type CourseClass,
+  type TeacherOffer,
+  type CourseLesson,
+} from '../api/languages';
 import { useRequestTrial } from '../api/trial-lessons';
 import { useAuthStore } from '../store/auth';
 import { LEVEL_COLOR } from '../lib/status';
@@ -145,6 +164,9 @@ export function CourseDetailPage() {
           </div>
         )}
 
+        {/* Программа курса */}
+        <CurriculumSection lessons={data.lessons} accent={accent} enrolled={data.enrolled} />
+
         {/* Пробный урок */}
         <div className="flex gap-2">
           <button
@@ -210,6 +232,110 @@ export function CourseDetailPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function CurriculumSection({
+  lessons,
+  accent,
+  enrolled,
+}: {
+  lessons: CourseLesson[];
+  accent: string;
+  enrolled: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState<string | null>(null);
+  if (!lessons.length) return null;
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-muted text-xs font-semibold uppercase tracking-wide">
+          {t('course.curriculum_title')}
+        </p>
+        <span className="text-faint text-xs">{t('course.lessons_n', { n: lessons.length })}</span>
+      </div>
+      <div className="glass-card overflow-hidden rounded-2xl">
+        {lessons.map((l, i) => {
+          const isOpen = open === l.id;
+          return (
+            <div key={l.id} className={i > 0 ? 'border-hairline border-t' : ''}>
+              <button
+                onClick={() =>
+                  l.unlocked
+                    ? setOpen((o) => (o === l.id ? null : l.id))
+                    : toast.info(t('course.locked_hint'))
+                }
+                className="press flex w-full items-center gap-3 px-4 py-3 text-left"
+              >
+                <span className="text-faint w-4 text-center text-xs font-bold tabular-nums">
+                  {i + 1}
+                </span>
+                {l.unlocked ? (
+                  <PlayCircle size={18} style={{ color: accent }} className="shrink-0" />
+                ) : (
+                  <Lock size={15} className="text-faint shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{l.title}</p>
+                  <div className="text-faint flex items-center gap-2 text-xs">
+                    {l.duration_min ? (
+                      <span className="flex items-center gap-0.5">
+                        <Clock size={11} /> {t('course.min_n', { n: l.duration_min })}
+                      </span>
+                    ) : null}
+                    {l.materials_count > 0 && (
+                      <span>· {t('course.materials_n', { n: l.materials_count })}</span>
+                    )}
+                  </div>
+                </div>
+                {l.is_preview && (
+                  <span className="bg-ok/15 text-ok shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold">
+                    {t('course.preview_free')}
+                  </span>
+                )}
+                {l.unlocked && (
+                  <ChevronDown
+                    size={15}
+                    className="text-faint shrink-0"
+                    style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
+                  />
+                )}
+              </button>
+              {isOpen && l.unlocked && (
+                <div className="space-y-2 px-4 pb-3">
+                  {l.description && (
+                    <p className="text-muted text-xs leading-relaxed">{l.description}</p>
+                  )}
+                  {l.video_url && (
+                    <button
+                      onClick={() => WebApp.openLink(l.video_url!)}
+                      className="glass-btn press flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold"
+                    >
+                      <PlayCircle size={14} /> {t('course.watch_video')}
+                    </button>
+                  )}
+                  {l.materials.map((m, mi) => (
+                    <button
+                      key={mi}
+                      onClick={() => WebApp.openLink(m.url)}
+                      className="bg-surface-2 press flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs"
+                    >
+                      <FileText size={14} className="text-faint shrink-0" />
+                      <span className="flex-1 truncate">{m.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {!enrolled && lessons.some((l) => !l.unlocked) && (
+        <p className="text-faint mt-2 text-xs">{t('course.curriculum_locked_hint')}</p>
+      )}
     </div>
   );
 }

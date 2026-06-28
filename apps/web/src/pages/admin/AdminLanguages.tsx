@@ -7,6 +7,7 @@ import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
+import { ListChecks, ChevronRight } from 'lucide-react';
 
 import { useBackButton } from '../../hooks/useBackButton';
 import { ImageUploadField } from '../../components/ImageUploadField';
@@ -209,6 +210,18 @@ export function AdminLanguagesPage() {
             <h3 className="mb-4 text-base font-bold">
               {draft.id ? t('admin.languages.edit') : t('admin.languages.add')}
             </h3>
+
+            {draft.id && (
+              <button
+                onClick={() => navigate(`/admin/languages/${draft.id}/lessons`)}
+                className="bg-brand/12 text-brand-400 press mb-4 flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold"
+              >
+                <span className="flex items-center gap-2">
+                  <ListChecks size={16} /> {t('admin.curriculum.open')}
+                </span>
+                <ChevronRight size={16} />
+              </button>
+            )}
 
             <div className="flex flex-col gap-3">
               <Field label={t('admin.languages.f_name')}>

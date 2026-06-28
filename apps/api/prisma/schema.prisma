@@ -240,6 +240,30 @@ model Language {
   placement_tests  PlacementTest[]
   class_requests   ClassRequest[]
   teacher_offers   TeacherOffer[]
+  course_lessons   CourseLesson[]
+}
+
+/// Программа курса (силлабус): упорядоченный список уроков/тем направления.
+/// Первый урок можно пометить is_preview — открыт бесплатно как демо.
+/// Материалы (видео/файлы) доступны только записанным студентам или в превью.
+model CourseLesson {
+  id           String   @id @default(cuid())
+  language_id  String
+  order        Int      @default(0) // позиция в программе
+  title        String
+  description  String?
+  duration_min Int? // длительность в минутах (для отображения)
+  is_preview   Boolean  @default(false) // бесплатный демо-урок
+  video_url    String? // ссылка на видео (запись/демо)
+  materials    Json     @default("[]") // [{ title, url, type }]
+  is_active    Boolean  @default(true)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  language Language @relation(fields: [language_id], references: [id], onDelete: Cascade)
+
+  @@index([language_id, order])
+  @@map("course_lessons")
 }
 
 // =====================

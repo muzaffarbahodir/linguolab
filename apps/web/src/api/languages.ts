@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
 
 /** Категория направления — группирует каталог (языки vs экзамены). */
@@ -88,11 +88,47 @@ export interface TeacherOffer {
   };
 }
 
+export interface LessonMaterial {
+  title: string;
+  url: string;
+  type?: string;
+}
+
+/** Урок программы курса (как видит студент). Материалы открыты при превью/записи. */
+export interface CourseLesson {
+  id: string;
+  order: number;
+  title: string;
+  description: string | null;
+  duration_min: number | null;
+  is_preview: boolean;
+  unlocked: boolean;
+  video_url: string | null;
+  materials: LessonMaterial[];
+  materials_count: number;
+}
+
+/** Урок в редакторе админа (полные поля). */
+export interface AdminCourseLesson {
+  id: string;
+  language_id: string;
+  order: number;
+  title: string;
+  description: string | null;
+  duration_min: number | null;
+  is_preview: boolean;
+  video_url: string | null;
+  materials: LessonMaterial[];
+  is_active: boolean;
+}
+
 export interface CourseDetail {
   course: Language;
   classes: CourseClass[];
   recommended_class_id: string | null;
   offers: TeacherOffer[];
+  lessons: CourseLesson[];
+  enrolled: boolean;
 }
 
 async function fetchLanguages(): Promise<Language[]> {
@@ -115,6 +151,44 @@ export function useCourseDetail(languageId: string | undefined) {
     queryFn: async () => {
       const res = await apiClient.get<CourseDetail>(`/languages/${languageId}/course`);
       return res.data;
+    },
+  });
+}
+
+// ─── Программа курса — админ-редактор ──────────────────────────────────────────
+
+export type LessonInput = Partial<Omit<AdminCourseLesson, 'id' | 'language_id'>>;
+
+export function useAdminLessons(languageId: string | undefined) {
+  return useQuery({
+    queryKey: ['admin', 'lessons', languageId],
+    enabled: !!languageId,
+    queryFn: async () =>
+      (await apiClient.get<AdminCourseLesson[]>(`/languages/${languageId}/lessons/admin`)).data,
+  });
+}
+
+export function useUpsertLesson(languageId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...dto }: LessonInput & { id?: string }) => {
+      if (id) return (await apiClient.patch(`/languages/lessons/${id}`, dto)).data;
+      return (await apiClient.post(`/languages/${languageId}/lessons`, dto)).data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'lessons', languageId] });
+      void qc.invalidateQueries({ queryKey: ['course-detail', languageId] });
+    },
+  });
+}
+
+export function useDeleteLesson(languageId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => (await apiClient.delete(`/languages/lessons/${id}`)).data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'lessons', languageId] });
+      void qc.invalidateQueries({ queryKey: ['course-detail', languageId] });
     },
   });
 }

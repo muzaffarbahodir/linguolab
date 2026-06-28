@@ -2,7 +2,13 @@ import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/commo
 import { Role } from '@prisma/client';
 
 import { Roles } from '../auth/decorators/roles.decorator';
-import { LanguagesService, type UpsertLanguageDto } from './languages.service';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequestUser } from '../auth/strategies/jwt.strategy';
+import {
+  LanguagesService,
+  type UpsertLanguageDto,
+  type UpsertLessonDto,
+} from './languages.service';
 
 @Controller('languages')
 export class LanguagesController {
@@ -14,10 +20,10 @@ export class LanguagesController {
     return this.languagesService.findAll();
   }
 
-  /** GET /languages/:id/course — страница курса: инфо + учителя/классы + рекомендация. */
+  /** GET /languages/:id/course — страница курса: инфо + учителя/классы + программа. */
   @Get(':id/course')
-  getCourseDetail(@Param('id') id: string) {
-    return this.languagesService.getCourseDetail(id);
+  getCourseDetail(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.languagesService.getCourseDetail(id, user.id);
   }
 
   // ─── Admin (SUPER_ADMIN) ──────────────────────────────────────────────────────
@@ -48,5 +54,35 @@ export class LanguagesController {
   @Roles(Role.SUPER_ADMIN)
   remove(@Param('id') id: string) {
     return this.languagesService.remove(id);
+  }
+
+  // ─── Программа курса (CourseLesson) ───────────────────────────────────────────
+
+  /** GET /languages/:id/lessons/admin — все уроки направления для редактора. */
+  @Get(':id/lessons/admin')
+  @Roles(Role.SUPER_ADMIN)
+  listLessonsAdmin(@Param('id') id: string) {
+    return this.languagesService.listLessonsAdmin(id);
+  }
+
+  /** POST /languages/:id/lessons — добавить урок в программу. */
+  @Post(':id/lessons')
+  @Roles(Role.SUPER_ADMIN)
+  createLesson(@Param('id') id: string, @Body() dto: UpsertLessonDto) {
+    return this.languagesService.createLesson(id, dto);
+  }
+
+  /** PATCH /languages/lessons/:lessonId — обновить урок. */
+  @Patch('lessons/:lessonId')
+  @Roles(Role.SUPER_ADMIN)
+  updateLesson(@Param('lessonId') lessonId: string, @Body() dto: UpsertLessonDto) {
+    return this.languagesService.updateLesson(lessonId, dto);
+  }
+
+  /** DELETE /languages/lessons/:lessonId — удалить урок. */
+  @Delete('lessons/:lessonId')
+  @Roles(Role.SUPER_ADMIN)
+  deleteLesson(@Param('lessonId') lessonId: string) {
+    return this.languagesService.deleteLesson(lessonId);
   }
 }
