@@ -10,7 +10,16 @@ import type { LucideIcon } from 'lucide-react';
 
 import { useBackButton } from '../hooks/useBackButton';
 import { DECKS } from '../games/decks';
-import { loadSrs, dueCount, loadXp, pullCloud, type XpState } from '../games/srs';
+import {
+  loadSrs,
+  dueCount,
+  loadXp,
+  applyProgress,
+  serializeProgress,
+  type XpState,
+  type ProgressBlob,
+} from '../games/srs';
+import { fetchGameProgress, putGameProgress } from '../api/gameProgress';
 import { LevelCard } from '../games/LevelCard';
 
 interface GameItem {
@@ -33,12 +42,26 @@ export function MiniGamesPage() {
   const [xp, setXp] = useState<XpState>(() => loadXp());
   const [due, setDue] = useState(() => dueCount(loadSrs(), allIds));
 
-  // Тянем прогресс из CloudStorage (кросс-девайс) и обновляем карточку.
+  // Кросс-девайс синхронизация через бэкенд: тянем серверный блоб, сливаем с
+  // локальным (макс XP, свежие карточки), показываем и пушим слитое обратно —
+  // так ПК и телефон сходятся при каждом заходе в хаб.
   useEffect(() => {
-    pullCloud((merged) => {
-      setXp(merged);
-      setDue(dueCount(loadSrs(), allIds));
-    });
+    let cancelled = false;
+    void (async () => {
+      try {
+        const server = (await fetchGameProgress()) as Partial<ProgressBlob> | null;
+        const merged = applyProgress(server);
+        if (cancelled) return;
+        setXp(merged);
+        setDue(dueCount(loadSrs(), allIds));
+        void putGameProgress(serializeProgress());
+      } catch {
+        /* офлайн/нет авторизации — остаёмся на локальном прогрессе */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [allIds]);
 
   const games: GameItem[] = [

@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import type { StudyFormat, StudyMode, LanguageCategory } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
@@ -359,6 +359,36 @@ export class UsersService {
 
     const me = ranked.find((r) => r.is_me) ?? null;
     return { top: ranked.slice(0, 30), me, total: ranked.length };
+  }
+
+  /**
+   * GET /users/me/game-progress — кросс-девайс прогресс мини-игр (XP + SRS).
+   * Возвращает сырой JSON-блоб (или null). Слияние делает клиент.
+   */
+  async getGameProgress(userId: string) {
+    const row = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { game_progress: true },
+    });
+    return { data: row?.game_progress ?? null };
+  }
+
+  /**
+   * PUT /users/me/game-progress — сохранить прогресс мини-игр (клиент шлёт уже
+   * слитый блоб). Ограничиваем размер, чтобы не раздувать строку.
+   */
+  async saveGameProgress(userId: string, data: unknown) {
+    if (data == null || typeof data !== 'object') {
+      throw new BadRequestException('Invalid progress');
+    }
+    if (JSON.stringify(data).length > 200_000) {
+      throw new BadRequestException('Progress too large');
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { game_progress: data as unknown as Prisma.InputJsonValue },
+    });
+    return { ok: true };
   }
 
   /**

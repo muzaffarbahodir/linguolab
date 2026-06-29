@@ -169,4 +169,20 @@ export const sfx = {
       tone(c, { freq: f, dur: 0.6, type: 'triangle', gain: 0.07, at: 0.17 }),
     );
   },
+  /**
+   * «Набор инерции» как rank-up в CS2: частые тики вначале, редеющие к концу
+   * (трещотка тормозит), питч ползёт вверх. Длительность = под анимацию полосы.
+   */
+  xpRamp: (durSec = 1.8) => {
+    const c = voice();
+    if (!c) return;
+    const N = 30;
+    for (let i = 0; i < N; i++) {
+      const f = i / (N - 1);
+      const at = (1 - Math.sqrt(1 - f)) * durSec; // плотно в начале, реже к концу
+      tone(c, { freq: 480 + f * 760, dur: 0.035, type: 'square', gain: 0.03, at });
+    }
+    // мягкий «дзынь» в конце
+    tone(c, { freq: 1320, dur: 0.18, type: 'triangle', gain: 0.06, at: durSec });
+  },
 };

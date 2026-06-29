@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Put,
   Body,
   Param,
   Query,
@@ -89,6 +90,18 @@ export class UsersController {
   @Get('leaderboard')
   leaderboard(@CurrentUser() user: RequestUser) {
     return this.usersService.getLeaderboard(user.id);
+  }
+
+  /** GET /users/me/game-progress — кросс-девайс прогресс мини-игр. */
+  @Get('me/game-progress')
+  gameProgress(@CurrentUser() user: RequestUser) {
+    return this.usersService.getGameProgress(user.id);
+  }
+
+  /** PUT /users/me/game-progress — сохранить слитый прогресс мини-игр. */
+  @Put('me/game-progress')
+  saveGameProgress(@CurrentUser() user: RequestUser, @Body() body: { data?: unknown }) {
+    return this.usersService.saveGameProgress(user.id, body?.data);
   }
 
   /** PATCH /users/me/notification-channels */

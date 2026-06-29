@@ -170,6 +170,10 @@ model User {
   /// Telegram заблокировал бота — больше не шлём уведомления
   tg_blocked          Boolean   @default(false)
 
+  /// Прогресс мини-игр (XP/уровень + SRS-карточки слов). Кросс-девайс хранилище:
+  /// клиент льёт сюда итог, при заходе в хаб тянет и сливает с локальным.
+  game_progress       Json?
+
   last_active_at      DateTime  @default(now())
   created_at          DateTime  @default(now())
   updated_at          DateTime  @updatedAt

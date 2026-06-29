@@ -215,6 +215,39 @@ export function pushCloud(): void {
   }
 }
 
+export interface ProgressBlob {
+  xp: XpState;
+  srs: SrsMap;
+}
+
+/** Текущий локальный прогресс одним блобом (для отправки на сервер). */
+export function serializeProgress(): ProgressBlob {
+  return { xp: loadXp(), srs: loadSrs() };
+}
+
+/**
+ * Слить серверный блоб в локальный (макс XP, свежее состояние карточек) и
+ * записать локально. Возвращает обновлённый XP. lastGain локальный не трогаем.
+ */
+export function applyProgress(blob: Partial<ProgressBlob> | null): XpState {
+  const local = loadXp();
+  if (!blob || typeof blob !== 'object') return local;
+  let mergedXp = local;
+  if (blob.xp) {
+    mergedXp = {
+      xp: Math.max(local.xp, blob.xp.xp ?? 0),
+      learned: Math.max(local.learned, blob.xp.learned ?? 0),
+      best: mergeBest(local.best, blob.xp.best ?? {}),
+      lastGain: local.lastGain,
+    };
+    writeJson(XP_KEY, mergedXp);
+  }
+  if (blob.srs) {
+    writeJson(SRS_KEY, mergeSrs(loadSrs(), blob.srs));
+  }
+  return mergedXp;
+}
+
 /** Подтянуть и слить XP + SRS из CloudStorage. cb с обновлённым XP после слияния. */
 export function pullCloud(cb?: (xp: XpState) => void): void {
   try {
