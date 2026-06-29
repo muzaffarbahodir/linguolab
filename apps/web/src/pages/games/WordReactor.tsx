@@ -25,7 +25,7 @@ import {
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
 import { ScoreCounter } from '../../games/ScoreCounter';
-import { DiscoBurst } from '../../games/DiscoBurst';
+import { DiscoBurst, DiscoRays } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'play' | 'over';
 
@@ -91,6 +91,7 @@ export function WordReactorPage() {
   // ─── изменяемое состояние движка (читает rAF, не триггерит ре-рендер) ──────
   const laneRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+  const runningRef = useRef(false);
   const yRef = useRef(0);
   const speedRef = useRef(120);
   const lastTsRef = useRef(0);
@@ -118,6 +119,7 @@ export function WordReactorPage() {
   useBackButton(() => navigate('/mini-games'));
 
   const stopLoop = useCallback(() => {
+    runningRef.current = false;
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
   }, []);
@@ -236,7 +238,7 @@ export function WordReactorPage() {
         s.score += gain;
         s.xpGain += 4 + Math.min(s.combo, 10);
         if (wasNew) practicedRef.current.add(target.id);
-        s.level = 1 + Math.floor(s.score / 120);
+        s.level = 1 + Math.floor(s.score / 80);
         haptic('success');
         sfx.correct();
         setFlash('good');
@@ -279,6 +281,7 @@ export function WordReactorPage() {
 
   const loop = useCallback(
     (ts: number) => {
+      if (!runningRef.current) return; // петля остановлена — не перезапускаемся
       if (lastTsRef.current === 0) lastTsRef.current = ts;
       const dt = Math.min(0.05, (ts - lastTsRef.current) / 1000);
       lastTsRef.current = ts;
@@ -296,6 +299,7 @@ export function WordReactorPage() {
   );
 
   const startGame = useCallback(() => {
+    stopLoop(); // на всякий случай гасим прошлую петлю перед новой
     const map = loadSrs();
     srsRef.current = map;
     queueRef.current = prioritize(
@@ -312,12 +316,13 @@ export function WordReactorPage() {
     setResult(null);
     setPhase('play');
     // дождёмся монтирования полосы перед первым раундом
+    runningRef.current = true;
     requestAnimationFrame(() => {
       laneHRef.current = laneRef.current?.clientHeight ?? 480;
       spawnRound();
       rafRef.current = requestAnimationFrame(loop);
     });
-  }, [deck, loop, spawnRound]);
+  }, [deck, loop, spawnRound, stopLoop]);
 
   // ─── рендер ────────────────────────────────────────────────────────────────
   return (
@@ -486,7 +491,7 @@ export function WordReactorPage() {
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
-                  width: `${Math.min(100, (hud.score % 120) / 1.2)}%`,
+                  width: `${Math.min(100, (hud.score % 80) / 0.8)}%`,
                   background: 'linear-gradient(90deg,#38E1A4,#5B9DFF)',
                 }}
               />
@@ -617,7 +622,10 @@ function Over({
   const leveledUp = result.levelAfter > result.levelBefore;
   return (
     <div className="relative z-10 flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-[calc(env(safe-area-inset-top)+1.5rem)] text-center">
-      <span className="text-[10px] tracking-[3px] text-[#7c8595]">{t('reactor.game_over')}</span>
+      <DiscoRays />
+      <span className="relative text-[10px] tracking-[3px] text-[#7c8595]">
+        {t('reactor.game_over')}
+      </span>
       <div className="mt-2 text-6xl font-bold tabular-nums" style={{ color: '#38E1A4' }}>
         {result.score}
       </div>

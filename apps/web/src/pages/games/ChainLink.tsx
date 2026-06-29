@@ -25,7 +25,7 @@ import {
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
 import { ScoreCounter } from '../../games/ScoreCounter';
-import { DiscoBurst } from '../../games/DiscoBurst';
+import { DiscoBurst, DiscoRays } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'play' | 'over';
 const LIVES = 3;
@@ -545,6 +545,7 @@ function Over({
 }) {
   return (
     <div className="relative z-10 flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-[calc(env(safe-area-inset-top)+1.5rem)] text-center">
+      <DiscoRays />
       <span className="text-[10px] tracking-[3px] text-[#7c8595]">{t('chain.game_over')}</span>
       <div className="mt-2 text-6xl font-bold tabular-nums" style={{ color: '#F5B445' }}>
         {result.matched}

@@ -33,6 +33,7 @@ import {
 } from '../../games/srs';
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
+import { DiscoRays } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'review' | 'over';
 const SESSION_MAX = 15;
@@ -490,6 +491,7 @@ function Over({
   const masteryUp = result.masteryAfter - result.masteryBefore;
   return (
     <div className="relative z-10 flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-[calc(env(safe-area-inset-top)+1.5rem)] text-center">
+      <DiscoRays />
       <span className="text-[10px] tracking-[3px] text-[#7c8595]">{t('dash.done_title')}</span>
       <div className="mt-2 text-6xl font-bold tabular-nums" style={{ color: '#38E1A4' }}>
         {pct}%

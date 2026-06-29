@@ -25,7 +25,7 @@ import {
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
 import { ScoreCounter } from '../../games/ScoreCounter';
-import { DiscoBurst } from '../../games/DiscoBurst';
+import { DiscoBurst, DiscoRays } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'play' | 'over';
 const LIVES = 3;
@@ -76,6 +76,7 @@ export function ReflexGamePage() {
   const [result, setResult] = useState<Result | null>(null);
 
   const rafRef = useRef<number | null>(null);
+  const runningRef = useRef(false);
   const startRef = useRef(0);
   const durRef = useRef(3000);
   const resolvingRef = useRef(false);
@@ -93,6 +94,7 @@ export function ReflexGamePage() {
   useBackButton(() => navigate('/mini-games'));
 
   const stopLoop = useCallback(() => {
+    runningRef.current = false;
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
   }, []);
@@ -177,7 +179,7 @@ export function ReflexGamePage() {
         s.score += (10 + Math.round(remaining * 40)) * Math.min(s.combo, 6);
         s.xpGain += 4 + Math.min(s.combo, 10);
         if (wasNew) practicedRef.current.add(target.id);
-        s.level = 1 + Math.floor(s.score / 150);
+        s.level = 1 + Math.floor(s.score / 100);
         haptic('success');
         sfx.correct();
         setFlash('good');
@@ -200,6 +202,7 @@ export function ReflexGamePage() {
 
   const loop = useCallback(
     (now: number) => {
+      if (!runningRef.current) return; // петля остановлена — не перезапускаемся
       if (!resolvingRef.current) {
         const remaining = 1 - (now - startRef.current) / durRef.current;
         setBar(Math.max(0, remaining));
@@ -213,6 +216,7 @@ export function ReflexGamePage() {
   );
 
   const start = useCallback(() => {
+    stopLoop(); // гасим прошлую петлю перед новой
     const map = loadSrs();
     srsRef.current = map;
     queueRef.current = prioritize(map, deckIds);
@@ -224,8 +228,9 @@ export function ReflexGamePage() {
     setResult(null);
     setPhase('play');
     nextRound();
+    runningRef.current = true;
     rafRef.current = requestAnimationFrame(loop);
-  }, [deckIds, loop, nextRound]);
+  }, [deckIds, loop, nextRound, stopLoop]);
 
   const barColor = bar > 0.5 ? '#38E1A4' : bar > 0.25 ? '#F5B445' : '#FF5C7A';
 
@@ -467,6 +472,7 @@ function Over({
   const leveledUp = result.levelAfter > result.levelBefore;
   return (
     <div className="relative z-10 flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-[calc(env(safe-area-inset-top)+1.5rem)] text-center">
+      <DiscoRays />
       <span className="text-[10px] tracking-[3px] text-[#7c8595]">{t('reflex.game_over')}</span>
       <div className="mt-2 text-6xl font-bold tabular-nums" style={{ color: ACCENT }}>
         {result.score}

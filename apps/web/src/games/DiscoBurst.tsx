@@ -33,3 +33,12 @@ export function DiscoBurst({ level, label }: { level: number; label?: string }) 
     </div>
   );
 }
+
+/** Постоянный диско-фон (спин без затухания) — за контентом экрана результата. */
+export function DiscoRays() {
+  return (
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      <div className="disco-rays disco-rays-loop" />
+    </div>
+  );
+}

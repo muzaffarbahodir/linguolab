@@ -934,3 +934,8 @@ html.light .ll-ann-promo {
 .disco-core {
   animation: discoPop 1.5s ease-out forwards;
 }
+/* Постоянные лучи (для экрана результата): крутятся без затухания. */
+.disco-rays-loop {
+  opacity: 0.5;
+  animation: discoSpin 7s linear infinite !important;
+}
