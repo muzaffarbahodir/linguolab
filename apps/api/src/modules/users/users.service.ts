@@ -284,9 +284,14 @@ export class UsersService {
   }
 
   /**
-   * GET /users/leaderboard — рейтинг студентов.
-   * Очки = достижения×50 + посещения×5 + проверенные ДЗ×3. Считаем дёшево
-   * через groupBy. Возвращаем топ-30 + позицию текущего пользователя.
+   * GET /users/leaderboard — рейтинг студентов по очкам реальной учёбы.
+   *
+   * Очки = посещения×10 (PRESENT) / ×5 (LATE) + проверенные ДЗ×5 + достижения×25.
+   * Посещения весят больше всего — рейтинг отражает «кто реально ходит и учится»,
+   * а не у кого случайно набралось достижений. Считаем дёшево через groupBy.
+   *
+   * Порядок детерминирован: очки ↓, затем число посещений ↓, затем имя ↑ —
+   * чтобы при равных очках порядок не «прыгал» между перезагрузками.
    */
   async getLeaderboard(currentUserId: string) {
     const students = await this.prisma.user.findMany({
@@ -294,13 +299,13 @@ export class UsersService {
       select: { id: true, first_name: true, last_name: true, avatar_url: true },
     });
     if (students.length === 0) {
-      return { top: [], me: null };
+      return { top: [], me: null, total: 0 };
     }
 
-    const [ach, att, hw] = await Promise.all([
-      this.prisma.userAchievement.groupBy({ by: ['user_id'], _count: { _all: true } }),
+    const [attByStatus, hw, ach] = await Promise.all([
+      // Посещения с разбивкой по статусу — PRESENT и LATE весят по-разному.
       this.prisma.lessonAttendance.groupBy({
-        by: ['student_id'],
+        by: ['student_id', 'status'],
         where: { status: { in: ['PRESENT', 'LATE'] } },
         _count: { _all: true },
       }),
@@ -309,25 +314,48 @@ export class UsersService {
         where: { status: 'GRADED' },
         _count: { _all: true },
       }),
+      this.prisma.userAchievement.groupBy({ by: ['user_id'], _count: { _all: true } }),
     ]);
 
-    const achMap = new Map(ach.map((a) => [a.user_id, a._count._all]));
-    const attMap = new Map(att.map((a) => [a.student_id, a._count._all]));
+    const presentMap = new Map<string, number>();
+    const lateMap = new Map<string, number>();
+    for (const row of attByStatus) {
+      if (row.status === 'PRESENT') presentMap.set(row.student_id, row._count._all);
+      else if (row.status === 'LATE') lateMap.set(row.student_id, row._count._all);
+    }
     const hwMap = new Map(hw.map((h) => [h.student_id, h._count._all]));
+    const achMap = new Map(ach.map((a) => [a.user_id, a._count._all]));
 
     const ranked = students
       .map((s) => {
+        const present = presentMap.get(s.id) ?? 0;
+        const late = lateMap.get(s.id) ?? 0;
+        const attended = present + late;
         const points =
-          (achMap.get(s.id) ?? 0) * 50 + (attMap.get(s.id) ?? 0) * 5 + (hwMap.get(s.id) ?? 0) * 3;
+          present * 10 + late * 5 + (hwMap.get(s.id) ?? 0) * 5 + (achMap.get(s.id) ?? 0) * 25;
         return {
           id: s.id,
           name: `${s.first_name}${s.last_name ? ' ' + s.last_name[0] + '.' : ''}`,
           avatar_url: s.avatar_url,
           points,
+          _attended: attended,
+          _sortName: (s.first_name ?? '').toLocaleLowerCase('ru'),
         };
       })
-      .sort((a, b) => b.points - a.points)
-      .map((s, i) => ({ ...s, rank: i + 1, is_me: s.id === currentUserId }));
+      .sort(
+        (a, b) =>
+          b.points - a.points ||
+          b._attended - a._attended ||
+          a._sortName.localeCompare(b._sortName, 'ru'),
+      )
+      .map((s, i) => ({
+        id: s.id,
+        name: s.name,
+        avatar_url: s.avatar_url,
+        points: s.points,
+        rank: i + 1,
+        is_me: s.id === currentUserId,
+      }));
 
     const me = ranked.find((r) => r.is_me) ?? null;
     return { top: ranked.slice(0, 30), me, total: ranked.length };

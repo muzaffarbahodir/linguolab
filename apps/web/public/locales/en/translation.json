@@ -186,11 +186,11 @@
   },
   "leaderboard": {
     "title": "Rating",
-    "subtitle": "Points for activity: achievements, attendance, homework",
+    "subtitle": "Points for real study: attendance, homework, achievements",
     "empty": "Leaderboard is empty",
     "you": "You",
     "me": "you",
-    "points_hint": "Points: achievement +50, attended lesson +5, graded homework +3"
+    "points_hint": "Points: attended lesson +10 (late +5), graded homework +5, achievement +25"
   },
   "games": {
     "title": "Mini-games",

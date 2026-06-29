@@ -138,7 +138,9 @@ export function useLeaderboard() {
   return useQuery<Leaderboard>({
     queryKey: ['users', 'leaderboard'],
     queryFn: async () => (await apiClient.get<Leaderboard>('/users/leaderboard')).data,
-    staleTime: 60_000,
+    // Рейтинг должен подтягивать свежие очки при каждом заходе в раздел.
+    staleTime: 15_000,
+    refetchOnMount: 'always',
   });
 }
 

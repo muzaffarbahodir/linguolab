@@ -186,11 +186,11 @@
   },
   "leaderboard": {
     "title": "Reyting",
-    "subtitle": "Faollik uchun ochkolar: yutuqlar, davomat, uy vazifasi",
+    "subtitle": "Haqiqiy o'qish uchun ochkolar: davomat, uy vazifasi, yutuqlar",
     "empty": "Reyting hozircha bo'sh",
     "you": "Siz",
     "me": "siz",
-    "points_hint": "Ochkolar: yutuq +50, qatnashilgan dars +5, tekshirilgan uy vazifasi +3"
+    "points_hint": "Ochkolar: qatnashilgan dars +10 (kechikkan +5), tekshirilgan uy vazifasi +5, yutuq +25"
   },
   "games": {
     "title": "Mini-o'yinlar",
