@@ -55,7 +55,7 @@ export function MiniGamesPage() {
       desc: t('games.dashboard.desc'),
       icon: LayoutDashboard,
       color: '#5B9DFF',
-      soon: true,
+      to: '/mini-games/dashboard',
     },
     {
       id: 'chain',

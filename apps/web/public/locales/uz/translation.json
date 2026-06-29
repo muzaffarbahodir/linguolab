@@ -235,6 +235,27 @@
     "again": "Yana",
     "to_hub": "O'yinlar menyusi"
   },
+  "dash": {
+    "how": "Tarjimani esla, kartani ag'dar va o'zingni bahola. O'ngga sur — bilaman, chapga — yo'q.",
+    "start": "Takrorni boshlash",
+    "exit": "Chiqish",
+    "deck": "To'plam",
+    "words": "so'z",
+    "due": "Takrorga",
+    "your_level": "Daraja",
+    "mastery": "O'zlashtirildi",
+    "recall": "TARJIMANI ESLA",
+    "reveal": "Ag'darish uchun bos",
+    "remember": "Bilaman",
+    "forget": "Bilmayman",
+    "reviewed": "Takrorlandi",
+    "remembered": "Yodlandi",
+    "streak": "Seriya",
+    "done_title": "SESSIYA TUGADI",
+    "again": "Yana",
+    "to_hub": "O'yinlar menyusi",
+    "mastery_up": "O'zlashtirish +{{n}}%"
+  },
   "profile": {
     "progress": "Umumiy jarayon",
     "dash_subject": "O‘rganyapman",

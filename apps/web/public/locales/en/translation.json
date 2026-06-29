@@ -235,6 +235,27 @@
     "again": "Play again",
     "to_hub": "Games menu"
   },
+  "dash": {
+    "how": "Recall the meaning, flip the card and rate yourself. Swipe right — I know, left — I don't.",
+    "start": "Start review",
+    "exit": "Exit",
+    "deck": "Deck",
+    "words": "words",
+    "due": "To review",
+    "your_level": "Level",
+    "mastery": "Mastery",
+    "recall": "RECALL THE MEANING",
+    "reveal": "Tap to flip",
+    "remember": "I know",
+    "forget": "I don't",
+    "reviewed": "Reviewed",
+    "remembered": "Remembered",
+    "streak": "Streak",
+    "done_title": "SESSION DONE",
+    "again": "Play again",
+    "to_hub": "Games menu",
+    "mastery_up": "Mastery +{{n}}%"
+  },
   "profile": {
     "progress": "Overall progress",
     "dash_subject": "Studying",

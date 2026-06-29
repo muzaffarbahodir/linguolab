@@ -120,6 +120,15 @@ export function WordReactorPage() {
 
   useEffect(() => () => stopLoop(), [stopLoop]);
 
+  // Разворачиваем мини-апп на всю высоту — иначе игра не помещается в экран.
+  useEffect(() => {
+    try {
+      WebApp.expand();
+    } catch {
+      /* вне TWA */
+    }
+  }, []);
+
   const speedForLevel = useCallback((level: number) => {
     const fallSec = Math.max(1.5, 2.9 - (level - 1) * 0.13);
     return laneHRef.current / fallSec;
@@ -343,7 +352,7 @@ export function WordReactorPage() {
       {phase === 'play' && round && (
         <div className="relative z-10 flex h-full flex-col">
           {/* HUD */}
-          <div className="flex items-center justify-between px-5 pt-5">
+          <div className="flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1rem)]">
             <div className="flex gap-1">
               {Array.from({ length: LIVES }).map((_, i) => (
                 <Heart
@@ -411,7 +420,7 @@ export function WordReactorPage() {
               <button
                 key={b.key}
                 onClick={() => b.state === 'fall' && resolve(b.correct, b)}
-                className="absolute -translate-x-1/2 select-none rounded-full border px-4 font-bold transition-colors"
+                className="absolute max-w-[44vw] -translate-x-1/2 select-none truncate whitespace-nowrap rounded-full border px-3.5 text-sm font-bold transition-colors"
                 style={{
                   left: `${b.x}%`,
                   top: groupY,
@@ -456,7 +465,7 @@ export function WordReactorPage() {
           </div>
 
           {/* нижний бар уровня */}
-          <div className="px-5 pb-6 pt-2">
+          <div className="px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-2">
             <div className="mb-1 flex justify-between text-[10px] tracking-[2px] text-[#7c8595]">
               <span>{t('reactor.level', { n: hud.level })}</span>
               <span>
@@ -511,15 +520,15 @@ function Intro({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="relative z-10 flex h-full flex-col items-center px-6 pt-16 text-center">
+    <div className="relative z-10 flex h-full flex-col items-center overflow-y-auto px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2rem)] text-center">
       <span className="text-[10px] tracking-[3px] text-[#7c8595]">LINGUOLAB · MINI-GAME</span>
-      <h1 className="mt-2 text-3xl font-bold">
+      <h1 className="mt-2 text-[26px] font-bold leading-tight">
         СЛОВО<span style={{ color: '#38E1A4' }}>-РЕАКТОР</span>
       </h1>
       <p className="mt-2 max-w-xs text-sm text-[#9aa3b2]">{t('reactor.how')}</p>
 
       <div
-        className="mt-6 flex w-full max-w-xs items-center justify-between rounded-2xl border px-4 py-3"
+        className="mt-5 flex w-full max-w-xs items-center justify-between rounded-2xl border px-4 py-3"
         style={{ borderColor: '#1c2230', background: '#10131b' }}
       >
         <div className="text-left">
@@ -564,7 +573,7 @@ function Intro({
         </div>
       </div>
 
-      <div className="mt-auto w-full max-w-xs pb-8">
+      <div className="mt-auto w-full max-w-xs pt-6">
         <button
           onClick={onPlay}
           className="press w-full rounded-2xl py-4 text-base font-bold text-black"
@@ -597,7 +606,7 @@ function Over({
 }) {
   const leveledUp = result.levelAfter > result.levelBefore;
   return (
-    <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
+    <div className="relative z-10 flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-[calc(env(safe-area-inset-top)+1.5rem)] text-center">
       <span className="text-[10px] tracking-[3px] text-[#7c8595]">{t('reactor.game_over')}</span>
       <div className="mt-2 text-6xl font-bold tabular-nums" style={{ color: '#38E1A4' }}>
         {result.score}
