@@ -65,6 +65,7 @@ interface Result {
   boards: number;
   bestCombo: number;
   xpGain: number;
+  capped: boolean;
   levelBefore: number;
   levelAfter: number;
 }
@@ -173,7 +174,7 @@ export function ChainLinkPage() {
     saveSrs(srsRef.current);
     const s = statsRef.current;
     const before = levelFromXp(loadXp().xp).level;
-    const newState = commitGameResult({
+    const res = commitGameResult({
       gameId: 'chain',
       xpGain: s.xpGain,
       score: s.matched,
@@ -183,9 +184,10 @@ export function ChainLinkPage() {
       matched: s.matched,
       boards: s.boards,
       bestCombo: s.bestCombo,
-      xpGain: Math.round(s.xpGain),
+      xpGain: res.awardedXp,
+      capped: res.capped,
       levelBefore: before,
-      levelAfter: levelFromXp(newState.xp).level,
+      levelAfter: levelFromXp(res.xp.xp).level,
     });
     sfx.tada();
     setPhase('over');
@@ -555,8 +557,18 @@ function Over({
       <div className="mt-6 grid w-full max-w-xs grid-cols-3 gap-2">
         <Metric label={t('chain.boards_done')} value={`${result.boards}`} color="#5B9DFF" />
         <Metric label={t('chain.best_combo')} value={`×${result.bestCombo}`} color="#F5B445" />
-        <Metric label="XP" value={`+${result.xpGain}`} color="#38E1A4" />
+        <Metric
+          label="XP"
+          value={result.capped ? '0' : `+${result.xpGain}`}
+          color={result.capped ? '#7c8595' : '#38E1A4'}
+        />
       </div>
+
+      {result.capped && (
+        <p className="mt-4 max-w-xs text-xs leading-relaxed text-[#9aa3b2]">
+          {t('games.xp_capped')}
+        </p>
+      )}
 
       <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
         <button

@@ -60,6 +60,7 @@ interface Result {
   reviewed: number;
   remembered: number;
   xpGain: number;
+  capped: boolean;
   masteryBefore: number;
   masteryAfter: number;
   levelBefore: number;
@@ -133,7 +134,7 @@ export function MemoryDashboardPage() {
     saveSrs(srsRef.current);
     const s = statsRef.current;
     const before = levelFromXp(loadXp().xp).level;
-    const newState = commitGameResult({
+    const res = commitGameResult({
       gameId: 'dashboard',
       xpGain: s.xpGain,
       score: s.remembered,
@@ -142,11 +143,12 @@ export function MemoryDashboardPage() {
     setResult({
       reviewed: s.reviewed,
       remembered: s.remembered,
-      xpGain: Math.round(s.xpGain),
+      xpGain: res.awardedXp,
+      capped: res.capped,
       masteryBefore: masteryBeforeRef.current,
       masteryAfter: deckMastery(srsRef.current, deckIds),
       levelBefore: before,
-      levelAfter: levelFromXp(newState.xp).level,
+      levelAfter: levelFromXp(res.xp.xp).level,
     });
     sfx.tada();
     setPhase('over');
@@ -501,8 +503,18 @@ function Over({
       <div className="mt-6 grid w-full max-w-xs grid-cols-3 gap-2">
         <Metric label={t('dash.reviewed')} value={`${result.reviewed}`} color="#5B9DFF" />
         <Metric label={t('dash.mastery')} value={`${result.masteryAfter}%`} color="#5B9DFF" />
-        <Metric label="XP" value={`+${result.xpGain}`} color="#38E1A4" />
+        <Metric
+          label="XP"
+          value={result.capped ? '0' : `+${result.xpGain}`}
+          color={result.capped ? '#7c8595' : '#38E1A4'}
+        />
       </div>
+
+      {result.capped && (
+        <p className="mt-4 max-w-xs text-xs leading-relaxed text-[#9aa3b2]">
+          {t('games.xp_capped')}
+        </p>
+      )}
 
       {masteryUp > 0 && (
         <div

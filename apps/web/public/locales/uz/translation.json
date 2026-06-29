@@ -201,6 +201,7 @@
     "learned": "So'z",
     "due_now": "{{n}} ta so'zni takrorlash vaqti",
     "footer": "Jarayon qurilmalar o'rtasida sinxronlanadi",
+    "xp_capped": "Bu o'yin uchun bugungi XP allaqachon berildi — lekin bu zo'r mashq 💪",
     "rank": {
       "novice": "Yangi",
       "student": "Shogird",

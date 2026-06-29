@@ -52,6 +52,7 @@ interface GameResult {
   bestCombo: number;
   practiced: number;
   xpGain: number;
+  capped: boolean;
   levelBefore: number;
   levelAfter: number;
 }
@@ -178,18 +179,19 @@ export function WordReactorPage() {
     saveSrs(srsRef.current);
     const s = statsRef.current;
     const before = levelFromXp(loadXp().xp).level;
-    const newState = commitGameResult({
+    const res = commitGameResult({
       gameId: 'reactor',
       xpGain: s.xpGain,
       score: s.score,
       learnedGain: practicedRef.current.size,
     });
-    const after = levelFromXp(newState.xp).level;
+    const after = levelFromXp(res.xp.xp).level;
     setResult({
       score: s.score,
       bestCombo: s.bestCombo,
       practiced: practicedRef.current.size,
-      xpGain: Math.round(s.xpGain),
+      xpGain: res.awardedXp,
+      capped: res.capped,
       levelBefore: before,
       levelAfter: after,
     });
@@ -634,10 +636,20 @@ function Over({
       <div className="mt-6 grid w-full max-w-xs grid-cols-3 gap-2">
         <Stat label={t('reactor.best_combo')} value={`×${result.bestCombo}`} color="#F5B445" />
         <Stat label={t('reactor.practiced')} value={`${result.practiced}`} color="#5B9DFF" />
-        <Stat label="XP" value={`+${result.xpGain}`} color="#38E1A4" />
+        <Stat
+          label="XP"
+          value={result.capped ? '0' : `+${result.xpGain}`}
+          color={result.capped ? '#7c8595' : '#38E1A4'}
+        />
       </div>
 
-      {leveledUp && (
+      {result.capped && (
+        <p className="mt-4 max-w-xs text-xs leading-relaxed text-[#9aa3b2]">
+          {t('games.xp_capped')}
+        </p>
+      )}
+
+      {!result.capped && leveledUp && (
         <div
           className="mt-5 flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold"
           style={{

@@ -42,6 +42,16 @@ export interface XpState {
   learned: number;
   /** XP, заработанный в последней игре — для анимации полосы в хабе. */
   lastGain: number;
+  /** Дата (YYYY-MM-DD) последнего начисления XP по каждой игре — XP даём раз/день. */
+  awarded: Record<string, string>;
+}
+
+/** Локальная дата YYYY-MM-DD (день по часам устройства). */
+function localDate(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
 }
 
 type SrsMap = Record<string, CardState>;
@@ -136,7 +146,7 @@ function shuffle<T>(arr: T[]): void {
 // ─── XP ───────────────────────────────────────────────────────────────────
 
 export function loadXp(): XpState {
-  return readJson<XpState>(XP_KEY, { xp: 0, best: {}, learned: 0, lastGain: 0 });
+  return readJson<XpState>(XP_KEY, { xp: 0, best: {}, learned: 0, lastGain: 0, awarded: {} });
 }
 
 /** Уровень = floor(sqrt(xp / 50)) + 1. Порог уровня растёт квадратично. */
@@ -151,23 +161,31 @@ export function levelFromXp(xp: number): { level: number; into: number; need: nu
  * Записать результат игры: добавить XP, обновить рекорд и счётчик выученных.
  * Зеркалит итог в CloudStorage. Возвращает новое состояние.
  */
+/**
+ * Записать результат игры. XP начисляем **раз в день на каждую игру**: повторные
+ * заходы в ту же игру за день не дают XP (capped=true) — только практика. Слова
+ * (learned) и рекорд (best) обновляются всегда. Возвращает реально начисленный XP.
+ */
 export function commitGameResult(args: {
   gameId: string;
   xpGain: number;
   score: number;
   learnedGain: number;
-}): XpState {
+}): { xp: XpState; awardedXp: number; capped: boolean } {
   const cur = loadXp();
-  const gain = Math.max(0, Math.round(args.xpGain));
+  const today = localDate();
+  const capped = (cur.awarded ?? {})[args.gameId] === today;
+  const gain = capped ? 0 : Math.max(0, Math.round(args.xpGain));
   const next: XpState = {
     xp: cur.xp + gain,
     learned: cur.learned + Math.max(0, args.learnedGain),
     best: { ...cur.best, [args.gameId]: Math.max(cur.best[args.gameId] ?? 0, args.score) },
     lastGain: gain,
+    awarded: capped ? (cur.awarded ?? {}) : { ...(cur.awarded ?? {}), [args.gameId]: today },
   };
   writeJson(XP_KEY, next);
   pushCloud();
-  return next;
+  return { xp: next, awardedXp: gain, capped };
 }
 
 /** Сбросить «заработано за последнюю игру» после показа анимации в хабе. */
@@ -189,6 +207,17 @@ function mergeBest(a: Record<string, number>, b: Record<string, number>): Record
   return out;
 }
 
+// Даты последнего начисления XP — берём более позднюю (строки YYYY-MM-DD
+// сравниваются лексикографически), чтобы лимит «раз/день» держался кросс-девайс.
+function mergeAwarded(
+  a: Record<string, string> = {},
+  b: Record<string, string> = {},
+): Record<string, string> {
+  const out = { ...a };
+  for (const k of Object.keys(b)) out[k] = out[k] && out[k] > b[k]! ? out[k]! : b[k]!;
+  return out;
+}
+
 function mergeSrs(local: SrsMap, cloud: SrsMap): SrsMap {
   const out: SrsMap = { ...local };
   for (const id of Object.keys(cloud)) {
@@ -206,7 +235,7 @@ export function pushCloud(): void {
     const xp = loadXp();
     WebApp.CloudStorage.setItem(
       XP_KEY,
-      JSON.stringify({ xp: xp.xp, learned: xp.learned, best: xp.best }),
+      JSON.stringify({ xp: xp.xp, learned: xp.learned, best: xp.best, awarded: xp.awarded }),
     );
     const srsStr = JSON.stringify(loadSrs());
     if (srsStr.length <= SRS_CLOUD_MAX) WebApp.CloudStorage.setItem(SRS_KEY, srsStr);
@@ -239,6 +268,7 @@ export function applyProgress(blob: Partial<ProgressBlob> | null): XpState {
       learned: Math.max(local.learned, blob.xp.learned ?? 0),
       best: mergeBest(local.best, blob.xp.best ?? {}),
       lastGain: local.lastGain,
+      awarded: mergeAwarded(local.awarded, blob.xp.awarded),
     };
     writeJson(XP_KEY, mergedXp);
   }
@@ -273,6 +303,7 @@ export function pullCloud(cb?: (xp: XpState) => void): void {
               learned: Math.max(local.learned, cloud.learned ?? 0),
               best: mergeBest(local.best, cloud.best ?? {}),
               lastGain: local.lastGain,
+              awarded: mergeAwarded(local.awarded, cloud.awarded),
             };
             writeJson(XP_KEY, merged);
             cb?.(merged);

@@ -50,6 +50,7 @@ interface Result {
   bestCombo: number;
   practiced: number;
   xpGain: number;
+  capped: boolean;
   levelBefore: number;
   levelAfter: number;
 }
@@ -142,7 +143,7 @@ export function ReflexGamePage() {
     saveSrs(srsRef.current);
     const s = statsRef.current;
     const before = levelFromXp(loadXp().xp).level;
-    const newState = commitGameResult({
+    const res = commitGameResult({
       gameId: 'reflex',
       xpGain: s.xpGain,
       score: s.score,
@@ -152,9 +153,10 @@ export function ReflexGamePage() {
       score: s.score,
       bestCombo: s.bestCombo,
       practiced: practicedRef.current.size,
-      xpGain: Math.round(s.xpGain),
+      xpGain: res.awardedXp,
+      capped: res.capped,
       levelBefore: before,
-      levelAfter: levelFromXp(newState.xp).level,
+      levelAfter: levelFromXp(res.xp.xp).level,
     });
     sfx.tada();
     setPhase('over');
@@ -482,10 +484,20 @@ function Over({
       <div className="mt-6 grid w-full max-w-xs grid-cols-3 gap-2">
         <Metric label={t('reflex.best_combo')} value={`×${result.bestCombo}`} color="#F5B445" />
         <Metric label={t('reflex.practiced')} value={`${result.practiced}`} color="#38E1A4" />
-        <Metric label="XP" value={`+${result.xpGain}`} color={ACCENT} />
+        <Metric
+          label="XP"
+          value={result.capped ? '0' : `+${result.xpGain}`}
+          color={result.capped ? '#7c8595' : ACCENT}
+        />
       </div>
 
-      {leveledUp && (
+      {result.capped && (
+        <p className="mt-4 max-w-xs text-xs leading-relaxed text-[#9aa3b2]">
+          {t('games.xp_capped')}
+        </p>
+      )}
+
+      {!result.capped && leveledUp && (
         <div
           className="mt-5 flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold"
           style={{

@@ -201,6 +201,7 @@
     "learned": "Words",
     "due_now": "{{n}} words to review",
     "footer": "Progress syncs across your devices",
+    "xp_capped": "Today's XP for this game is already counted — but this is great practice 💪",
     "rank": {
       "novice": "Novice",
       "student": "Student",

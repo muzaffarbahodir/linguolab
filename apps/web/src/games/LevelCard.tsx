@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
-import { Flame, Sparkles } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 import { levelFromXp, clearLastGain, type XpState } from './srs';
 import { initAudio, sfx } from './sound';
@@ -24,16 +24,15 @@ function tierFor(level: number) {
 }
 
 function Medallion({ level, color }: { level: number; color: string }) {
+  // Скромный элегантный бейдж: мягкая заливка тира + тонкое кольцо, цифра в цвет.
   return (
     <div
-      className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
-      style={{
-        background: `radial-gradient(circle at 50% 35%, ${color}, #0a0b10 75%)`,
-        boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`,
-      }}
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+      style={{ background: `${color}1f`, boxShadow: `inset 0 0 0 1.5px ${color}59` }}
     >
-      <Sparkles size={11} className="absolute right-1 top-1 text-white/70" />
-      <span className="text-xl font-extrabold tabular-nums text-white">{level}</span>
+      <span className="text-lg font-bold tabular-nums" style={{ color }}>
+        {level}
+      </span>
     </div>
   );
 }
