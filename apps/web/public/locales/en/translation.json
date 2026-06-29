@@ -194,9 +194,46 @@
   },
   "games": {
     "title": "Mini-games",
-    "soon": "Coming soon",
-    "desc": "Addictive mini-games are coming that make you pick up new words without noticing — even the laziest learners.",
-    "back": "Back"
+    "soon": "Soon",
+    "back": "Back",
+    "subtitle": "Addictive yet useful — words stick on their own",
+    "level": "Level",
+    "learned": "Words",
+    "due_now": "{{n}} words to review",
+    "footer": "Score and words are saved between sessions",
+    "reactor": {
+      "title": "Word Reactor",
+      "desc": "Catch the falling word that matches the meaning"
+    },
+    "dashboard": {
+      "title": "Memory dashboard",
+      "desc": "Swipe cards with spaced repetition"
+    },
+    "chain": {
+      "title": "Chain link",
+      "desc": "Connect a word to its translation with one line"
+    },
+    "reflex": {
+      "title": "Reflex",
+      "desc": "Fast speed quiz — tap the right translation"
+    }
+  },
+  "reactor": {
+    "how": "Words fall toward the core. Tap the one that means the prompt — before it lands.",
+    "due": "To review",
+    "your_level": "Your level",
+    "deck": "Deck",
+    "words": "words",
+    "play": "Play",
+    "exit": "Exit",
+    "catch_label": "CATCH THE WORD THAT MEANS",
+    "level": "LEVEL {{n}}",
+    "game_over": "GAME OVER",
+    "best_combo": "Best combo",
+    "practiced": "Words",
+    "level_up": "New level {{n}}!",
+    "again": "Play again",
+    "to_hub": "Games menu"
   },
   "profile": {
     "progress": "Overall progress",

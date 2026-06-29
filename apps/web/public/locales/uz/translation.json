@@ -195,8 +195,45 @@
   "games": {
     "title": "Mini-o'yinlar",
     "soon": "Tez orada",
-    "desc": "Tez orada yangi so'zlarni o'zingiz sezmagan holda yodlatadigan qiziqarli mini-o'yinlar paydo bo'ladi — hatto eng dangasalar uchun ham.",
-    "back": "Orqaga"
+    "back": "Orqaga",
+    "subtitle": "Qiziqarli va foydali — so'zlar o'z-o'zidan yodlanadi",
+    "level": "Daraja",
+    "learned": "So'z",
+    "due_now": "{{n}} ta so'zni takrorlash vaqti",
+    "footer": "Ochkolar va so'zlar saqlanib qoladi",
+    "reactor": {
+      "title": "So'z-Reaktor",
+      "desc": "Ma'noga mos tushayotgan so'zni ilib ol"
+    },
+    "dashboard": {
+      "title": "Xotira paneli",
+      "desc": "Intervalli takrorlash bilan svayp-kartalar"
+    },
+    "chain": {
+      "title": "Zanjirli bog'lash",
+      "desc": "So'zni tarjimasi bilan bitta chiziqda ulang"
+    },
+    "reflex": {
+      "title": "Refleks",
+      "desc": "Tezkor viktorina — to'g'ri tarjimani bos"
+    }
+  },
+  "reactor": {
+    "how": "So'zlar yadroga tushadi. Tushib ketmasdan oldin ma'noga mos kelganini bos.",
+    "due": "Takrorlashga",
+    "your_level": "Sizning darajangiz",
+    "deck": "To'plam",
+    "words": "so'z",
+    "play": "O'ynash",
+    "exit": "Chiqish",
+    "catch_label": "MA'NOSI MOS SO'ZNI ILIB OL",
+    "level": "DARAJA {{n}}",
+    "game_over": "O'YIN TUGADI",
+    "best_combo": "Eng yaxshi kombo",
+    "practiced": "So'z",
+    "level_up": "Yangi daraja {{n}}!",
+    "again": "Yana",
+    "to_hub": "O'yinlar menyusi"
   },
   "profile": {
     "progress": "Umumiy jarayon",
