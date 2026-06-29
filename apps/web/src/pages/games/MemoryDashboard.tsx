@@ -31,6 +31,8 @@ import {
   commitGameResult,
   type CardState,
 } from '../../games/srs';
+import { initAudio, sfx } from '../../games/sound';
+import { SoundToggle } from '../../games/SoundToggle';
 
 type Phase = 'intro' | 'review' | 'over';
 const SESSION_MAX = 15;
@@ -115,6 +117,7 @@ export function MemoryDashboardPage() {
       .map((id) => deck.cards.find((c) => c.id === id))
       .filter((c): c is WordCard => Boolean(c));
     statsRef.current = { reviewed: 0, remembered: 0, streak: 0, bestStreak: 0, xpGain: 0 };
+    initAudio();
     setQueue(cards);
     setIdx(0);
     setFlipped(false);
@@ -144,6 +147,7 @@ export function MemoryDashboardPage() {
       levelBefore: before,
       levelAfter: levelFromXp(newState.xp).level,
     });
+    sfx.win();
     setPhase('over');
   }, [deckIds]);
 
@@ -161,10 +165,12 @@ export function MemoryDashboardPage() {
         s.bestStreak = Math.max(s.bestStreak, s.streak);
         s.xpGain += 4 + Math.min(s.streak, 6);
         haptic('success');
+        sfx.correct();
       } else {
         s.streak = 0;
         s.xpGain += 1;
         haptic('error');
+        sfx.wrong();
       }
       setHud({ reviewed: s.reviewed, remembered: s.remembered, streak: s.streak });
       setLeaving(remember ? 1 : -1);
@@ -221,6 +227,7 @@ export function MemoryDashboardPage() {
           backgroundSize: '60px 60px',
         }}
       />
+      <SoundToggle />
 
       {phase === 'intro' && (
         <Intro
@@ -276,7 +283,12 @@ export function MemoryDashboardPage() {
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
-              onClick={() => Math.abs(drag) < 6 && setFlipped((f) => !f)}
+              onClick={() => {
+                if (Math.abs(drag) < 6) {
+                  setFlipped((f) => !f);
+                  sfx.tap();
+                }
+              }}
               className="relative flex w-full max-w-xs cursor-pointer touch-none select-none flex-col items-center justify-center rounded-3xl border px-6 py-10"
               style={{
                 minHeight: 240,

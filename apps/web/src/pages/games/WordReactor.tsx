@@ -22,6 +22,8 @@ import {
   commitGameResult,
   type CardState,
 } from '../../games/srs';
+import { initAudio, sfx } from '../../games/sound';
+import { SoundToggle } from '../../games/SoundToggle';
 
 type Phase = 'intro' | 'play' | 'over';
 
@@ -187,6 +189,7 @@ export function WordReactorPage() {
       levelBefore: before,
       levelAfter: after,
     });
+    sfx.win();
     setPhase('over');
   }, [stopLoop]);
 
@@ -233,6 +236,7 @@ export function WordReactorPage() {
         if (wasNew) practicedRef.current.add(target.id);
         s.level = 1 + Math.floor(s.score / 120);
         haptic('success');
+        sfx.correct();
         setFlash('good');
         if (tapped) spawnBurst(tapped.x, '#38E1A4');
         setRound((r) =>
@@ -242,6 +246,7 @@ export function WordReactorPage() {
         s.combo = 0;
         s.lives -= 1;
         haptic('error');
+        sfx.wrong();
         setFlash('bad');
         if (tapped) spawnBurst(tapped.x, '#FF5C7A');
         setRound((r) =>
@@ -300,6 +305,7 @@ export function WordReactorPage() {
     practicedRef.current = new Set();
     laneHRef.current = laneRef.current?.clientHeight ?? 480;
     lastTsRef.current = 0;
+    initAudio();
     setHud({ score: 0, combo: 0, lives: LIVES, level: 1 });
     setResult(null);
     setPhase('play');
@@ -337,6 +343,7 @@ export function WordReactorPage() {
               : 'radial-gradient(circle at 50% 80%, #FF5C7A, transparent 70%)',
         }}
       />
+      <SoundToggle />
 
       {phase === 'intro' && (
         <Intro

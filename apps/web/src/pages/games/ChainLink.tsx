@@ -22,6 +22,8 @@ import {
   commitGameResult,
   type CardState,
 } from '../../games/srs';
+import { initAudio, sfx } from '../../games/sound';
+import { SoundToggle } from '../../games/SoundToggle';
 
 type Phase = 'intro' | 'play' | 'over';
 const LIVES = 3;
@@ -93,6 +95,7 @@ export function ChainLinkPage() {
   const [matched, setMatched] = useState<Set<string>>(new Set());
   const [sel, setSel] = useState<Sel | null>(null);
   const [bad, setBad] = useState<string | null>(null);
+  const [link, setLink] = useState<{ ly: number; ry: number } | null>(null);
   const [hud, setHud] = useState({ score: 0, combo: 0, lives: LIVES });
   const [result, setResult] = useState<Result | null>(null);
 
@@ -147,6 +150,7 @@ export function ChainLinkPage() {
     setBoard({ left, right });
     setMatched(new Set());
     setSel(null);
+    setLink(null);
   }, [deck, i18n.language]);
 
   const start = useCallback(() => {
@@ -156,6 +160,7 @@ export function ChainLinkPage() {
     qIdxRef.current = 0;
     statsRef.current = { matched: 0, boards: 0, combo: 0, bestCombo: 0, lives: LIVES, xpGain: 0 };
     lockRef.current = false;
+    initAudio();
     setHud({ score: 0, combo: 0, lives: LIVES });
     setResult(null);
     setPhase('play');
@@ -189,10 +194,12 @@ export function ChainLinkPage() {
       if (!sel) {
         setSel({ side, pairId });
         haptic('light');
+        sfx.tap();
         return;
       }
       if (sel.side === side) {
         setSel({ side, pairId }); // переключаем выбор на той же стороне
+        sfx.tap();
         return;
       }
       // выбраны две стороны — проверяем
@@ -206,6 +213,14 @@ export function ChainLinkPage() {
         s.bestCombo = Math.max(s.bestCombo, s.combo);
         s.xpGain += 4 + Math.min(s.combo, 8);
         haptic('success');
+        sfx.correct();
+        // короткая изогнутая линия в зазоре — показываем одну за раз, не пересекаются
+        const lt = board?.left.find((tl) => tl.pairId === pairId);
+        const rt = board?.right.find((tr) => tr.pairId === pairId);
+        if (lt && rt) {
+          setLink({ ly: rowY(lt.row), ry: rowY(rt.row) });
+          window.setTimeout(() => setLink(null), 460);
+        }
         const nextMatched = new Set(matched);
         nextMatched.add(pairId);
         setMatched(nextMatched);
@@ -215,6 +230,7 @@ export function ChainLinkPage() {
           s.boards += 1;
           lockRef.current = true;
           window.setTimeout(() => {
+            sfx.win();
             lockRef.current = false;
             nextBoard();
           }, 480);
@@ -226,6 +242,7 @@ export function ChainLinkPage() {
         s.combo = 0;
         s.lives -= 1;
         haptic('error');
+        sfx.wrong();
         setBad(pairId);
         setSel(null);
         setHud({ score: s.matched, combo: s.combo, lives: s.lives });
@@ -254,6 +271,7 @@ export function ChainLinkPage() {
           backgroundSize: '60px 60px',
         }}
       />
+      <SoundToggle />
 
       {phase === 'intro' && (
         <Intro
@@ -299,33 +317,31 @@ export function ChainLinkPage() {
           {/* доска */}
           <div className="flex flex-1 items-center justify-center">
             <div className="relative w-full max-w-sm" style={{ height: boardH }}>
-              {/* линии связей */}
-              <svg
-                className="pointer-events-none absolute inset-0"
-                width="100%"
-                height={boardH}
-                preserveAspectRatio="none"
-              >
-                {board.left
-                  .filter((lt) => matched.has(lt.pairId))
-                  .map((lt) => {
-                    const rt = board.right.find((r) => r.pairId === lt.pairId)!;
-                    return (
-                      <line
-                        key={lt.pairId}
-                        x1="29%"
-                        y1={rowY(lt.row)}
-                        x2="71%"
-                        y2={rowY(rt.row)}
-                        stroke="#38E1A4"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        style={{ filter: 'drop-shadow(0 0 4px rgba(56,225,164,.7))' }}
-                        className="chain-line"
-                      />
-                    );
-                  })}
-              </svg>
+              {/* связь — одна изогнутая линия в зазоре, показывается на миг;
+                  начинается/кончается в промежутке, не касаясь плиток, и т.к.
+                  одновременно видна только одна — линии не пересекаются */}
+              {link && (
+                <svg
+                  key={`${link.ly}-${link.ry}`}
+                  className="pointer-events-none absolute inset-0"
+                  width="100%"
+                  height={boardH}
+                  viewBox={`0 0 100 ${boardH}`}
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d={`M 44 ${link.ly} C 50 ${link.ly}, 50 ${link.ry}, 56 ${link.ry}`}
+                    fill="none"
+                    stroke="#38E1A4"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    pathLength={1}
+                    vectorEffect="non-scaling-stroke"
+                    className="chain-line"
+                    style={{ filter: 'drop-shadow(0 0 5px rgba(56,225,164,.8))' }}
+                  />
+                </svg>
+              )}
 
               {/* колонки */}
               <div className="absolute inset-0 flex justify-between">
@@ -362,8 +378,11 @@ export function ChainLinkPage() {
       )}
 
       <style>{`
-        @keyframes chainDraw { from { opacity: 0; } to { opacity: 1; } }
-        .chain-line { animation: chainDraw .35s ease-out; }
+        @keyframes chainDraw {
+          from { stroke-dashoffset: 1; opacity: .4; }
+          to { stroke-dashoffset: 0; opacity: 1; }
+        }
+        .chain-line { stroke-dasharray: 1; animation: chainDraw .3s ease-out forwards; }
       `}</style>
     </div>
   );
