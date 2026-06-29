@@ -43,7 +43,8 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
 
   const [dispXp, setDispXp] = useState(xp.lastGain > 0 ? Math.max(0, xp.xp - xp.lastGain) : 0);
   const [showGain, setShowGain] = useState(xp.lastGain > 0);
-  const [shineKey, setShineKey] = useState(0);
+  const [animating, setAnimating] = useState(xp.lastGain > 0);
+  const [waves, setWaves] = useState<number[]>([]);
   const prevTargetRef = useRef(xp.lastGain > 0 ? Math.max(0, xp.xp - xp.lastGain) : 0);
   const rafRef = useRef<number | null>(null);
 
@@ -62,6 +63,7 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
     if (withSound) {
       initAudio();
       sfx.xpRamp(durMs / 1000);
+      setAnimating(true);
     }
     const start = performance.now();
     const step = (now: number) => {
@@ -69,9 +71,12 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
       const eased = 1 - Math.pow(1 - p, 2.4); // ease-out = инерция
       setDispXp(Math.round(from + (target - from) * eased));
       if (p < 1) rafRef.current = requestAnimationFrame(step);
-      else if (withSound) {
-        clearLastGain();
-        setShowGain(false);
+      else {
+        setAnimating(false);
+        if (withSound) {
+          clearLastGain();
+          setShowGain(false);
+        }
       }
     };
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -85,9 +90,21 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
   const dl = levelFromXp(dispXp);
   const tier = tierFor(dl.level);
   const fill = dl.need ? dl.into / dl.need : 0;
+  const prevXp = Math.max(0, xp.xp - xp.lastGain);
+  const prevLvl = levelFromXp(prevXp);
+  // База (уже было) — синим; прирост за игру — зелёный→синий с жёлтой рамкой.
+  const baseFill =
+    animating && !(prevLvl.level === dl.level && prevLvl.need)
+      ? 0
+      : animating
+        ? prevLvl.into / prevLvl.need
+        : fill;
+  const earnedW = Math.max(0, fill - baseFill);
 
   const onTapBar = () => {
-    setShineKey((k) => k + 1);
+    const id = performance.now();
+    setWaves((w) => [...w, id]);
+    window.setTimeout(() => setWaves((w) => w.filter((x) => x !== id)), 850);
     try {
       WebApp.HapticFeedback.impactOccurred('light');
     } catch {
@@ -103,14 +120,14 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
         <Medallion level={dl.level} color={tier.color} />
         <div className="min-w-0 flex-1">
           <div className="text-muted text-[11px] font-semibold uppercase tracking-wide">
-            {t('games.level')} · {t(`games.rank.${tier.key}`)}
+            {t('games.level')}
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold" style={{ color: tier.color }}>
-              {dl.level}
+            <span className="text-xl font-bold" style={{ color: tier.color }}>
+              {t(`games.rank.${tier.key}`)}
             </span>
             {showGain && (
-              <span className="xp-gain text-xs font-bold" style={{ color: tier.color }}>
+              <span className="xp-gain text-xs font-bold" style={{ color: '#38E1A4' }}>
                 +{xp.lastGain} XP
               </span>
             )}
@@ -131,24 +148,27 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
         className="relative mt-3 block h-4 w-full overflow-hidden rounded-md"
         style={{ background: 'var(--surface-2)' }}
       >
-        <span className="xp-idle" />
+        {/* база — то, что уже было — синим */}
         <div
           className="absolute inset-y-0 left-0"
-          style={{
-            width: `${fill * 100}%`,
-            background: `linear-gradient(90deg, ${tier.color}, #5B9DFF)`,
-            boxShadow: `0 0 10px ${tier.color}aa`,
-          }}
+          style={{ width: `${baseFill * 100}%`, background: '#5B9DFF' }}
         />
-        {/* насечки-сегменты поверх */}
-        <span
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(8,9,13,.55) calc(10% - 2px) 10%)',
-          }}
-        />
-        {shineKey > 0 && <span key={shineKey} className="xp-shine" />}
+        {/* прирост за игру — зелёный→синий, жёлтая рамка, тянется */}
+        {animating && earnedW > 0 && (
+          <div
+            className="absolute inset-y-0"
+            style={{
+              left: `${baseFill * 100}%`,
+              width: `${earnedW * 100}%`,
+              background: 'linear-gradient(90deg,#38E1A4,#5B9DFF)',
+              boxShadow: 'inset 0 0 0 1.5px #F5B445',
+            }}
+          />
+        )}
+        {/* волна — только по тапу, новый элемент на каждый тап */}
+        {waves.map((id) => (
+          <span key={id} className="xp-shine" />
+        ))}
       </button>
 
       <div className="text-faint mt-1.5 flex items-center justify-between text-[11px] tabular-nums">
