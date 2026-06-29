@@ -28,6 +28,7 @@ import {
   Gamepad2,
   UserRound,
   Cake,
+  ExternalLink,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -887,6 +888,37 @@ export function ProfilePage() {
             ))}
           </div>
         </>
+      )}
+
+      {/* Имя-ссылка на Telegram-аккаунт */}
+      {username && (
+        <button
+          onClick={() => {
+            try {
+              WebApp.HapticFeedback.impactOccurred('light');
+            } catch {
+              /* вне TWA */
+            }
+            WebApp.openTelegramLink(`https://t.me/${username}`);
+          }}
+          className="glass-section press flex w-full items-center gap-3 overflow-hidden rounded-2xl p-3.5"
+        >
+          {photoUrl ? (
+            <img src={photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+          ) : (
+            <div className="bg-brand/15 text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold">
+              {firstName[0]?.toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1 text-left">
+            <p className="truncate font-semibold">
+              {firstName}
+              {lastName ? ` ${lastName}` : ''}
+            </p>
+            <p className="text-tg-hint truncate text-xs">@{username}</p>
+          </div>
+          <ExternalLink size={18} className="text-tg-hint shrink-0" />
+        </button>
       )}
     </div>
   );

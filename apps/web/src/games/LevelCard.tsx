@@ -23,14 +23,58 @@ function tierFor(level: number) {
   return TIERS.find((t) => level >= t.min) ?? TIERS[TIERS.length - 1]!;
 }
 
-function Medallion({ level, color }: { level: number; color: string }) {
-  // Скромный элегантный бейдж: мягкая заливка тира + тонкое кольцо, цифра в цвет.
+// Steam-подобный бейдж: цвет циклом каждые 10 уровней, форма каждые 100 (круг →
+// треугольник → больше углов), и внутри десятки оттенок светлеет к концу.
+const HUES = [205, 150, 45, 275, 0, 175, 95, 320, 25, 255];
+
+function levelBadge(level: number): { sides: number; fill: string; line: string } {
+  const band = Math.floor(level / 10);
+  const within = level % 10; // 0 (тёмный, начало десятки) → 9 (светлее)
+  const hue = HUES[band % HUES.length]!;
+  const light = 42 + within * 3; // 42% → 69%, заметная разница
+  const hundreds = Math.floor(level / 100);
+  return {
+    sides: hundreds === 0 ? 0 : hundreds + 2, // 0=круг, 100→3 (треугольник), 200→4 …
+    fill: `hsl(${hue} 68% ${light}% / 0.16)`,
+    line: `hsl(${hue} 68% ${light}%)`,
+  };
+}
+
+/** Точки правильного N-угольника, вершиной вверх, в боксе 48×48. */
+function polyPoints(n: number, cx: number, cy: number, r: number): string {
+  const pts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(' ');
+}
+
+function Medallion({ level }: { level: number }) {
+  const { sides, fill, line } = levelBadge(level);
+  const S = 48;
   return (
     <div
-      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-      style={{ background: `${color}1f`, boxShadow: `inset 0 0 0 1.5px ${color}59` }}
+      className="relative flex shrink-0 items-center justify-center"
+      style={{ width: S, height: S }}
     >
-      <span className="text-lg font-bold tabular-nums" style={{ color }}>
+      {sides === 0 ? (
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ background: fill, boxShadow: `inset 0 0 0 1.6px ${line}` }}
+        />
+      ) : (
+        <svg className="absolute inset-0" width={S} height={S} viewBox="0 0 48 48" aria-hidden>
+          <polygon
+            points={polyPoints(sides, 24, 25, 21)}
+            fill={fill}
+            stroke={line}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+      <span className="relative text-base font-bold tabular-nums" style={{ color: line }}>
         {level}
       </span>
     </div>
@@ -88,6 +132,7 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
 
   const dl = levelFromXp(dispXp);
   const tier = tierFor(dl.level);
+  const accent = levelBadge(dl.level).line;
   const fill = dl.need ? dl.into / dl.need : 0;
   // База (что было до игры) — синим; прирост — зелёный, потом плавно в синий.
   const hadXp = Math.max(0, xp.xp - xp.lastGain);
@@ -118,13 +163,13 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
   return (
     <div className="glass-card relative mb-5 overflow-hidden rounded-2xl p-4">
       <div className="flex items-center gap-3">
-        <Medallion level={dl.level} color={tier.color} />
+        <Medallion level={dl.level} />
         <div className="min-w-0 flex-1">
           <div className="text-muted text-[11px] font-semibold uppercase tracking-wide">
             {t('games.level')}
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold" style={{ color: tier.color }}>
+            <span className="text-xl font-bold" style={{ color: accent }}>
               {t(`games.rank.${tier.key}`)}
             </span>
             {showGain && (
