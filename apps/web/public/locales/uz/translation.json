@@ -200,7 +200,14 @@
     "level": "Daraja",
     "learned": "So'z",
     "due_now": "{{n}} ta so'zni takrorlash vaqti",
-    "footer": "Ochkolar va so'zlar saqlanib qoladi",
+    "footer": "Jarayon qurilmalar o'rtasida sinxronlanadi",
+    "rank": {
+      "novice": "Yangi",
+      "student": "Shogird",
+      "expert": "Bilimdon",
+      "master": "Usta",
+      "legend": "Afsona"
+    },
     "reactor": {
       "title": "So'z-Reaktor",
       "desc": "Ma'noga mos tushayotgan so'zni ilib ol"

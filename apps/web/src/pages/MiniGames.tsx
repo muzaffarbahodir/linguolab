@@ -2,15 +2,16 @@
  * MiniGamesPage — хаб мини-игр для запоминания слов. Показывает общий XP/уровень
  * и список игр (готовые + «скоро»). Route: /mini-games
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Gamepad2, Zap, LayoutDashboard, Network, Timer, ChevronRight, Flame } from 'lucide-react';
+import { Gamepad2, Zap, LayoutDashboard, Network, Timer, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import { useBackButton } from '../hooks/useBackButton';
 import { DECKS } from '../games/decks';
-import { loadSrs, dueCount, loadXp, levelFromXp } from '../games/srs';
+import { loadSrs, dueCount, loadXp, pullCloud, type XpState } from '../games/srs';
+import { LevelCard } from '../games/LevelCard';
 
 interface GameItem {
   id: string;
@@ -28,17 +29,17 @@ export function MiniGamesPage() {
 
   useBackButton(() => navigate('/profile'));
 
-  const { xp, lvl, due, learned } = useMemo(() => {
-    const xpState = loadXp();
-    const srs = loadSrs();
-    const allIds = DECKS.flatMap((d) => d.cards.map((c) => c.id));
-    return {
-      xp: xpState,
-      lvl: levelFromXp(xpState.xp),
-      due: dueCount(srs, allIds),
-      learned: xpState.learned,
-    };
-  }, []);
+  const allIds = useMemo(() => DECKS.flatMap((d) => d.cards.map((c) => c.id)), []);
+  const [xp, setXp] = useState<XpState>(() => loadXp());
+  const [due, setDue] = useState(() => dueCount(loadSrs(), allIds));
+
+  // Тянем прогресс из CloudStorage (кросс-девайс) и обновляем карточку.
+  useEffect(() => {
+    pullCloud((merged) => {
+      setXp(merged);
+      setDue(dueCount(loadSrs(), allIds));
+    });
+  }, [allIds]);
 
   const games: GameItem[] = [
     {
@@ -83,44 +84,8 @@ export function MiniGamesPage() {
       </div>
       <p className="text-muted mb-4 text-sm">{t('games.subtitle')}</p>
 
-      {/* XP / уровень */}
-      <div className="glass-card mb-5 rounded-2xl p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-muted text-[11px] font-semibold uppercase tracking-wide">
-              {t('games.level')}
-            </div>
-            <div className="text-brand text-2xl font-bold">{lvl.level}</div>
-          </div>
-          <div className="flex gap-4 text-right">
-            <div>
-              <div className="text-muted text-[11px] font-semibold uppercase tracking-wide">XP</div>
-              <div className="text-lg font-bold tabular-nums">{xp.xp}</div>
-            </div>
-            <div>
-              <div className="text-muted text-[11px] font-semibold uppercase tracking-wide">
-                {t('games.learned')}
-              </div>
-              <div className="text-lg font-bold tabular-nums">{learned}</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-surface-2 mt-3 h-2 overflow-hidden rounded-full">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${Math.round((lvl.into / lvl.need) * 100)}%`,
-              background: 'linear-gradient(90deg,#38E1A4,#5B9DFF)',
-            }}
-          />
-        </div>
-        {due > 0 && (
-          <div className="text-warn mt-3 flex items-center gap-1.5 text-xs font-semibold">
-            <Flame size={14} className="fill-current" />
-            {t('games.due_now', { n: due })}
-          </div>
-        )}
-      </div>
+      {/* XP / уровень — анимированная карточка в духе CS2 */}
+      <LevelCard xp={xp} due={due} />
 
       {/* список игр */}
       <div className="flex flex-col gap-3">

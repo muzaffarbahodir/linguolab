@@ -40,6 +40,8 @@ export interface XpState {
   best: Record<string, number>;
   /** Сколько всего слов хоть раз отвечено верно (для «выучено N»). */
   learned: number;
+  /** XP, заработанный в последней игре — для анимации полосы в хабе. */
+  lastGain: number;
 }
 
 type SrsMap = Record<string, CardState>;
@@ -134,7 +136,7 @@ function shuffle<T>(arr: T[]): void {
 // ─── XP ───────────────────────────────────────────────────────────────────
 
 export function loadXp(): XpState {
-  return readJson<XpState>(XP_KEY, { xp: 0, best: {}, learned: 0 });
+  return readJson<XpState>(XP_KEY, { xp: 0, best: {}, learned: 0, lastGain: 0 });
 }
 
 /** Уровень = floor(sqrt(xp / 50)) + 1. Порог уровня растёт квадратично. */
@@ -156,41 +158,97 @@ export function commitGameResult(args: {
   learnedGain: number;
 }): XpState {
   const cur = loadXp();
+  const gain = Math.max(0, Math.round(args.xpGain));
   const next: XpState = {
-    xp: cur.xp + Math.max(0, Math.round(args.xpGain)),
+    xp: cur.xp + gain,
     learned: cur.learned + Math.max(0, args.learnedGain),
     best: { ...cur.best, [args.gameId]: Math.max(cur.best[args.gameId] ?? 0, args.score) },
+    lastGain: gain,
   };
   writeJson(XP_KEY, next);
-  try {
-    WebApp.CloudStorage.setItem(XP_KEY, JSON.stringify({ xp: next.xp, learned: next.learned }));
-  } catch {
-    /* нет CloudStorage вне TWA — не критично */
-  }
+  pushCloud();
   return next;
 }
 
-/** Подтянуть XP из CloudStorage при старте (если там больше — берём оттуда). */
-export function hydrateXpFromCloud(cb: (xp: XpState) => void): void {
+/** Сбросить «заработано за последнюю игру» после показа анимации в хабе. */
+export function clearLastGain(): void {
+  const cur = loadXp();
+  if (cur.lastGain) writeJson(XP_KEY, { ...cur, lastGain: 0 });
+}
+
+// ─── Кросс-девайс синхронизация (Telegram CloudStorage) ──────────────────────
+// localStorage у ПК и телефона разный → прогресс расходился. CloudStorage один
+// на все устройства пользователя: пушим итог после игры, тянем и сливаем при
+// заходе в хаб. Сливаем по максимуму (не теряем прогресс ни одного устройства).
+
+const SRS_CLOUD_MAX = 3500; // лимит ключа CloudStorage ~4096 символов
+
+function mergeBest(a: Record<string, number>, b: Record<string, number>): Record<string, number> {
+  const out = { ...a };
+  for (const k of Object.keys(b)) out[k] = Math.max(out[k] ?? 0, b[k] ?? 0);
+  return out;
+}
+
+function mergeSrs(local: SrsMap, cloud: SrsMap): SrsMap {
+  const out: SrsMap = { ...local };
+  for (const id of Object.keys(cloud)) {
+    const c = cloud[id]!;
+    const l = out[id];
+    // больше повторений = свежее; при равенстве — более поздний due
+    if (!l || c.reps > l.reps || (c.reps === l.reps && c.due > l.due)) out[id] = c;
+  }
+  return out;
+}
+
+/** Записать XP + SRS в CloudStorage (после игры). */
+export function pushCloud(): void {
   try {
-    WebApp.CloudStorage.getItem(XP_KEY, (err, value) => {
-      if (err || !value) return;
-      try {
-        const cloud = JSON.parse(value) as { xp?: number; learned?: number };
-        const local = loadXp();
-        if ((cloud.xp ?? 0) > local.xp) {
-          const merged: XpState = {
-            ...local,
-            xp: cloud.xp ?? local.xp,
-            learned: Math.max(local.learned, cloud.learned ?? 0),
-          };
-          writeJson(XP_KEY, merged);
-          cb(merged);
+    const xp = loadXp();
+    WebApp.CloudStorage.setItem(
+      XP_KEY,
+      JSON.stringify({ xp: xp.xp, learned: xp.learned, best: xp.best }),
+    );
+    const srsStr = JSON.stringify(loadSrs());
+    if (srsStr.length <= SRS_CLOUD_MAX) WebApp.CloudStorage.setItem(SRS_KEY, srsStr);
+  } catch {
+    /* нет CloudStorage вне TWA */
+  }
+}
+
+/** Подтянуть и слить XP + SRS из CloudStorage. cb с обновлённым XP после слияния. */
+export function pullCloud(cb?: (xp: XpState) => void): void {
+  try {
+    WebApp.CloudStorage.getItems(
+      [XP_KEY, SRS_KEY],
+      (err: unknown, values?: Record<string, string>) => {
+        if (err || !values) return;
+        // SRS сначала — чтобы due-счётчик в cb был уже актуальным
+        try {
+          if (values[SRS_KEY]) {
+            const cloud = JSON.parse(values[SRS_KEY]) as SrsMap;
+            writeJson(SRS_KEY, mergeSrs(loadSrs(), cloud));
+          }
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore parse */
-      }
-    });
+        try {
+          if (values[XP_KEY]) {
+            const cloud = JSON.parse(values[XP_KEY]) as Partial<XpState>;
+            const local = loadXp();
+            const merged: XpState = {
+              xp: Math.max(local.xp, cloud.xp ?? 0),
+              learned: Math.max(local.learned, cloud.learned ?? 0),
+              best: mergeBest(local.best, cloud.best ?? {}),
+              lastGain: local.lastGain,
+            };
+            writeJson(XP_KEY, merged);
+            cb?.(merged);
+          }
+        } catch {
+          /* ignore */
+        }
+      },
+    );
   } catch {
     /* ignore */
   }

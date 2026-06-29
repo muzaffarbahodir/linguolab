@@ -939,3 +939,60 @@ html.light .ll-ann-promo {
   opacity: 0.5;
   animation: discoSpin 7s linear infinite !important;
 }
+
+/* ── XP-полоса в хабе: фоновый блик + волна по тапу + всплытие «+N XP» ─────── */
+@keyframes xpShineSweep {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(360%);
+  }
+}
+.xp-shine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 35%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: xpShineSweep 0.85s ease-out;
+}
+@keyframes xpIdleSweep {
+  0% {
+    transform: translateX(-130%);
+  }
+  55%,
+  100% {
+    transform: translateX(360%);
+  }
+}
+.xp-idle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  pointer-events: none;
+  opacity: 0.18;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: xpIdleSweep 3.6s ease-in-out infinite;
+}
+@keyframes xpGainPop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.xp-gain {
+  animation: xpGainPop 0.5s ease-out;
+}

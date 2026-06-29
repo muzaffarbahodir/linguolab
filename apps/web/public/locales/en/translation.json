@@ -200,7 +200,14 @@
     "level": "Level",
     "learned": "Words",
     "due_now": "{{n}} words to review",
-    "footer": "Score and words are saved between sessions",
+    "footer": "Progress syncs across your devices",
+    "rank": {
+      "novice": "Novice",
+      "student": "Student",
+      "expert": "Expert",
+      "master": "Master",
+      "legend": "Legend"
+    },
     "reactor": {
       "title": "Word Reactor",
       "desc": "Catch the falling word that matches the meaning"
