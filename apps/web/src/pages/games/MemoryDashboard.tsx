@@ -147,7 +147,7 @@ export function MemoryDashboardPage() {
       levelBefore: before,
       levelAfter: levelFromXp(newState.xp).level,
     });
-    sfx.win();
+    sfx.tada();
     setPhase('over');
   }, [deckIds]);
 

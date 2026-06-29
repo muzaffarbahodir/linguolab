@@ -24,6 +24,8 @@ import {
 } from '../../games/srs';
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
+import { ScoreCounter } from '../../games/ScoreCounter';
+import { DiscoBurst } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'play' | 'over';
 
@@ -189,7 +191,7 @@ export function WordReactorPage() {
       levelBefore: before,
       levelAfter: after,
     });
-    sfx.win();
+    sfx.tada();
     setPhase('over');
   }, [stopLoop]);
 
@@ -344,6 +346,7 @@ export function WordReactorPage() {
         }}
       />
       <SoundToggle />
+      <DiscoBurst level={hud.level} label={t('games.level')} />
 
       {phase === 'intro' && (
         <Intro
@@ -372,7 +375,7 @@ export function WordReactorPage() {
             </div>
             <div className="text-center">
               <div className="text-[10px] tracking-[2px] text-[#7c8595]">SCORE</div>
-              <div className="text-lg font-bold tabular-nums">{hud.score}</div>
+              <ScoreCounter value={hud.score} className="text-lg font-bold tabular-nums" />
             </div>
             <div className="text-right">
               <div className="text-[10px] tracking-[2px] text-[#7c8595]">COMBO</div>

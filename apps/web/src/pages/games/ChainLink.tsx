@@ -24,6 +24,8 @@ import {
 } from '../../games/srs';
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
+import { ScoreCounter } from '../../games/ScoreCounter';
+import { DiscoBurst } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'play' | 'over';
 const LIVES = 3;
@@ -96,7 +98,7 @@ export function ChainLinkPage() {
   const [sel, setSel] = useState<Sel | null>(null);
   const [bad, setBad] = useState<string | null>(null);
   const [link, setLink] = useState<{ ly: number; ry: number } | null>(null);
-  const [hud, setHud] = useState({ score: 0, combo: 0, lives: LIVES });
+  const [hud, setHud] = useState({ score: 0, combo: 0, lives: LIVES, boards: 0 });
   const [result, setResult] = useState<Result | null>(null);
 
   const srsRef = useRef<Record<string, CardState>>({});
@@ -161,7 +163,7 @@ export function ChainLinkPage() {
     statsRef.current = { matched: 0, boards: 0, combo: 0, bestCombo: 0, lives: LIVES, xpGain: 0 };
     lockRef.current = false;
     initAudio();
-    setHud({ score: 0, combo: 0, lives: LIVES });
+    setHud({ score: 0, combo: 0, lives: LIVES, boards: 0 });
     setResult(null);
     setPhase('play');
     nextBoard();
@@ -185,6 +187,7 @@ export function ChainLinkPage() {
       levelBefore: before,
       levelAfter: levelFromXp(newState.xp).level,
     });
+    sfx.tada();
     setPhase('over');
   }, []);
 
@@ -225,16 +228,15 @@ export function ChainLinkPage() {
         nextMatched.add(pairId);
         setMatched(nextMatched);
         setSel(null);
-        setHud({ score: s.matched, combo: s.combo, lives: s.lives });
         if (nextMatched.size >= (board?.left.length ?? PAIRS)) {
-          s.boards += 1;
+          s.boards += 1; // диско-вспышка + звук уровня — через DiscoBurst(level=boards)
           lockRef.current = true;
           window.setTimeout(() => {
-            sfx.win();
             lockRef.current = false;
             nextBoard();
-          }, 480);
+          }, 600);
         }
+        setHud({ score: s.matched, combo: s.combo, lives: s.lives, boards: s.boards });
       } else {
         // ошибка — засчитываем неверный ответ выбранному слову
         srsRef.current = gradeCard(srsRef.current, sel.pairId, false);
@@ -245,7 +247,7 @@ export function ChainLinkPage() {
         sfx.wrong();
         setBad(pairId);
         setSel(null);
-        setHud({ score: s.matched, combo: s.combo, lives: s.lives });
+        setHud({ score: s.matched, combo: s.combo, lives: s.lives, boards: s.boards });
         window.setTimeout(() => setBad(null), 280);
         if (s.lives <= 0) {
           lockRef.current = true;
@@ -272,6 +274,7 @@ export function ChainLinkPage() {
         }}
       />
       <SoundToggle />
+      <DiscoBurst level={hud.boards} label={t('games.level')} />
 
       {phase === 'intro' && (
         <Intro
@@ -300,7 +303,7 @@ export function ChainLinkPage() {
             </div>
             <div className="text-center">
               <div className="text-[10px] tracking-[2px] text-[#7c8595]">SCORE</div>
-              <div className="text-lg font-bold tabular-nums">{hud.score}</div>
+              <ScoreCounter value={hud.score} className="text-lg font-bold tabular-nums" />
             </div>
             <div className="text-right">
               <div className="text-[10px] tracking-[2px] text-[#7c8595]">COMBO</div>
@@ -368,7 +371,7 @@ export function ChainLinkPage() {
           </div>
 
           <div className="pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-2 text-center text-[10px] tracking-[2px] text-[#7c8595]">
-            {deck.flag} {deck.title} · {t('chain.boards', { n: statsRef.current.boards })}
+            {deck.flag} {deck.title} · {t('chain.boards', { n: hud.boards })}
           </div>
         </div>
       )}

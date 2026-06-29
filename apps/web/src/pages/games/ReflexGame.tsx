@@ -24,6 +24,8 @@ import {
 } from '../../games/srs';
 import { initAudio, sfx } from '../../games/sound';
 import { SoundToggle } from '../../games/SoundToggle';
+import { ScoreCounter } from '../../games/ScoreCounter';
+import { DiscoBurst } from '../../games/DiscoBurst';
 
 type Phase = 'intro' | 'play' | 'over';
 const LIVES = 3;
@@ -70,7 +72,7 @@ export function ReflexGamePage() {
   const [picked, setPicked] = useState<number | null>(null);
   const [bar, setBar] = useState(1);
   const [flash, setFlash] = useState<'none' | 'good' | 'bad'>('none');
-  const [hud, setHud] = useState({ score: 0, combo: 0, lives: LIVES });
+  const [hud, setHud] = useState({ score: 0, combo: 0, lives: LIVES, level: 1 });
   const [result, setResult] = useState<Result | null>(null);
 
   const rafRef = useRef<number | null>(null);
@@ -152,7 +154,7 @@ export function ReflexGamePage() {
       levelBefore: before,
       levelAfter: levelFromXp(newState.xp).level,
     });
-    sfx.win();
+    sfx.tada();
     setPhase('over');
   }, [stopLoop]);
 
@@ -186,7 +188,7 @@ export function ReflexGamePage() {
         sfx.wrong();
         setFlash('bad');
       }
-      setHud({ score: s.score, combo: s.combo, lives: s.lives });
+      setHud({ score: s.score, combo: s.combo, lives: s.lives, level: s.level });
       window.setTimeout(() => setFlash('none'), 220);
       window.setTimeout(() => {
         if (s.lives <= 0) endGame();
@@ -218,7 +220,7 @@ export function ReflexGamePage() {
     statsRef.current = { score: 0, combo: 0, bestCombo: 0, lives: LIVES, level: 1, xpGain: 0 };
     practicedRef.current = new Set();
     initAudio();
-    setHud({ score: 0, combo: 0, lives: LIVES });
+    setHud({ score: 0, combo: 0, lives: LIVES, level: 1 });
     setResult(null);
     setPhase('play');
     nextRound();
@@ -251,6 +253,7 @@ export function ReflexGamePage() {
         }}
       />
       <SoundToggle />
+      <DiscoBurst level={hud.level} label={t('games.level')} />
 
       {phase === 'intro' && (
         <Intro
@@ -279,7 +282,7 @@ export function ReflexGamePage() {
             </div>
             <div className="text-center">
               <div className="text-[10px] tracking-[2px] text-[#7c8595]">SCORE</div>
-              <div className="text-lg font-bold tabular-nums">{hud.score}</div>
+              <ScoreCounter value={hud.score} className="text-lg font-bold tabular-nums" />
             </div>
             <div className="text-right">
               <div className="text-[10px] tracking-[2px] text-[#7c8595]">COMBO</div>

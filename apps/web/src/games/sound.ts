@@ -144,4 +144,29 @@ export const sfx = {
   wrong: () => play('wrong', 0.9),
   win: () => play('win', 0.9),
   combo: () => play('tap', 0.4),
+  /** Быстрый восходящий «перезвон» — под анимацию накопления очков. */
+  score: () => {
+    const c = voice();
+    if (!c) return;
+    [660, 784, 932, 1108].forEach((f, i) =>
+      tone(c, { freq: f, dur: 0.05, type: 'triangle', gain: 0.045, at: i * 0.04 }),
+    );
+  },
+  /** Яркий диско-перезвон на повышение уровня. */
+  levelup: () => {
+    const c = voice();
+    if (!c) return;
+    [659, 880, 1047, 1319, 1568].forEach((f, i) =>
+      tone(c, { freq: f, dur: 0.2, type: 'triangle', gain: 0.075, at: i * 0.06 }),
+    );
+  },
+  /** Финальное «та-да»: короткий аккорд + вытянутый яркий. */
+  tada: () => {
+    const c = voice();
+    if (!c) return;
+    [392, 523, 659].forEach((f) => tone(c, { freq: f, dur: 0.14, type: 'triangle', gain: 0.06 }));
+    [523, 659, 784, 1047].forEach((f) =>
+      tone(c, { freq: f, dur: 0.6, type: 'triangle', gain: 0.07, at: 0.17 }),
+    );
+  },
 };

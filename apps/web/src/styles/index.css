@@ -852,3 +852,85 @@ html.light .ll-ann-promo {
     background: var(--secondary-bg);
   }
 }
+
+/* ── Мини-игры: накопление очков + диско-вспышка уровня ───────────────────── */
+@keyframes scorePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -2px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -22px) scale(1);
+  }
+}
+.score-pop {
+  animation: scorePop 0.9s ease-out forwards;
+}
+
+@keyframes discoSpin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@keyframes discoFade {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes discoPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  60% {
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+.disco-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220vmax;
+  height: 220vmax;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 7deg,
+    rgba(167, 139, 250, 0.22) 7deg 14deg,
+    transparent 14deg 21deg,
+    rgba(56, 225, 164, 0.2) 21deg 28deg,
+    transparent 28deg 35deg,
+    rgba(245, 180, 69, 0.2) 35deg 42deg,
+    transparent 42deg 49deg,
+    rgba(91, 157, 255, 0.2) 49deg 56deg
+  );
+  -webkit-mask: radial-gradient(closest-side, rgba(0, 0, 0, 0.95), transparent 72%);
+  mask: radial-gradient(closest-side, rgba(0, 0, 0, 0.95), transparent 72%);
+  animation:
+    discoSpin 5s linear infinite,
+    discoFade 1.5s ease-out forwards;
+}
+.disco-core {
+  animation: discoPop 1.5s ease-out forwards;
+}
