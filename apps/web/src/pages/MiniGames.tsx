@@ -63,7 +63,7 @@ export function MiniGamesPage() {
       desc: t('games.chain.desc'),
       icon: Network,
       color: '#F5B445',
-      soon: true,
+      to: '/mini-games/chain',
     },
     {
       id: 'reflex',

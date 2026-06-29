@@ -256,6 +256,23 @@
     "to_hub": "O'yinlar menyusi",
     "mastery_up": "O'zlashtirish +{{n}}%"
   },
+  "chain": {
+    "how": "Chapdagi so'zni va o'ngdagi tarjimasini bos. Barcha juftlarni yig'sang, taxta yangilanadi.",
+    "start": "O'ynash",
+    "exit": "Chiqish",
+    "deck": "To'plam",
+    "words": "so'z",
+    "due": "Takrorga",
+    "your_level": "Daraja",
+    "connect": "SO'Z VA TARJIMANI BOG'LA",
+    "boards": "Taxta: {{n}}",
+    "game_over": "O'YIN TUGADI",
+    "matched": "Juftlar yig'ildi",
+    "boards_done": "Taxta",
+    "best_combo": "Eng yaxshi kombo",
+    "again": "Yana",
+    "to_hub": "O'yinlar menyusi"
+  },
   "profile": {
     "progress": "Umumiy jarayon",
     "dash_subject": "O‘rganyapman",

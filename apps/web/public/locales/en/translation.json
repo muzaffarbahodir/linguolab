@@ -256,6 +256,23 @@
     "to_hub": "Games menu",
     "mastery_up": "Mastery +{{n}}%"
   },
+  "chain": {
+    "how": "Tap a word on the left and its translation on the right. Clear all pairs to refill the board.",
+    "start": "Play",
+    "exit": "Exit",
+    "deck": "Deck",
+    "words": "words",
+    "due": "To review",
+    "your_level": "Level",
+    "connect": "LINK WORD AND MEANING",
+    "boards": "Boards: {{n}}",
+    "game_over": "GAME OVER",
+    "matched": "Pairs matched",
+    "boards_done": "Boards",
+    "best_combo": "Best combo",
+    "again": "Play again",
+    "to_hub": "Games menu"
+  },
   "profile": {
     "progress": "Overall progress",
     "dash_subject": "Studying",
