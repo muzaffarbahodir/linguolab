@@ -273,6 +273,22 @@
     "again": "Yana",
     "to_hub": "O'yinlar menyusi"
   },
+  "reflex": {
+    "how": "So'z markazda, pastda tarjimalar. Bar tugamasdan to'g'risini tez bos.",
+    "start": "O'ynash",
+    "exit": "Chiqish",
+    "deck": "To'plam",
+    "words": "so'z",
+    "due": "Takrorga",
+    "your_level": "Daraja",
+    "tap_label": "TARJIMANI TANLA",
+    "game_over": "O'YIN TUGADI",
+    "best_combo": "Eng yaxshi kombo",
+    "practiced": "So'z",
+    "level_up": "Yangi daraja {{n}}!",
+    "again": "Yana",
+    "to_hub": "O'yinlar menyusi"
+  },
   "profile": {
     "progress": "Umumiy jarayon",
     "dash_subject": "O‘rganyapman",

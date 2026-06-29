@@ -70,8 +70,8 @@ export function MiniGamesPage() {
       title: t('games.reflex.title'),
       desc: t('games.reflex.desc'),
       icon: Timer,
-      color: '#FF5C7A',
-      soon: true,
+      color: '#A78BFA',
+      to: '/mini-games/reflex',
     },
   ];
 
