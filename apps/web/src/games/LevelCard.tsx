@@ -43,7 +43,7 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
 
   const [dispXp, setDispXp] = useState(xp.lastGain > 0 ? Math.max(0, xp.xp - xp.lastGain) : 0);
   const [showGain, setShowGain] = useState(xp.lastGain > 0);
-  const [animating, setAnimating] = useState(xp.lastGain > 0);
+  const [earnedBlue, setEarnedBlue] = useState(!(xp.lastGain > 0));
   const [waves, setWaves] = useState<number[]>([]);
   const prevTargetRef = useRef(xp.lastGain > 0 ? Math.max(0, xp.xp - xp.lastGain) : 0);
   const rafRef = useRef<number | null>(null);
@@ -63,7 +63,7 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
     if (withSound) {
       initAudio();
       sfx.xpRamp(durMs / 1000);
-      setAnimating(true);
+      setEarnedBlue(false); // пока набирается — зелёный
     }
     const start = performance.now();
     const step = (now: number) => {
@@ -72,7 +72,7 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
       setDispXp(Math.round(from + (target - from) * eased));
       if (p < 1) rafRef.current = requestAnimationFrame(step);
       else {
-        setAnimating(false);
+        setEarnedBlue(true); // набрался — плавно в синий
         if (withSound) {
           clearLastGain();
           setShowGain(false);
@@ -90,14 +90,16 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
   const dl = levelFromXp(dispXp);
   const tier = tierFor(dl.level);
   const fill = dl.need ? dl.into / dl.need : 0;
-  const prevXp = Math.max(0, xp.xp - xp.lastGain);
-  const prevLvl = levelFromXp(prevXp);
-  // База (уже было) — синим; прирост за игру — зелёный→синий с жёлтой рамкой.
+  // База (что было до игры) — синим; прирост — зелёный, потом плавно в синий.
+  const hadXp = Math.max(0, xp.xp - xp.lastGain);
+  const hadLvl = levelFromXp(hadXp);
   const baseFill =
-    animating && !(prevLvl.level === dl.level && prevLvl.need)
-      ? 0
-      : animating
-        ? prevLvl.into / prevLvl.need
+    hadLvl.level === dl.level
+      ? dl.need
+        ? hadLvl.into / dl.need
+        : 0
+      : hadLvl.level < dl.level
+        ? 0
         : fill;
   const earnedW = Math.max(0, fill - baseFill);
 
@@ -145,7 +147,7 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
       <button
         onClick={onTapBar}
         aria-label="xp"
-        className="relative mt-3 block h-4 w-full overflow-hidden rounded-md"
+        className="border-hairline relative mt-3 block h-4 w-full overflow-hidden rounded-md border"
         style={{ background: 'var(--surface-2)' }}
       >
         {/* база — то, что уже было — синим */}
@@ -153,15 +155,17 @@ export function LevelCard({ xp, due }: { xp: XpState; due: number }) {
           className="absolute inset-y-0 left-0"
           style={{ width: `${baseFill * 100}%`, background: '#5B9DFF' }}
         />
-        {/* прирост за игру — зелёный→синий, жёлтая рамка, тянется */}
-        {animating && earnedW > 0 && (
+        {/* прирост за игру — пока набирается зелёный, затем плавно в синий;
+            жёлтая рамка подсвечивает растягивающийся кусок */}
+        {earnedW > 0 && (
           <div
             className="absolute inset-y-0"
             style={{
               left: `${baseFill * 100}%`,
               width: `${earnedW * 100}%`,
-              background: 'linear-gradient(90deg,#38E1A4,#5B9DFF)',
-              boxShadow: 'inset 0 0 0 1.5px #F5B445',
+              background: earnedBlue ? '#5B9DFF' : '#38E1A4',
+              boxShadow: earnedBlue ? 'none' : 'inset 0 0 0 1.5px #F5B445',
+              transition: 'background-color .7s ease, box-shadow .7s ease',
             }}
           />
         )}
