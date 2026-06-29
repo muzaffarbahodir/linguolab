@@ -334,6 +334,7 @@ function AuthenticatedApp() {
     ].includes(location.pathname) ||
     location.pathname.startsWith('/cash-check/') ||
     location.pathname.startsWith('/cash-confirm/') ||
+    location.pathname.startsWith('/mini-games/') ||
     location.pathname.startsWith('/my-class/') ||
     location.pathname.startsWith('/teacher') ||
     location.pathname.startsWith('/admin') ||
