@@ -1212,6 +1212,8 @@
       "days_label": "Dars kunlari *",
       "time_label": "Boshlanish vaqti *",
       "duration_label": "Davomiyligi (daq.) *",
+      "start_date_label": "Kurs boshlanish sanasi",
+      "start_date_hint": "Darslar shu sanadan jadval bo'yicha yaratiladi. Bo'sh = bugundan.",
       "schedule_save": "Jadvalni saqlash",
       "schedule_error": "Jadvalni saqlashda xato"
     },

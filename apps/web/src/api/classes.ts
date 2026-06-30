@@ -80,14 +80,21 @@ export function useSetClassSchedule() {
       schedule_days,
       schedule_time,
       schedule_duration,
+      starts_at,
     }: {
       classId: string;
       schedule_days: string[];
       schedule_time: string;
       schedule_duration: number;
+      starts_at?: string | null;
     }) =>
       apiClient
-        .patch(`/classes/${classId}/schedule`, { schedule_days, schedule_time, schedule_duration })
+        .patch(`/classes/${classId}/schedule`, {
+          schedule_days,
+          schedule_time,
+          schedule_duration,
+          starts_at,
+        })
         .then((r) => r.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'classes'] });

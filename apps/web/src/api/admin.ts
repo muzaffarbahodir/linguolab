@@ -332,6 +332,9 @@ export interface AdminClass {
   ends_at: string | null;
   description: string | null;
   enrolled_count: number;
+  schedule_days?: string[];
+  schedule_time?: string | null;
+  schedule_duration?: number | null;
   language: { id: string; name_ru: string; flag_emoji: string; color: string | null };
   teacher: {
     id: string;

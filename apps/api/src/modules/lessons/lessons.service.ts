@@ -429,10 +429,15 @@ export class LessonsService {
 
     const TZ_OFFSET_MS = 5 * 60 * 60 * 1000; // UTC+5
     const nowUtc = new Date();
-    const nowTz = new Date(nowUtc.getTime() + TZ_OFFSET_MS);
-    const y = nowTz.getUTCFullYear();
-    const mo = nowTz.getUTCMonth();
-    const d = nowTz.getUTCDate();
+    // Уроки идут от даты начала курса (которую задаёт учитель/менеджер), а не
+    // «от сегодня». Если старт в будущем — генерим с него; если в прошлом или
+    // не задан — с текущего момента.
+    const startBoundary =
+      cls.starts_at && cls.starts_at.getTime() > nowUtc.getTime() ? cls.starts_at : nowUtc;
+    const baseTz = new Date(startBoundary.getTime() + TZ_OFFSET_MS);
+    const y = baseTz.getUTCFullYear();
+    const mo = baseTz.getUTCMonth();
+    const d = baseTz.getUTCDate();
 
     const candidateDates: Date[] = [];
     const totalDays = weeks * 7;
@@ -445,6 +450,8 @@ export class LessonsService {
       // Конвертируем в UTC для хранения в БД
       const lessonUtc = new Date(candidateTz.getTime() - TZ_OFFSET_MS);
       if (lessonUtc <= nowUtc) continue; // пропускаем прошедшие
+      if (cls.starts_at && lessonUtc.getTime() < cls.starts_at.getTime()) continue; // раньше старта курса
+      if (cls.ends_at && lessonUtc.getTime() > cls.ends_at.getTime()) continue; // позже конца курса
 
       candidateDates.push(lessonUtc);
     }

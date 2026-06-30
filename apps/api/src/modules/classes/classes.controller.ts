@@ -176,11 +176,12 @@ export class ClassesController {
     @Body('schedule_days') days: string[],
     @Body('schedule_time') time: string,
     @Body('schedule_duration') duration: number,
+    @Body('starts_at') startsAt?: string | null,
   ) {
     if (!days?.length || !time || !duration) {
       throw new BadRequestException('schedule_days, schedule_time, schedule_duration are required');
     }
-    return this.classesService.setSchedule(classId, days, time, Number(duration));
+    return this.classesService.setSchedule(classId, days, time, Number(duration), startsAt);
   }
 
   /**

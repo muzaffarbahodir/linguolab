@@ -46,9 +46,10 @@ const STATUS_COLOR: Record<ClassStatus, string> = {
 function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }) {
   const { t } = useTranslation();
   const setSchedule = useSetClassSchedule();
-  const [days, setDays] = useState<string[]>([] as string[]);
-  const [time, setTime] = useState('09:00');
-  const [duration, setDuration] = useState('60');
+  const [days, setDays] = useState<string[]>(cls.schedule_days ?? []);
+  const [time, setTime] = useState(cls.schedule_time ?? '09:00');
+  const [duration, setDuration] = useState(String(cls.schedule_duration ?? 60));
+  const [startDate, setStartDate] = useState(cls.starts_at ? cls.starts_at.slice(0, 10) : '');
 
   function toggleDay(key: string) {
     setDays((prev) => (prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key]));
@@ -62,6 +63,7 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
         schedule_days: days,
         schedule_time: time,
         schedule_duration: parseInt(duration, 10),
+        starts_at: startDate || null,
       },
       {
         onSuccess: () => {
@@ -135,6 +137,20 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
               style={inputStyle}
             />
           </div>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-muted mb-1 text-xs font-semibold">
+            {t('admin.classes.start_date_label')}
+          </p>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+            style={inputStyle}
+          />
+          <p className="text-muted mt-1 text-[11px]">{t('admin.classes.start_date_hint')}</p>
         </div>
 
         <button

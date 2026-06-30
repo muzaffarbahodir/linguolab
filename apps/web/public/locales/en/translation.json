@@ -1212,6 +1212,8 @@
       "days_label": "Class days *",
       "time_label": "Start time *",
       "duration_label": "Duration (min) *",
+      "start_date_label": "Course start date",
+      "start_date_hint": "Lessons are generated from this date by the schedule. Empty = from today.",
       "schedule_save": "Save schedule",
       "schedule_error": "Schedule save error"
     },

@@ -228,19 +228,40 @@ export class ClassesService {
   /**
    * PATCH /classes/:id/schedule — менеджер задаёт расписание занятий.
    */
-  async setSchedule(classId: string, days: string[], time: string, duration: number) {
+  async setSchedule(
+    classId: string,
+    days: string[],
+    time: string,
+    duration: number,
+    startsAt?: string | null,
+  ) {
     const cls = await this.prisma.class.findUnique({ where: { id: classId } });
     if (!cls) throw new NotFoundException('Class not found');
 
+    // Дата начала курса — от неё генерируются уроки. undefined → не трогаем.
+    let starts: Date | null | undefined;
+    if (startsAt === null) starts = null;
+    else if (typeof startsAt === 'string' && startsAt) {
+      const d = new Date(startsAt);
+      if (isNaN(d.getTime())) throw new BadRequestException('Invalid start date');
+      starts = d;
+    }
+
     return this.prisma.class.update({
       where: { id: classId },
-      data: { schedule_days: days, schedule_time: time, schedule_duration: duration },
+      data: {
+        schedule_days: days,
+        schedule_time: time,
+        schedule_duration: duration,
+        ...(starts !== undefined ? { starts_at: starts } : {}),
+      },
       select: {
         id: true,
         title: true,
         schedule_days: true,
         schedule_time: true,
         schedule_duration: true,
+        starts_at: true,
       },
     });
   }
@@ -662,6 +683,14 @@ export class ClassesService {
     });
     if (!enrollment || enrollment.status !== 'ACTIVE') {
       throw new NotFoundException('You are not enrolled in this class');
+    }
+
+    // Оценку можно ставить только после проведённого урока в классе.
+    const conducted = await this.prisma.lesson.count({
+      where: { class_id: classId, status: 'COMPLETED' },
+    });
+    if (conducted === 0) {
+      throw new ForbiddenException('LESSON_NOT_CONDUCTED');
     }
 
     // Получаем teacher_id класса
