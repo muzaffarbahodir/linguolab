@@ -126,14 +126,11 @@ export class PaymentsService {
         trial_language_id: dto.offline_trial_language_id ?? null,
         period_months: months,
         promo_code: promo?.code ?? null,
+        // Записываем намерение; реально списываем только при PAID (брошенный
+        // заказ не теряет баллы). Скидка уже учтена в сумме.
         points_spent: redeem.points,
       },
     });
-
-    // Списываем баллы сразу при оформлении (скидка уже учтена в сумме).
-    if (redeem.points > 0) {
-      await this.points.spend(payerId, redeem.points, payment.id);
-    }
 
     // Привязка к очному пробному уроку — после PAID заявка авто-подтвердится.
     // updateMany + payment_id:null = идемпотентно при повторном checkout.
@@ -366,15 +363,20 @@ export class PaymentsService {
         },
       });
 
-      // Лояльные баллы (кэшбэк) + реферальный бонус — не ломаем флоу при ошибке.
+      // Баллы: списываем зарезервированные (если платили баллами) + кэшбэк +
+      // реферальный бонус. Списание баллов — кошелёк плательщика. Не ломаем флоу.
       try {
+        const payerForPoints = payment.payer_user_id ?? payment.user_id;
+        if (payment.points_spent > 0) {
+          await this.points.spend(payerForPoints, payment.points_spent, payment.id);
+        }
         await this.points.awardForPayment(
           payment.user_id,
           Number(payment.amount_tiyin),
           payment.id,
         );
       } catch (e) {
-        this.logger.error(`points.awardForPayment(${payment.id}): ${String(e)}`);
+        this.logger.error(`points(${payment.id}): ${String(e)}`);
       }
 
       // Авто-открытие группы: первый оплативший студент → класс ACTIVE и виден.

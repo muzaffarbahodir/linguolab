@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -88,17 +88,32 @@ export class PointsService {
     return { points, discount_uzs: points * POINT_VALUE_UZS };
   }
 
-  /** Списать баллы за оплату (с проверкой баланса). */
+  /**
+   * Списать баллы за оплату — толерантно: не больше текущего баланса (на случай
+   * если баланс изменился между оформлением и подтверждением). Зовём при PAID.
+   */
   async spend(userId: string, points: number, paymentId: string): Promise<void> {
     if (points <= 0) return;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { points: true },
     });
-    if (!user || user.points < points) {
-      throw new BadRequestException('Недостаточно баллов');
+    const toSpend = Math.min(points, user?.points ?? 0);
+    if (toSpend > 0) {
+      await this.addPoints(
+        userId,
+        -toSpend,
+        'spend_payment',
+        `Оплата баллами: −${toSpend}`,
+        paymentId,
+      );
     }
-    await this.addPoints(userId, -points, 'spend_payment', `Оплата баллами: −${points}`, paymentId);
+  }
+
+  /** Вернуть потраченные баллы (отмена/возврат заказа). */
+  async refundSpent(userId: string, points: number, paymentId: string): Promise<void> {
+    if (points <= 0) return;
+    await this.addPoints(userId, points, 'refund', `Возврат баллов за заказ`, paymentId);
   }
 
   private async maybeReferralBonus(inviteeId: string, paymentId: string): Promise<void> {
