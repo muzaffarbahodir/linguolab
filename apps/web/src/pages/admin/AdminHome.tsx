@@ -35,6 +35,13 @@ interface QuickLink {
 
 type TFn = (key: string) => string;
 
+/** Срезает ведущий эмодзи из подписи (некоторые заголовки содержат его в переводе,
+ *  а в меню эмодзи уже показан отдельным чипом → иначе дублируется). */
+const LEADING_EMOJI = /^[\p{Extended_Pictographic}️‍\s]+/u;
+function stripLeadingEmoji(s: string): string {
+  return s.replace(LEADING_EMOJI, '');
+}
+
 /** Порядок секций меню админа. */
 const GROUP_ORDER: { key: QuickGroup; tKey: string }[] = [
   { key: 'people', tKey: 'admin.home.grp_people' },
@@ -432,7 +439,9 @@ export function AdminHomePage() {
                   >
                     {link.emoji}
                   </span>
-                  <span className="flex-1 truncate text-sm font-medium">{link.label}</span>
+                  <span className="flex-1 truncate text-sm font-medium">
+                    {stripLeadingEmoji(link.label)}
+                  </span>
                   <ChevronRight size={16} className="text-tg-hint shrink-0" />
                 </button>
               ))}
@@ -491,34 +500,30 @@ function WidgetCard({
   onClick?: () => void;
 }) {
   // Длинные значения (выручка) уменьшаем, чтобы помещались.
-  const valueSize = value.length > 7 ? 'text-lg' : 'text-2xl';
+  const valueSize = value.length > 8 ? 'text-base' : 'text-[1.7rem]';
   return (
     <div
-      className={`relative shrink-0 snap-start overflow-hidden rounded-2xl p-4 ${
-        wide ? 'min-w-[58%]' : 'min-w-[42%]'
-      }`}
+      className={`shrink-0 snap-start overflow-hidden rounded-2xl ${wide ? 'min-w-[56%]' : 'min-w-[40%]'}`}
       style={{
-        background: `linear-gradient(150deg, ${color}26, ${color}0a)`,
-        border: `1px solid ${color}33`,
+        background: 'var(--surface)',
+        border: '1px solid var(--hairline)',
         cursor: onClick ? 'pointer' : 'default',
       }}
       onClick={onClick}
     >
-      {/* Водяной знак-эмодзи */}
-      <span className="pointer-events-none absolute -bottom-3 -right-1 text-6xl opacity-10">
-        {emoji}
-      </span>
-      <div className="relative">
+      {/* Цветной акцент сверху */}
+      <div className="h-1 w-full" style={{ background: color }} />
+      <div className="p-3.5">
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-base"
-          style={{ background: `${color}33` }}
+          className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg text-base"
+          style={{ background: `${color}1f` }}
         >
           {emoji}
         </div>
-        <div className={`mt-3 font-extrabold leading-tight ${valueSize}`} style={{ color }}>
+        <div className={`font-extrabold leading-none ${valueSize}`} style={{ color }}>
           {value}
         </div>
-        <div className="text-tg-hint mt-0.5 truncate text-xs">{label}</div>
+        <div className="text-tg-hint mt-1.5 text-xs leading-tight">{label}</div>
       </div>
     </div>
   );
