@@ -243,6 +243,14 @@ export class TeachersService {
       throw new ForbiddenException('You must be an active student in this class to rate');
     }
 
+    // Оценку можно ставить только после проведённого урока в этом классе.
+    const conducted = await this.prisma.lesson.count({
+      where: { class_id: data.class_id, status: 'COMPLETED' },
+    });
+    if (conducted === 0) {
+      throw new ForbiddenException('LESSON_NOT_CONDUCTED');
+    }
+
     // Upsert — один студент может изменить оценку
     const result = await this.prisma.teacherRating.upsert({
       where: {

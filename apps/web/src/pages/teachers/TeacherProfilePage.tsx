@@ -143,8 +143,14 @@ function RateTeacherSheet({
           setDone(true);
           setTimeout(onClose, 1200);
         },
-        onError: () => {
-          toast.error(t('teacher.error_must_be_student'));
+        onError: (err) => {
+          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(
+            msg === 'LESSON_NOT_CONDUCTED'
+              ? t('teacher.rate_after_lesson')
+              : t('teacher.error_must_be_student'),
+          );
         },
       },
     );

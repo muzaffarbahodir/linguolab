@@ -800,6 +800,7 @@
     "tab_visits": "Qatnashish",
     "star_labels": ["", "Yomon", "O'rtacha past", "O'rtacha", "Yaxshi", "A'lo"],
     "error_must_be_student": "Xato. Siz ushbu sinfning faol talabasi bo'lishingiz kerak.",
+    "rate_after_lesson": "O'qituvchini birinchi dars o'tkazilgandan keyin baholash mumkin.",
     "no_spots": "Joy yo'q",
     "enroll_btn": "Yozilish",
     "comment_ph": "Izoh (ixtiyoriy)...",

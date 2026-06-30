@@ -800,6 +800,7 @@
     "tab_visits": "Attendance",
     "star_labels": ["", "Poor", "Below average", "Average", "Good", "Excellent"],
     "error_must_be_student": "Error. You must be an active student of this class.",
+    "rate_after_lesson": "You can rate the teacher after the first conducted lesson.",
     "no_spots": "No spots",
     "enroll_btn": "Enroll",
     "comment_ph": "Comment (optional)...",
