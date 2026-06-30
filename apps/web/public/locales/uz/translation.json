@@ -192,6 +192,21 @@
     "me": "siz",
     "points_hint": "Ochkolar: qatnashilgan dars +10 (kechikkan +5), tekshirilgan uy vazifasi +5, yutuq +25"
   },
+  "points": {
+    "title": "Ballar",
+    "subtitle": "To'lovlar uchun keshbek — yig'ing va chegirma sifatida sarflang",
+    "balance": "Balans",
+    "level_bronze": "Bronza",
+    "level_silver": "Kumush",
+    "level_gold": "Oltin",
+    "level_platinum": "Platina",
+    "to_next": "Keyingi darajagacha: {{n}} ball",
+    "max_level": "Eng yuqori daraja 💎",
+    "how_cashback": "Har bir kurs to'lovidan ball keshbek",
+    "how_referral": "Do'st uchun bonus: taklif qilgan do'st birinchi to'lov qilganda +5 ball",
+    "history": "Tarix",
+    "empty": "Hozircha amallar yo'q"
+  },
   "games": {
     "title": "Mini-o'yinlar",
     "soon": "Tez orada",
@@ -360,6 +375,7 @@
     "my_classes_hint": "Darslar va jarayon",
     "rating": "Reyting",
     "games": "Mini-o'yinlar",
+    "points": "Ballar",
     "schedule": "Jadval",
     "homework": "Uy vazifalari",
     "achievements": "Yutuqlar",

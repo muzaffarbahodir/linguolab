@@ -192,6 +192,21 @@
     "me": "you",
     "points_hint": "Points: attended lesson +10 (late +5), graded homework +5, achievement +25"
   },
+  "points": {
+    "title": "Points",
+    "subtitle": "Cashback on payments — collect and spend as a discount",
+    "balance": "Balance",
+    "level_bronze": "Bronze",
+    "level_silver": "Silver",
+    "level_gold": "Gold",
+    "level_platinum": "Platinum",
+    "to_next": "To next level: {{n}} points",
+    "max_level": "Max level 💎",
+    "how_cashback": "Earn points back on every course payment",
+    "how_referral": "Friend bonus: +5 points when your invitee makes their first payment",
+    "history": "History",
+    "empty": "No transactions yet"
+  },
   "games": {
     "title": "Mini-games",
     "soon": "Soon",
@@ -360,6 +375,7 @@
     "my_classes_hint": "Lessons and progress",
     "rating": "Rating",
     "games": "Mini-games",
+    "points": "Points",
     "schedule": "Schedule",
     "homework": "Homework",
     "achievements": "Achievements",

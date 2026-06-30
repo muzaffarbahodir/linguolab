@@ -699,6 +699,7 @@ export function ProfilePage() {
   // ── Student quick links ───────────────────────────────────────────────────
   // Пункты кабинета — без объяснительных подсказок, только название.
   const studentQuickLinks: MenuItem[] = [
+    { Icon: Coins, label: t('profile.points'), onClick: () => navigate('/points') },
     { Icon: Award, label: t('profile.rating'), onClick: () => navigate('/leaderboard') },
     { Icon: Gamepad2, label: t('profile.games'), onClick: () => navigate('/mini-games') },
     { Icon: GraduationCap, label: t('profile.my_classes'), onClick: () => navigate('/schedule') },

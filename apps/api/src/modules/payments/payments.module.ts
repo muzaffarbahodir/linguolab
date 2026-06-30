@@ -8,9 +8,10 @@ import { TelegramModule } from '../telegram/telegram.module';
 import { FiscalModule } from '../fiscal/fiscal.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PromoModule } from '../promo/promo.module';
+import { PointsModule } from '../points/points.module';
 
 @Module({
-  imports: [TelegramModule, FiscalModule, NotificationsModule, PromoModule],
+  imports: [TelegramModule, FiscalModule, NotificationsModule, PromoModule, PointsModule],
   controllers: [PaymentsController],
   providers: [PaymentsService, PaymeService, ClickService, BillingReminderService],
   exports: [PaymentsService],

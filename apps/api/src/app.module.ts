@@ -40,6 +40,7 @@ import { ClassRequestsModule } from './modules/class-requests/class-requests.mod
 import { TeacherOffersModule } from './modules/teacher-offers/teacher-offers.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { HrModule } from './modules/hr/hr.module';
+import { PointsModule } from './modules/points/points.module';
 
 /**
  * AppModule — корневой модуль.
@@ -118,6 +119,7 @@ import { HrModule } from './modules/hr/hr.module';
     TeacherOffersModule,
     AnnouncementsModule,
     HrModule,
+    PointsModule,
     ScheduleModule.forRoot(),
     HealthModule,
   ],

@@ -14,6 +14,7 @@ import { FiscalService } from '../fiscal/fiscal.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { PromoService } from '../promo/promo.service';
+import { PointsService } from '../points/points.service';
 
 export interface CheckoutDto {
   provider: PaymentProvider;
@@ -42,6 +43,7 @@ export class PaymentsService {
     private readonly notifications: NotificationsService,
     private readonly telegram: TelegramService,
     private readonly promo: PromoService,
+    private readonly points: PointsService,
   ) {}
 
   /**
@@ -348,6 +350,17 @@ export class PaymentsService {
           paid_until: paidUntil,
         },
       });
+
+      // Лояльные баллы (кэшбэк) + реферальный бонус — не ломаем флоу при ошибке.
+      try {
+        await this.points.awardForPayment(
+          payment.user_id,
+          Number(payment.amount_tiyin),
+          payment.id,
+        );
+      } catch (e) {
+        this.logger.error(`points.awardForPayment(${payment.id}): ${String(e)}`);
+      }
 
       // Авто-открытие группы: первый оплативший студент → класс ACTIVE и виден.
       if (payment.class.status === 'DRAFT' || payment.class.status === 'ENROLLMENT_OPEN') {
