@@ -570,6 +570,8 @@
     "promo_applied": "Promo applied: −{{pct}}%",
     "promo_invalid": "Invalid promo code",
     "promo_active": "{{code}} · {{pct}}% off",
+    "use_points": "Use points",
+    "use_points_hint": "{{n}} points = {{uzs}} off",
     "pay_invoice": "💳 Pay",
     "cash": "Cash",
     "cash_hint": "Pay in cash at the center. A manager confirms the payment and your group access opens.",

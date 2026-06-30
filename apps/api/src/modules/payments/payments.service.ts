@@ -30,6 +30,8 @@ export interface CheckoutDto {
   period_months?: number;
   /** Промокод-скидка (опционально). */
   promo_code?: string;
+  /** Сколько лояльных баллов списать в скидку (опционально). 0/undefined = не списывать. */
+  points_to_spend?: number;
 }
 
 @Injectable()
@@ -94,7 +96,14 @@ export class PaymentsService {
     // Промокод — списываем одно использование и применяем скидку к сумме.
     const promo = dto.promo_code ? await this.promo.consume(dto.promo_code) : null;
     const discountPct = promo?.discount_percent ?? 0;
-    const finalUzs = Math.round(cls.price_uzs * months * (1 - discountPct / 100));
+    const orderUzs = Math.round(cls.price_uzs * months * (1 - discountPct / 100));
+    // Опциональная скидка лояльными баллами (платит — плательщик).
+    const redeem = await this.points.quoteRedeem(
+      payerId,
+      orderUzs,
+      Math.round(dto.points_to_spend ?? 0),
+    );
+    const finalUzs = Math.max(0, orderUzs - redeem.discount_uzs);
     const amountTiyin = BigInt(uzsToTiyin(finalUzs));
     // Ставка НДС из env. 0 = режим без НДС (налог с оборота). По умолчанию 0 —
     // безопаснее, пока режим не подтверждён бухгалтером. См. VAT_RATE в .env.
@@ -117,8 +126,14 @@ export class PaymentsService {
         trial_language_id: dto.offline_trial_language_id ?? null,
         period_months: months,
         promo_code: promo?.code ?? null,
+        points_spent: redeem.points,
       },
     });
+
+    // Списываем баллы сразу при оформлении (скидка уже учтена в сумме).
+    if (redeem.points > 0) {
+      await this.points.spend(payerId, redeem.points, payment.id);
+    }
 
     // Привязка к очному пробному уроку — после PAID заявка авто-подтвердится.
     // updateMany + payment_id:null = идемпотентно при повторном checkout.

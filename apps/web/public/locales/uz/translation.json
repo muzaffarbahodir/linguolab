@@ -570,6 +570,8 @@
     "promo_applied": "Promokod qo'llandi: −{{pct}}%",
     "promo_invalid": "Promokod yaroqsiz",
     "promo_active": "{{code}} · {{pct}}% chegirma",
+    "use_points": "Ballarni ishlatish",
+    "use_points_hint": "{{n}} ball = {{uzs}} chegirma",
     "pay_invoice": "💳 To'lash",
     "cash": "Naqd pul",
     "cash_hint": "O'quv markazida naqd pul bilan to'lang. Menejer to'lovni tasdiqlagach, guruhga kirish ochiladi.",

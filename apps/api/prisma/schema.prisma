@@ -693,6 +693,8 @@ model Payment {
   period_months     Int             @default(1)
   /// Применённый промокод (для записи/аналитики). Скидка уже в amount_tiyin.
   promo_code        String?
+  /// Списано лояльных баллов при оформлении (скидка уже в amount_tiyin).
+  points_spent      Int             @default(0)
   currency          String          @default("UZS")
   provider          PaymentProvider
   provider_txn_id   String?                               // ID транзакции провайдера

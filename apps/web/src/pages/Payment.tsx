@@ -11,6 +11,7 @@ import { useBackButton } from '../hooks/useBackButton';
 
 import { useCheckout, useMyPayments, useFetchReceipt, type PaymentProvider } from '../api/payments';
 import { useValidatePromo } from '../api/promo';
+import { usePoints } from '../api/points';
 import { useMyEnrollments } from '../api/enrollments';
 import { formatUzs } from '../lib/money';
 import { useCurrency } from '../hooks/useCurrency';
@@ -45,6 +46,7 @@ export default function Payment() {
   const [months, setMonths] = useState(1);
   const [promoInput, setPromoInput] = useState('');
   const [applied, setApplied] = useState<{ code: string; pct: number } | null>(null);
+  const [usePts, setUsePts] = useState(false);
   const { fmt } = useCurrency();
 
   useBackButton(() => navigate(-1));
@@ -54,17 +56,36 @@ export default function Payment() {
   const fetchReceipt = useFetchReceipt();
   const { data: history, isLoading: historyLoading } = useMyPayments();
   const { data: enrollments } = useMyEnrollments();
+  const { data: ptsData } = usePoints();
 
   // План помесячной оплаты доступен только для оплаты курса (не пробного).
   const isCoursePayment = priceUzs !== undefined && !offlineTrialLanguageId && !trialId;
   const baseTotal = (priceUzs ?? 0) * (isCoursePayment ? months : 1);
   const total = applied ? Math.round(baseTotal * (1 - applied.pct / 100)) : baseTotal;
 
+  // Опциональная скидка лояльными баллами (только для оплаты курса).
+  const pointBalance = ptsData?.points ?? 0;
+  const pointValue = ptsData?.point_value_uzs ?? 500;
+  const redeemablePts = isCoursePayment
+    ? Math.min(pointBalance, Math.floor(total / pointValue))
+    : 0;
+  const ptsDiscount = usePts ? redeemablePts * pointValue : 0;
+  const payable = Math.max(0, total - ptsDiscount);
+
   // Стабильный idempotency_key на пару (класс, провайдер, план, промокод) — повтор/
   // двойной клик не плодит дубли PENDING. Смена параметров → новый ключ → новый платёж.
   const idempotencyKey = useMemo(
     () => crypto.randomUUID(),
-    [classId, selectedProvider, studentId, trialId, offlineTrialLanguageId, months, applied?.code],
+    [
+      classId,
+      selectedProvider,
+      studentId,
+      trialId,
+      offlineTrialLanguageId,
+      months,
+      applied?.code,
+      usePts,
+    ],
   );
 
   const handleApplyPromo = () => {
@@ -96,6 +117,9 @@ export default function Payment() {
         ...(offlineTrialLanguageId ? { offline_trial_language_id: offlineTrialLanguageId } : {}),
         ...(isCoursePayment ? { period_months: months } : {}),
         ...(isCoursePayment && applied ? { promo_code: applied.code } : {}),
+        ...(isCoursePayment && usePts && redeemablePts > 0
+          ? { points_to_spend: redeemablePts }
+          : {}),
       });
       // Наличные — нет редиректа в кассу: показываем чек с QR для менеджера.
       if (selectedProvider === 'CASH' || !result.redirect_url) {
@@ -190,13 +214,40 @@ export default function Payment() {
               </p>
             )}
 
+            {/* Скидка баллами — опционально */}
+            {redeemablePts > 0 && (
+              <button
+                onClick={() => setUsePts((v) => !v)}
+                className="mt-2 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left"
+                style={{
+                  borderColor: usePts ? 'rgb(var(--brand-rgb))' : 'var(--hairline)',
+                  background: usePts ? 'rgba(var(--brand-rgb),0.08)' : 'transparent',
+                }}
+              >
+                <span>
+                  <span className="text-sm font-semibold">{t('payment.use_points')}</span>
+                  <span className="text-faint block text-xs">
+                    {t('payment.use_points_hint', {
+                      n: redeemablePts,
+                      uzs: fmt(redeemablePts * pointValue),
+                    })}
+                  </span>
+                </span>
+                <span
+                  className={`shrink-0 text-sm font-bold ${usePts ? 'text-brand' : 'text-faint'}`}
+                >
+                  {usePts ? `−${fmt(ptsDiscount)}` : '○'}
+                </span>
+              </button>
+            )}
+
             <div className="mt-3 flex items-center justify-between px-1">
               <span className="text-muted text-sm">{t('payment.total')}</span>
               <span className="flex items-baseline gap-2">
-                {applied && (
+                {(applied || ptsDiscount > 0) && (
                   <span className="text-faint text-sm line-through">{fmt(baseTotal)}</span>
                 )}
-                <span className="text-brand text-lg font-bold">{fmt(total)}</span>
+                <span className="text-brand text-lg font-bold">{fmt(payable)}</span>
               </span>
             </div>
           </div>
