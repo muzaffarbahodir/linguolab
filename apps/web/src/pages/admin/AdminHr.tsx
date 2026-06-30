@@ -9,6 +9,7 @@ import WebApp from '@twa-dev/sdk';
 
 import { useBackButton } from '../../hooks/useBackButton';
 import { formatUzs } from '../../lib/money';
+import { apiClient } from '../../api/client';
 import {
   useEmployees,
   useCreateEmployee,
@@ -49,6 +50,25 @@ const EMPTY: Draft = {
 
 function empName(e: Employee) {
   return `${e.user.first_name}${e.user.last_name ? ' ' + e.user.last_name : ''}`;
+}
+
+/** Скачать CSV-реестр зарплат за прогон (через axios с Bearer-токеном). */
+async function downloadPayrollCsv(runId: string, period: string, onError: () => void) {
+  try {
+    const res = await apiClient.get<Blob>(`/hr/payroll/runs/${runId}/export`, {
+      responseType: 'blob',
+    });
+    const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payroll-${period}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    WebApp.HapticFeedback.notificationOccurred('success');
+  } catch {
+    onError();
+  }
 }
 
 export function AdminHrPage() {
@@ -401,19 +421,31 @@ function PayrollTab() {
                 {run.status === 'FINALIZED' ? t('admin.hr.finalized') : t('admin.hr.draft')}
               </p>
             </div>
-            {run.status === 'DRAFT' && (
+            <div className="flex items-center gap-2">
               <button
                 onClick={() =>
-                  WebApp.showConfirm(t('admin.hr.finalize_confirm'), (ok) => {
-                    if (ok) finalize.mutate(run.id);
-                  })
+                  downloadPayrollCsv(run.id, run.period, () =>
+                    WebApp.showAlert(t('admin.hr.export_error')),
+                  )
                 }
-                disabled={finalize.isPending}
-                className="bg-ok/15 text-ok border-ok/30 press rounded-xl border px-3 py-1.5 text-xs font-semibold"
+                className="bg-info/15 text-info border-info/30 press rounded-xl border px-3 py-1.5 text-xs font-semibold"
               >
-                {t('admin.hr.finalize')}
+                📥 {t('admin.hr.export')}
               </button>
-            )}
+              {run.status === 'DRAFT' && (
+                <button
+                  onClick={() =>
+                    WebApp.showConfirm(t('admin.hr.finalize_confirm'), (ok) => {
+                      if (ok) finalize.mutate(run.id);
+                    })
+                  }
+                  disabled={finalize.isPending}
+                  className="bg-ok/15 text-ok border-ok/30 press rounded-xl border px-3 py-1.5 text-xs font-semibold"
+                >
+                  {t('admin.hr.finalize')}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Totals */}

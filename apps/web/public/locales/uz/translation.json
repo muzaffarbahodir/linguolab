@@ -1165,6 +1165,8 @@
       "period": "Oy (YYYY-MM)",
       "generate": "Hisoblash",
       "finalize": "Yakunlash",
+      "export": "Eksport",
+      "export_error": "CSV yuklab bo'lmadi",
       "finalize_confirm": "Hisobni yakunlaysizmi? Keyin o'zgartirib bo'lmaydi.",
       "finalized": "Yakunlangan",
       "draft": "Qoralama",

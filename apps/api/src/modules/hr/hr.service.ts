@@ -18,6 +18,21 @@ import { PrismaService } from '../../prisma/prisma.service';
 const NDFL_RATE = 12; // НДФЛ, удерживается из зарплаты штатного
 const SOCIAL_RATE = 12; // соцналог работодателя (затрата центра, не удержание)
 
+/** Экранирование поля CSV: запятая/кавычки/перенос → оборачиваем в "..." */
+function csvField(value: string | number): string {
+  const s = String(value);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+const SALARY_LABEL_RU: Record<SalaryType, string> = {
+  FIXED: 'Оклад',
+  PER_LESSON: 'За урок',
+  REVENUE_SHARE: '% выручки',
+};
+
 export interface UpsertEmployeeDto {
   user_id?: string;
   telegram_username?: string;
@@ -196,6 +211,75 @@ export class HrService {
     });
 
     return this.getRun(run.id);
+  }
+
+  /**
+   * GET /hr/payroll/runs/:id/export — реестр зарплат за месяц в CSV.
+   * Строки по сотрудникам + итоговая строка (НДФЛ/соцналог/к выплате) для бухгалтера.
+   */
+  async exportPayrollCsv(runId: string): Promise<{ period: string; csv: string }> {
+    const run = await this.prisma.payrollRun.findUnique({
+      where: { id: runId },
+      include: {
+        payslips: {
+          include: {
+            employee: {
+              select: {
+                employment_type: true,
+                salary_type: true,
+                user: { select: { first_name: true, last_name: true } },
+              },
+            },
+          },
+          orderBy: { net_uzs: 'desc' },
+        },
+      },
+    });
+    if (!run) throw new NotFoundException('Payroll run not found');
+    const slips = run.payslips;
+
+    const header = [
+      'Сотрудник',
+      'Занятость',
+      'Тип оплаты',
+      'Уроков',
+      'Начислено',
+      'НДФЛ',
+      'Соцналог',
+      'К выплате',
+    ].join(',');
+
+    const rows = slips.map((p) => {
+      const name = `${p.employee.user.first_name}${
+        p.employee.user.last_name ? ' ' + p.employee.user.last_name : ''
+      }`;
+      return [
+        csvField(name),
+        p.employee.employment_type === EmploymentType.STAFF ? 'Штат' : 'Самозанятый',
+        csvField(SALARY_LABEL_RU[p.employee.salary_type]),
+        p.lessons_count,
+        p.gross_uzs,
+        p.ndfl_uzs,
+        p.social_uzs,
+        p.net_uzs,
+      ].join(',');
+    });
+
+    const sum = (sel: (s: (typeof slips)[number]) => number) =>
+      slips.reduce((acc, p) => acc + sel(p), 0);
+    const totalRow = [
+      'ИТОГО',
+      '',
+      '',
+      '',
+      sum((p) => p.gross_uzs),
+      sum((p) => p.ndfl_uzs),
+      sum((p) => p.social_uzs),
+      sum((p) => p.net_uzs),
+    ].join(',');
+
+    const csv = [header, ...rows, '', totalRow].join('\n');
+    return { period: run.period, csv };
   }
 
   async finalizeRun(id: string) {

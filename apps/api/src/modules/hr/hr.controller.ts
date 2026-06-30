@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Res } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import type { Response } from 'express';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import { HrService, type UpsertEmployeeDto } from './hr.service';
@@ -42,6 +43,15 @@ export class HrController {
   @Get('payroll/runs/:id')
   getRun(@Param('id') id: string) {
     return this.hr.getRun(id);
+  }
+
+  /** GET /hr/payroll/runs/:id/export — реестр зарплат CSV (для бухгалтера). */
+  @Get('payroll/runs/:id/export')
+  async exportPayroll(@Param('id') id: string, @Res() res: Response) {
+    const { period, csv } = await this.hr.exportPayrollCsv(id);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="payroll-${period}.csv"`);
+    res.send('﻿' + csv); // BOM для корректного открытия в Excel
   }
 
   /** Сформировать черновик зарплаты за месяц. Body: { period: "YYYY-MM" } */

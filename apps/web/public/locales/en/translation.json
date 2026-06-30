@@ -1165,6 +1165,8 @@
       "period": "Month (YYYY-MM)",
       "generate": "Generate",
       "finalize": "Finalize",
+      "export": "Export",
+      "export_error": "Failed to export CSV",
       "finalize_confirm": "Finalize run? It can't be changed after.",
       "finalized": "Finalized",
       "draft": "Draft",
