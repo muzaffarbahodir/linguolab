@@ -226,7 +226,47 @@ export class ClassesService {
   }
 
   /**
-   * PATCH /classes/:id/schedule — менеджер задаёт расписание занятий.
+   * GET /classes/:id/setup — состояние «готовности» класса к работе.
+   * Учитель видит что осталось заполнить (расписание, дата старта, ссылка).
+   * teacherUserId передаётся для учителя → проверка владения классом.
+   */
+  async getClassSetup(classId: string, teacherUserId?: string) {
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        title: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
+        starts_at: true,
+        ends_at: true,
+        meeting_url: true,
+        teacher: { select: { user_id: true } },
+        _count: { select: { lessons: true } },
+      },
+    });
+    if (!cls) throw new NotFoundException('Class not found');
+    if (teacherUserId && cls.teacher.user_id !== teacherUserId) {
+      throw new ForbiddenException('Not your class');
+    }
+
+    return {
+      id: cls.id,
+      title: cls.title,
+      schedule_days: cls.schedule_days,
+      schedule_time: cls.schedule_time,
+      schedule_duration: cls.schedule_duration,
+      starts_at: cls.starts_at,
+      ends_at: cls.ends_at,
+      meeting_url: cls.meeting_url,
+      lessons_count: cls._count.lessons,
+    };
+  }
+
+  /**
+   * PATCH /classes/:id/schedule — расписание занятий.
+   * Менеджер/админ — любой класс; учитель — только свой (teacherUserId).
    */
   async setSchedule(
     classId: string,
@@ -234,9 +274,16 @@ export class ClassesService {
     time: string,
     duration: number,
     startsAt?: string | null,
+    teacherUserId?: string,
   ) {
-    const cls = await this.prisma.class.findUnique({ where: { id: classId } });
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, teacher: { select: { user_id: true } } },
+    });
     if (!cls) throw new NotFoundException('Class not found');
+    if (teacherUserId && cls.teacher.user_id !== teacherUserId) {
+      throw new ForbiddenException('Not your class');
+    }
 
     // Дата начала курса — от неё генерируются уроки. undefined → не трогаем.
     let starts: Date | null | undefined;

@@ -133,6 +133,17 @@ export class ClassesController {
     return this.classesService.rateTeacher(user.id, classId, Number(rating), comment);
   }
 
+  /**
+   * GET /classes/:id/setup — готовность класса (расписание/старт/ссылка).
+   * Учитель видит только свой класс.
+   */
+  @Get(':id/setup')
+  @Roles(Role.TEACHER, Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  getClassSetup(@Param('id') classId: string, @CurrentUser() user: RequestUser) {
+    const teacherUserId = user.role === Role.TEACHER ? user.id : undefined;
+    return this.classesService.getClassSetup(classId, teacherUserId);
+  }
+
   /** GET /classes/:id */
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -166,13 +177,15 @@ export class ClassesController {
   }
 
   /**
-   * PATCH /classes/:id/schedule — менеджер задаёт расписание.
-   * Body: { schedule_days: string[], schedule_time: string, schedule_duration: number }
+   * PATCH /classes/:id/schedule — расписание занятий.
+   * Менеджер/админ — любой класс; учитель — только свой.
+   * Body: { schedule_days: string[], schedule_time: string, schedule_duration: number, starts_at? }
    */
   @Patch(':id/schedule')
-  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.TEACHER, Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
   setSchedule(
     @Param('id') classId: string,
+    @CurrentUser() user: RequestUser,
     @Body('schedule_days') days: string[],
     @Body('schedule_time') time: string,
     @Body('schedule_duration') duration: number,
@@ -181,7 +194,15 @@ export class ClassesController {
     if (!days?.length || !time || !duration) {
       throw new BadRequestException('schedule_days, schedule_time, schedule_duration are required');
     }
-    return this.classesService.setSchedule(classId, days, time, Number(duration), startsAt);
+    const teacherUserId = user.role === Role.TEACHER ? user.id : undefined;
+    return this.classesService.setSchedule(
+      classId,
+      days,
+      time,
+      Number(duration),
+      startsAt,
+      teacherUserId,
+    );
   }
 
   /**

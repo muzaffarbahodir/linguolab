@@ -119,6 +119,25 @@ export interface PendingSubmission {
   };
 }
 
+export interface ClassSetup {
+  id: string;
+  title: string;
+  schedule_days: string[];
+  schedule_time: string | null;
+  schedule_duration: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  meeting_url: string | null;
+  lessons_count: number;
+}
+
+export interface SetSchedulePayload {
+  schedule_days: string[];
+  schedule_time: string;
+  schedule_duration: number;
+  starts_at?: string | null;
+}
+
 export interface CreateLessonPayload {
   classId: string;
   title?: string;
@@ -334,6 +353,40 @@ export function useTeacherPendingHw() {
     },
     staleTime: 3 * 60 * 1000,
     placeholderData: [] as PendingSubmission[],
+  });
+}
+
+export function useClassSetup(classId: string) {
+  return useQuery({
+    queryKey: ['teacher', 'class', classId, 'setup'],
+    queryFn: async () => {
+      const res = await apiClient.get<ClassSetup>(`/classes/${classId}/setup`);
+      return res.data;
+    },
+    enabled: !!classId,
+  });
+}
+
+export function useSetTeacherSchedule(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: SetSchedulePayload) =>
+      apiClient.patch(`/classes/${classId}/schedule`, payload).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teacher', 'class', classId, 'setup'] });
+      void qc.invalidateQueries({ queryKey: ['teacher', 'classes'] });
+    },
+  });
+}
+
+export function useSetMeetingUrl(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (meeting_url: string) =>
+      apiClient.patch(`/classes/${classId}/meeting`, { meeting_url }).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teacher', 'class', classId, 'setup'] });
+    },
   });
 }
 

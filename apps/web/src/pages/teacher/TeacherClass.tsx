@@ -16,9 +16,16 @@ import {
   useCreateLesson,
   useCreateHomework,
   useGenerateLessons,
+  useClassSetup,
+  useSetTeacherSchedule,
+  useSetMeetingUrl,
+  type ClassSetup,
 } from '../../api/teacher';
+import { toast } from '../../store/toast';
 
 type Tab = 'lessons' | 'students' | 'homework';
+
+const DAY_KEYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;
 
 // STATUS_LABEL теперь через t('teacher.status_*') в компоненте
 const STATUS_BG: Record<string, string> = {
@@ -48,6 +55,7 @@ export function TeacherClassPage() {
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [showAddHw, setShowAddHw] = useState(false);
   const [showGenerate, setShowGenerate] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
   const [generateWeeks, setGenerateWeeks] = useState(4);
   const [generateResult, setGenerateResult] = useState<{ created: number; skipped: number } | null>(
     null,
@@ -60,6 +68,7 @@ export function TeacherClassPage() {
   const [hwDesc, setHwDesc] = useState('');
   const [hwDue, setHwDue] = useState('');
 
+  const setupQuery = useClassSetup(classId ?? '');
   const lessonsQuery = useClassLessons(classId ?? '');
   const studentsQuery = useClassStudents(classId ?? '');
   const studentStatsQuery = useClassStudentStats(classId ?? '');
@@ -130,6 +139,11 @@ export function TeacherClassPage() {
         {/* ── LESSONS ── */}
         {tab === 'lessons' && (
           <div>
+            {/* Course setup readiness */}
+            {setupQuery.data && (
+              <SetupCard setup={setupQuery.data} onOpen={() => setShowSetup(true)} />
+            )}
+
             {/* Generate result banner */}
             {generateResult && (
               <div
@@ -163,7 +177,15 @@ export function TeacherClassPage() {
             {/* Action buttons */}
             <div className="mb-4 grid grid-cols-2 gap-2">
               <button
-                onClick={() => setShowGenerate(true)}
+                onClick={() => {
+                  // без расписания уроки не сгенерировать — отправляем в настройку
+                  if (!setupQuery.data?.schedule_days.length) {
+                    toast.error(t('teacher.setup_schedule_required'));
+                    setShowSetup(true);
+                    return;
+                  }
+                  setShowGenerate(true);
+                }}
                 className="press rounded-xl py-3 text-sm font-semibold"
                 style={{ background: 'rgba(59,130,246,0.18)', color: '#3B82F6' }}
               >
@@ -580,6 +602,219 @@ export function TeacherClassPage() {
           </div>
         </div>
       )}
+
+      {/* ── Course Setup Sheet ── */}
+      {showSetup && setupQuery.data && classId && (
+        <ClassSetupSheet
+          classId={classId}
+          setup={setupQuery.data}
+          onClose={() => setShowSetup(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Setup readiness card ──────────────────────────────────────────────────────
+
+function SetupCard({ setup, onOpen }: { setup: ClassSetup; onOpen: () => void }) {
+  const { t } = useTranslation();
+  const hasSchedule = setup.schedule_days.length > 0 && !!setup.schedule_time;
+  const hasStart = !!setup.starts_at;
+  const hasMeeting = !!setup.meeting_url;
+  const ready = hasSchedule && hasStart;
+
+  const rows: { ok: boolean; label: string }[] = [
+    { ok: hasSchedule, label: t('teacher.setup_schedule') },
+    { ok: hasStart, label: t('teacher.setup_start') },
+    { ok: hasMeeting, label: t('teacher.setup_meeting') },
+  ];
+
+  return (
+    <div
+      className="mb-4 rounded-2xl border p-4"
+      style={{
+        background: ready ? 'rgba(16,185,129,0.10)' : 'rgba(245,158,11,0.10)',
+        borderColor: ready ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.30)',
+      }}
+    >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-base">{ready ? '✅' : '⚙️'}</span>
+          <span className="text-sm font-bold">{t('teacher.setup_title')}</span>
+        </div>
+        <span className="text-xs font-semibold" style={{ color: ready ? '#10B981' : '#F59E0B' }}>
+          {ready ? t('teacher.setup_ready') : t('teacher.setup_incomplete')}
+        </span>
+      </div>
+
+      <div className="mb-3 space-y-1.5">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center gap-2 text-xs">
+            <span style={{ color: r.ok ? '#10B981' : 'var(--muted)' }}>{r.ok ? '✓' : '○'}</span>
+            <span style={{ color: r.ok ? 'inherit' : 'var(--muted)' }}>{r.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onOpen}
+        className="press w-full rounded-xl py-2.5 text-xs font-bold text-white"
+        style={{
+          background: ready ? 'rgba(255,255,255,0.10)' : 'linear-gradient(135deg,#f59e0b,#fbbf24)',
+        }}
+      >
+        {ready ? t('teacher.setup_edit') : t('teacher.setup_btn')}
+      </button>
+    </div>
+  );
+}
+
+// ── Course Setup Sheet ────────────────────────────────────────────────────────
+
+function ClassSetupSheet({
+  classId,
+  setup,
+  onClose,
+}: {
+  classId: string;
+  setup: ClassSetup;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const saveSchedule = useSetTeacherSchedule(classId);
+  const saveMeeting = useSetMeetingUrl(classId);
+
+  const [days, setDays] = useState<string[]>(setup.schedule_days ?? []);
+  const [time, setTime] = useState(setup.schedule_time ?? '09:00');
+  const [duration, setDuration] = useState(String(setup.schedule_duration ?? 60));
+  const [startDate, setStartDate] = useState(setup.starts_at ? setup.starts_at.slice(0, 10) : '');
+  const [meeting, setMeeting] = useState(setup.meeting_url ?? '');
+
+  function toggleDay(key: string) {
+    setDays((prev) => (prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key]));
+  }
+
+  async function handleSave() {
+    if (!days.length || !time || !duration) {
+      toast.error(t('teacher.setup_schedule_required'));
+      return;
+    }
+    try {
+      await saveSchedule.mutateAsync({
+        schedule_days: days,
+        schedule_time: time,
+        schedule_duration: parseInt(duration, 10) || 60,
+        starts_at: startDate || null,
+      });
+      if (meeting.trim() !== (setup.meeting_url ?? '')) {
+        await saveMeeting.mutateAsync(meeting.trim());
+      }
+      WebApp.HapticFeedback.notificationOccurred('success');
+      onClose();
+    } catch {
+      toast.error(t('teacher.save_error'));
+    }
+  }
+
+  const pending = saveSchedule.isPending || saveMeeting.isPending;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end"
+      style={{ background: 'rgba(0,0,0,0.65)' }}
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl px-5 pb-10 pt-5"
+        style={{ background: '#1a2538' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+        <h2 className="mb-1 font-bold text-white">⚙️ {t('teacher.setup_title')}</h2>
+        <p className="text-muted mb-4 text-xs">{setup.title}</p>
+
+        {/* Days */}
+        <p className="text-muted mb-2 text-xs font-semibold">{t('teacher.setup_days')}</p>
+        <div className="mb-4 flex gap-1.5">
+          {DAY_KEYS.map((key) => (
+            <button
+              key={key}
+              onClick={() => toggleDay(key)}
+              className="press flex-1 rounded-xl py-2 text-xs font-bold"
+              style={{
+                background: days.includes(key) ? '#6366f1' : 'var(--surface-2)',
+                color: days.includes(key) ? '#fff' : 'var(--muted)',
+              }}
+            >
+              {t(`schedule.day_${key.toLowerCase()}`)}
+            </button>
+          ))}
+        </div>
+
+        {/* Time + duration */}
+        <div className="mb-4 flex gap-3">
+          <div className="flex-1">
+            <p className="text-muted mb-1 text-xs font-semibold">{t('teacher.setup_time')}</p>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--hairline)' }}
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-muted mb-1 text-xs font-semibold">{t('teacher.setup_duration')}</p>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="60"
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--hairline)' }}
+            />
+          </div>
+        </div>
+
+        {/* Start date */}
+        <div className="mb-4">
+          <p className="text-muted mb-1 text-xs font-semibold">{t('teacher.setup_start')}</p>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+            style={{ background: 'var(--surface-2)', border: '1px solid var(--hairline)' }}
+          />
+          <p className="text-muted mt-1 text-[11px]">{t('teacher.setup_start_hint')}</p>
+        </div>
+
+        {/* Meeting URL */}
+        <div className="mb-5">
+          <p className="text-muted mb-1 text-xs font-semibold">
+            {t('teacher.setup_meeting_label')}
+          </p>
+          <input
+            type="url"
+            value={meeting}
+            onChange={(e) => setMeeting(e.target.value)}
+            placeholder="https://zoom.us/j/..."
+            className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+            style={{ background: 'var(--surface-2)', border: '1px solid var(--hairline)' }}
+          />
+          <p className="text-muted mt-1 text-[11px]">{t('teacher.setup_meeting_hint')}</p>
+        </div>
+
+        <button
+          onClick={() => void handleSave()}
+          disabled={pending || !days.length}
+          className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
+          style={{ background: 'linear-gradient(135deg,#6366f1,#a5b4fc)' }}
+        >
+          {pending ? '...' : t('teacher.setup_save')}
+        </button>
+      </div>
     </div>
   );
 }
