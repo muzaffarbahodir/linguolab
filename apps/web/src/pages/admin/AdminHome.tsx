@@ -97,7 +97,7 @@ function getQuickLinks(t: TFn): QuickLink[] {
       group: 'learning',
     },
     {
-      emoji: '🎓',
+      emoji: '📜',
       label: t('admin.certificates.title'),
       path: '/admin/certificates',
       color: '#10B981',
@@ -113,7 +113,7 @@ function getQuickLinks(t: TFn): QuickLink[] {
     },
     // ── Финансы ──
     {
-      emoji: '💰',
+      emoji: '🏦',
       label: t('admin.finance.title'),
       path: '/admin/finance',
       color: '#10B981',
@@ -176,7 +176,7 @@ function getQuickLinks(t: TFn): QuickLink[] {
       superOnly: true,
     },
     {
-      emoji: '📋',
+      emoji: '🧾',
       label: t('admin.audit.title'),
       path: '/admin/audit',
       color: '#F59E0B',
@@ -258,11 +258,11 @@ export function AdminHomePage() {
         </p>
       </div>
 
-      {/* Widgets (ADMIN+ only) */}
+      {/* Widgets (ADMIN+ only) — свайпаемая карусель карточек */}
       {isAdmin && (
         <div className="mb-5">
           {widgets ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <WidgetCard
                 emoji="🎓"
                 label={t('admin.home.stat_students')}
@@ -298,7 +298,7 @@ export function AdminHomePage() {
                 label={t('admin.home.stat_revenue')}
                 value={formatUzs(Math.round(widgets.revenue_this_month / 100))}
                 color="#EF4444"
-                small
+                wide
                 onClick={() => navigate('/admin/finance')}
               />
             </div>
@@ -479,31 +479,47 @@ function WidgetCard({
   label,
   value,
   color,
-  small,
+  wide,
   onClick,
 }: {
   emoji: string;
   label: string;
   value: string;
   color: string;
-  small?: boolean;
+  /** Шире обычного — для длинных значений (выручка). */
+  wide?: boolean;
   onClick?: () => void;
 }) {
+  // Длинные значения (выручка) уменьшаем, чтобы помещались.
+  const valueSize = value.length > 7 ? 'text-lg' : 'text-2xl';
   return (
     <div
-      className="rounded-2xl p-4"
+      className={`relative shrink-0 snap-start overflow-hidden rounded-2xl p-4 ${
+        wide ? 'min-w-[58%]' : 'min-w-[42%]'
+      }`}
       style={{
-        background: `${color}12`,
-        border: `1px solid ${color}28`,
+        background: `linear-gradient(150deg, ${color}26, ${color}0a)`,
+        border: `1px solid ${color}33`,
         cursor: onClick ? 'pointer' : 'default',
       }}
       onClick={onClick}
     >
-      <div className="mb-1 text-xl">{emoji}</div>
-      <div className={`font-bold ${small ? 'text-sm' : 'text-lg'}`} style={{ color }}>
-        {value}
+      {/* Водяной знак-эмодзи */}
+      <span className="pointer-events-none absolute -bottom-3 -right-1 text-6xl opacity-10">
+        {emoji}
+      </span>
+      <div className="relative">
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-base"
+          style={{ background: `${color}33` }}
+        >
+          {emoji}
+        </div>
+        <div className={`mt-3 font-extrabold leading-tight ${valueSize}`} style={{ color }}>
+          {value}
+        </div>
+        <div className="text-tg-hint mt-0.5 truncate text-xs">{label}</div>
       </div>
-      <div className="text-tg-hint mt-0.5 text-xs">{label}</div>
     </div>
   );
 }
