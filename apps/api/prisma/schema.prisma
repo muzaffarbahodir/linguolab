@@ -1065,6 +1065,9 @@ model ClassRequest {
   schedule_days     String[]           @default([])    // ["MON","WED","FRI"]
   schedule_time     String?                            // "10:00" HH:MM UTC+5
   schedule_duration Int?                               // минуты: 60/90/120
+  /// Желаемые даты курса — учитель задаёт в заявке; на апруве переносятся в Class
+  starts_at         DateTime?
+  ends_at           DateTime?
   max_students      Int                @default(10)
   /// Ссылка на онлайн-урок (Zoom/Meet) — учитель задаёт при открытии курса
   meeting_url       String?

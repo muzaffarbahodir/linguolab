@@ -1,4 +1,14 @@
-import { IsString, IsEnum, IsOptional, IsInt, IsArray, Min, Max, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsInt,
+  IsArray,
+  Min,
+  Max,
+  MaxLength,
+  IsDateString,
+} from 'class-validator';
 import { CEFR } from '@prisma/client';
 
 export class CreateClassRequestDto {
@@ -28,6 +38,16 @@ export class CreateClassRequestDto {
   @Min(30)
   @Max(240)
   schedule_duration?: number;
+
+  /** Желаемая дата начала курса (ISO) — от неё пойдут уроки */
+  @IsOptional()
+  @IsDateString()
+  starts_at?: string;
+
+  /** Желаемая дата окончания курса (ISO) */
+  @IsOptional()
+  @IsDateString()
+  ends_at?: string;
 
   @IsOptional()
   @IsInt()

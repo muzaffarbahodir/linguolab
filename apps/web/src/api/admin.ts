@@ -351,6 +351,8 @@ export interface ClassRequestItem {
   schedule_days: string[];
   schedule_time: string | null;
   schedule_duration: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
   max_students: number;
   note: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';

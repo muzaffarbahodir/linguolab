@@ -20,6 +20,8 @@ const requestSelect = {
   schedule_days: true,
   schedule_time: true,
   schedule_duration: true,
+  starts_at: true,
+  ends_at: true,
   max_students: true,
   meeting_url: true,
   course_duration: true,
@@ -73,6 +75,8 @@ export class ClassRequestsService {
         schedule_days: dto.schedule_days,
         schedule_time: dto.schedule_time,
         schedule_duration: dto.schedule_duration,
+        starts_at: dto.starts_at ? new Date(dto.starts_at) : undefined,
+        ends_at: dto.ends_at ? new Date(dto.ends_at) : undefined,
         max_students: dto.max_students ?? 10,
         meeting_url: dto.meeting_url,
         course_duration: dto.course_duration,
@@ -171,8 +175,8 @@ export class ClassRequestsService {
         enrollment_closes_at: dto.enrollment_closes_at
           ? new Date(dto.enrollment_closes_at)
           : undefined,
-        starts_at: dto.starts_at ? new Date(dto.starts_at) : undefined,
-        ends_at: dto.ends_at ? new Date(dto.ends_at) : undefined,
+        starts_at: dto.starts_at ? new Date(dto.starts_at) : (request.starts_at ?? undefined),
+        ends_at: dto.ends_at ? new Date(dto.ends_at) : (request.ends_at ?? undefined),
         is_active: false, // станет true когда откроют запись
       },
       select: { id: true, title: true },

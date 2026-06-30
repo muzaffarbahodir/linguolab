@@ -50,6 +50,7 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
   const [days, setDays] = useState<string[]>([]);
   const [time, setTime] = useState('09:00');
   const [duration, setDuration] = useState('60');
+  const [startDate, setStartDate] = useState('');
   const [maxStudents, setMaxStudents] = useState('10');
 
   function toggleDay(key: string) {
@@ -76,6 +77,7 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
         schedule_days: days.length ? days : undefined,
         schedule_time: time || undefined,
         schedule_duration: parseInt(duration, 10) || undefined,
+        starts_at: startDate || undefined,
         max_students: parseInt(maxStudents, 10) || undefined,
       },
       {
@@ -201,6 +203,15 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
             />
           </div>
         </div>
+
+        {/* Дата начала курса */}
+        <p className="text-muted mb-1 text-xs">{t('class_req.start_date_label')}</p>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className={`${inputCls} mb-3`}
+        />
 
         {/* Ссылка на онлайн-урок (Zoom/Meet) */}
         <p className="text-muted mb-1 text-xs">{t('class_req.meeting_label')}</p>

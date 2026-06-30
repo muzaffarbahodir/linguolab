@@ -9,6 +9,8 @@ export interface MyClassRequestItem {
   schedule_days: string[];
   schedule_time: string | null;
   schedule_duration: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
   max_students: number;
   meeting_url: string | null;
   course_duration: string | null;
@@ -44,6 +46,8 @@ export function useCreateClassRequest() {
       schedule_days?: string[];
       schedule_time?: string;
       schedule_duration?: number;
+      starts_at?: string;
+      ends_at?: string;
       max_students?: number;
       meeting_url?: string;
       course_duration?: string;

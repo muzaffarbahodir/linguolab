@@ -1457,6 +1457,7 @@
     "time_label": "Time",
     "duration_label": "Dur. (min)",
     "seats_label": "Seats",
+    "start_date_label": "Course start date (lessons start from it)",
     "meeting_label": "Online lesson link (Zoom/Meet, optional)",
     "duration_course_label": "Course duration",
     "duration_course_ph": "e.g. 3 months · 36 lessons",

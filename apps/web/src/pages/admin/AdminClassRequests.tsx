@@ -42,8 +42,9 @@ function ApproveModal({ req, onClose }: { req: ClassRequestItem; onClose: () => 
   });
   const [enrollmentOpens, setEnrollmentOpens] = useState('');
   const [enrollmentCloses, setEnrollmentCloses] = useState('');
-  const [startsAt, setStartsAt] = useState('');
-  const [endsAt, setEndsAt] = useState('');
+  // Дату старта учитель указал в заявке — подставляем, админ лишь подтверждает.
+  const [startsAt, setStartsAt] = useState(req.starts_at ? req.starts_at.slice(0, 10) : '');
+  const [endsAt, setEndsAt] = useState(req.ends_at ? req.ends_at.slice(0, 10) : '');
   const [adminNote, setAdminNote] = useState('');
 
   function handleApprove() {
@@ -246,6 +247,7 @@ function RequestCard({ req }: { req: ClassRequestItem }) {
         <div className="text-muted mb-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
           {req.schedule_days.length > 0 && <span>📅 {req.schedule_days.join(', ')}</span>}
           {req.schedule_time && <span>🕐 {req.schedule_time}</span>}
+          {req.starts_at && <span>🚀 {new Date(req.starts_at).toLocaleDateString()}</span>}
           {req.max_students && <span>👥 {t('admin_cr.seats_to', { n: req.max_students })}</span>}
         </div>
 

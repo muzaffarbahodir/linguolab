@@ -1457,6 +1457,7 @@
     "time_label": "Vaqt",
     "duration_label": "Davom. (daq)",
     "seats_label": "Joylar",
+    "start_date_label": "Kurs boshlanish sanasi (darslar shundan boshlanadi)",
     "meeting_label": "Onlayn dars havolasi (Zoom/Meet, ixtiyoriy)",
     "duration_course_label": "Kurs davomiyligi",
     "duration_course_ph": "masalan 3 oy · 36 dars",

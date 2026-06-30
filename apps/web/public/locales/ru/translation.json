@@ -1457,6 +1457,7 @@
     "time_label": "Время",
     "duration_label": "Длит. (мин)",
     "seats_label": "Мест",
+    "start_date_label": "Дата начала курса (с неё пойдут уроки)",
     "meeting_label": "Ссылка на онлайн-урок (Zoom/Meet, необязательно)",
     "duration_course_label": "Продолжительность курса",
     "duration_course_ph": "напр. 3 месяца · 36 уроков",
