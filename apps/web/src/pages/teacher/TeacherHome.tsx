@@ -19,6 +19,7 @@ import {
 } from '../../api/teacher';
 import { useAuthStore } from '../../store/auth';
 import { useTeacherProfileByUserId, useUpdateTeacherProfile } from '../../api/teachers';
+import { uploadImage } from '../../api/uploads';
 import { toast } from '../../store/toast';
 
 /** Форматирует время урока из UTC → UTC+5 (Ташкент) */
@@ -41,6 +42,8 @@ function EditProfileSheet({ userId, onClose }: { userId: string; onClose: () => 
   const update = useUpdateTeacherProfile();
 
   const [bio, setBio] = useState(profile?.bio ?? '');
+  const [photo, setPhoto] = useState(profile?.photo_url ?? '');
+  const [uploading, setUploading] = useState(false);
   const [website, setWebsite] = useState(profile?.website_url ?? '');
   const [instagram, setInstagram] = useState(profile?.instagram_url ?? '');
   const [telegram, setTelegram] = useState(profile?.telegram_url ?? '');
@@ -50,16 +53,34 @@ function EditProfileSheet({ userId, onClose }: { userId: string; onClose: () => 
   useEffect(() => {
     if (profile) {
       setBio(profile.bio ?? '');
+      setPhoto(profile.photo_url ?? '');
       setWebsite(profile.website_url ?? '');
       setInstagram(profile.instagram_url ?? '');
       setTelegram(profile.telegram_url ?? '');
     }
   }, [profile]);
 
+  async function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // позволяем выбрать тот же файл повторно
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setPhoto(url);
+      WebApp.HapticFeedback.notificationOccurred('success');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('teacher.save_error'));
+    } finally {
+      setUploading(false);
+    }
+  }
+
   function handleSave() {
     update.mutate(
       {
         bio: bio.trim() || undefined,
+        photo_url: photo.trim() ? photo.trim() : null,
         website_url: website.trim() || undefined,
         instagram_url: instagram.trim() || undefined,
         telegram_url: telegram.trim() || undefined,
@@ -93,6 +114,39 @@ function EditProfileSheet({ userId, onClose }: { userId: string; onClose: () => 
         ) : (
           <>
             <h2 className="mb-4 text-base font-bold text-white">{t('teacher.edit_profile')}</h2>
+
+            {/* Photo */}
+            <div className="mb-4 flex items-center gap-4">
+              <div className="bg-surface-2 h-16 w-16 shrink-0 overflow-hidden rounded-full">
+                {(photo || profile?.user.avatar_url) && (
+                  <img
+                    src={photo || profile?.user.avatar_url || ''}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="bg-surface-2 press inline-block cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-white">
+                  {uploading ? t('teacher.photo_uploading') : t('teacher.photo_change')}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => void handlePhotoPick(e)}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+                {photo && (
+                  <button
+                    onClick={() => setPhoto('')}
+                    className="text-faint text-left text-[11px] underline"
+                  >
+                    {t('teacher.photo_remove')}
+                  </button>
+                )}
+              </div>
+            </div>
 
             {/* Bio */}
             <label className="text-muted mb-1 block text-xs font-medium">

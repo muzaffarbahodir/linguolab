@@ -40,7 +40,7 @@ export class TeachersController {
 
   /**
    * PATCH /teachers/profile — учитель обновляет свой профиль.
-   * Body: { bio?, website_url?, instagram_url?, telegram_url? }
+   * Body: { bio?, photo_url?, website_url?, instagram_url?, telegram_url? }
    */
   @Patch('profile')
   @Roles(Role.TEACHER)
@@ -49,6 +49,7 @@ export class TeachersController {
     @Body()
     body: {
       bio?: string;
+      photo_url?: string | null;
       website_url?: string;
       instagram_url?: string;
       telegram_url?: string;

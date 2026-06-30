@@ -246,6 +246,7 @@ export function useUpdateTeacherProfile() {
   return useMutation({
     mutationFn: async (data: {
       bio?: string;
+      photo_url?: string | null;
       website_url?: string;
       instagram_url?: string;
       telegram_url?: string;

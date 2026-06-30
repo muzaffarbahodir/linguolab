@@ -323,6 +323,7 @@ export class TeachersService {
     userId: string,
     data: {
       bio?: string;
+      photo_url?: string | null;
       website_url?: string;
       instagram_url?: string;
       telegram_url?: string;
@@ -335,6 +336,7 @@ export class TeachersService {
       where: { id: teacher.id },
       data: {
         bio: data.bio,
+        photo_url: data.photo_url,
         website_url: data.website_url,
         instagram_url: data.instagram_url,
         telegram_url: data.telegram_url,
@@ -342,6 +344,7 @@ export class TeachersService {
       select: {
         id: true,
         bio: true,
+        photo_url: true,
         website_url: true,
         instagram_url: true,
         telegram_url: true,
