@@ -88,6 +88,24 @@ export function useAdminDashboard() {
   });
 }
 
+export interface RecentPayment {
+  id: string;
+  amount_uzs: number;
+  provider: string;
+  paid_at: string;
+  student: string;
+  class_title: string | null;
+}
+
+export function useRecentPayments(limit = 8) {
+  return useQuery({
+    queryKey: ['admin', 'payments', 'recent', limit],
+    queryFn: async () =>
+      (await apiClient.get<RecentPayment[]>(`/admin/payments/recent?limit=${limit}`)).data,
+    staleTime: 30_000,
+  });
+}
+
 // ─── Users (ADMIN+) ───────────────────────────────────────────────────────────
 
 export function useAdminUsers(page = 1, role?: Role) {

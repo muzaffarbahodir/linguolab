@@ -952,7 +952,12 @@
       "preview_title": "👁 Role preview",
       "preview_desc": "View the app through another role's eyes. Data is real, role in DB stays unchanged.",
       "open_hint": "Open →",
-      "sections": "Sections"
+      "sections": "Sections",
+      "recent_payments": "Recent payments",
+      "grp_people": "People",
+      "grp_learning": "Learning",
+      "grp_finance": "Finance",
+      "grp_system": "System"
     },
     "users": {
       "title": "Users",

@@ -639,6 +639,35 @@ export class AdminService {
   }
 
   /**
+   * GET /admin/payments/recent — последние оплаты (для дашборда админа).
+   */
+  async recentPayments(limit = 8) {
+    const payments = await this.prisma.payment.findMany({
+      where: { status: 'PAID' },
+      orderBy: [{ paid_at: 'desc' }, { created_at: 'desc' }],
+      take: limit,
+      select: {
+        id: true,
+        amount_tiyin: true,
+        provider: true,
+        paid_at: true,
+        created_at: true,
+        user: { select: { first_name: true, last_name: true } },
+        class: { select: { title: true } },
+      },
+    });
+
+    return payments.map((p) => ({
+      id: p.id,
+      amount_uzs: Math.round(Number(p.amount_tiyin) / 100),
+      provider: p.provider,
+      paid_at: (p.paid_at ?? p.created_at).toISOString(),
+      student: `${p.user.first_name}${p.user.last_name ? ' ' + p.user.last_name : ''}`,
+      class_title: p.class?.title ?? null,
+    }));
+  }
+
+  /**
    * GET /admin/payments/export
    * Возвращает CSV строку всех платежей.
    */

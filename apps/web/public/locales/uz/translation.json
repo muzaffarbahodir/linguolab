@@ -952,7 +952,12 @@
       "preview_title": "👁 Rol ko'rinishi",
       "preview_desc": "Ilovani boshqa rol ko'zi bilan ko'ring. Ma'lumotlar haqiqiy, bazadagi rol o'zgarmaydi.",
       "open_hint": "Ochish →",
-      "sections": "Bo'limlar"
+      "sections": "Bo'limlar",
+      "recent_payments": "So'nggi to'lovlar",
+      "grp_people": "Odamlar",
+      "grp_learning": "Ta'lim",
+      "grp_finance": "Moliya",
+      "grp_system": "Tizim"
     },
     "users": {
       "title": "Foydalanuvchilar",

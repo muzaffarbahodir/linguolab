@@ -239,6 +239,15 @@ export class AdminController {
     return this.adminService.broadcast(dto, user.id);
   }
 
+  /**
+   * GET /admin/payments/recent — последние оплаты для дашборда.
+   */
+  @Get('payments/recent')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  recentPayments(@Query('limit', new DefaultValuePipe(8), ParseIntPipe) limit: number) {
+    return this.adminService.recentPayments(limit);
+  }
+
   // ─── Export CSV ──────────────────────────────────────────────────────────────
 
   /**

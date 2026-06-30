@@ -3,10 +3,11 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronRight } from 'lucide-react';
 import { useBackButton } from '../../hooks/useBackButton';
 
 import { useAuthStore, type Role } from '../../store/auth';
-import { useAdminDashboard } from '../../api/admin';
+import { useAdminDashboard, useRecentPayments } from '../../api/admin';
 import { useAllTransfers } from '../../api/enrollments';
 import { useAllTrials } from '../../api/trial-lessons';
 import { useAllTickets } from '../../api/support';
@@ -20,152 +21,166 @@ const ROLE_COLOR: Record<string, string> = {
   SUPER_ADMIN: '#F59E0B',
 };
 
+type QuickGroup = 'people' | 'learning' | 'finance' | 'system';
+
 interface QuickLink {
   emoji: string;
   label: string;
-  desc: string;
   path: string;
   color: string;
+  group: QuickGroup;
   adminOnly?: boolean;
   superOnly?: boolean;
 }
 
 type TFn = (key: string) => string;
 
+/** Порядок секций меню админа. */
+const GROUP_ORDER: { key: QuickGroup; tKey: string }[] = [
+  { key: 'people', tKey: 'admin.home.grp_people' },
+  { key: 'learning', tKey: 'admin.home.grp_learning' },
+  { key: 'finance', tKey: 'admin.home.grp_finance' },
+  { key: 'system', tKey: 'admin.home.grp_system' },
+];
+
 function getQuickLinks(t: TFn): QuickLink[] {
   return [
+    // ── Люди ──
     {
       emoji: '👥',
       label: t('admin.users.title'),
-      desc: t('admin.users.desc'),
       path: '/admin/users',
       color: '#6366f1',
+      group: 'people',
     },
     {
       emoji: '🎓',
       label: t('admin.students.title'),
-      desc: t('admin.students.desc'),
       path: '/admin/students',
       color: '#818cf8',
-    },
-    {
-      emoji: '💰',
-      label: t('admin.finance.title'),
-      desc: t('admin.finance.desc'),
-      path: '/admin/finance',
-      color: '#10B981',
-      adminOnly: true,
-    },
-    {
-      emoji: '📢',
-      label: t('admin.broadcast.title'),
-      desc: t('admin.broadcast.desc'),
-      path: '/admin/broadcast',
-      color: '#3B82F6',
-      adminOnly: true,
-    },
-    {
-      emoji: '📋',
-      label: t('admin.audit.title'),
-      desc: t('admin.audit.desc'),
-      path: '/admin/audit',
-      color: '#F59E0B',
-      adminOnly: true,
+      group: 'people',
     },
     {
       emoji: '👨‍🏫',
       label: t('admin.teachers.title'),
-      desc: t('admin.teachers.desc'),
       path: '/admin/teachers',
       color: '#3B82F6',
+      group: 'people',
     },
+    // ── Обучение ──
     {
       emoji: '📚',
       label: t('admin.classes.title'),
-      desc: t('admin.classes.desc'),
       path: '/admin/classes',
       color: '#10B981',
-    },
-    {
-      emoji: '📊',
-      label: t('admin.analytics.title'),
-      desc: t('admin.analytics.desc'),
-      path: '/admin/analytics',
-      color: '#F59E0B',
-      adminOnly: true,
+      group: 'learning',
     },
     {
       emoji: '📋',
       label: t('admin.enrollments.title'),
-      desc: t('admin.enrollments.desc'),
       path: '/admin/enrollments',
       color: '#F59E0B',
+      group: 'learning',
+    },
+    {
+      emoji: '🎯',
+      label: t('admin.trials.title'),
+      path: '/admin/trials',
+      color: '#F59E0B',
+      group: 'learning',
+    },
+    {
+      emoji: '🔄',
+      label: t('admin.transfers.title'),
+      path: '/admin/transfers',
+      color: '#818cf8',
+      group: 'learning',
     },
     {
       emoji: '🎓',
       label: t('admin.certificates.title'),
-      desc: t('admin.certificates.desc'),
       path: '/admin/certificates',
       color: '#10B981',
+      group: 'learning',
+    },
+    {
+      emoji: '🌐',
+      label: t('admin.languages.title'),
+      path: '/admin/languages',
+      color: '#06B6D4',
+      group: 'learning',
+      superOnly: true,
+    },
+    // ── Финансы ──
+    {
+      emoji: '💰',
+      label: t('admin.finance.title'),
+      path: '/admin/finance',
+      color: '#10B981',
+      group: 'finance',
+      adminOnly: true,
+    },
+    {
+      emoji: '📊',
+      label: t('admin.analytics.title'),
+      path: '/admin/analytics',
+      color: '#F59E0B',
+      group: 'finance',
+      adminOnly: true,
+    },
+    {
+      emoji: '👔',
+      label: t('admin.hr.title'),
+      path: '/admin/hr',
+      color: '#0EA5E9',
+      group: 'finance',
+      adminOnly: true,
     },
     {
       emoji: '⚙️',
       label: t('admin.payment_settings.title'),
-      desc: t('admin.payment_settings.desc'),
       path: '/admin/payment-settings',
       color: '#6B7280',
+      group: 'finance',
       adminOnly: true,
     },
     {
       emoji: '🔗',
       label: t('admin.referrals.title'),
-      desc: t('admin.referrals.desc'),
       path: '/admin/referrals',
       color: '#818cf8',
+      group: 'finance',
     },
-    {
-      emoji: '🔄',
-      label: t('admin.transfers.title'),
-      desc: t('admin.transfers.desc'),
-      path: '/admin/transfers',
-      color: '#818cf8',
-    },
-    {
-      emoji: '🎯',
-      label: t('admin.trials.title'),
-      desc: t('admin.trials.desc'),
-      path: '/admin/trials',
-      color: '#F59E0B',
-    },
+    // ── Система ──
     {
       emoji: '🎫',
       label: t('admin.support.title'),
-      desc: t('admin.support.desc'),
       path: '/admin/support',
       color: '#EF4444',
+      group: 'system',
     },
     {
-      emoji: '🌐',
-      label: t('admin.languages.title'),
-      desc: t('admin.languages.desc'),
-      path: '/admin/languages',
-      color: '#06B6D4',
-      superOnly: true,
+      emoji: '📢',
+      label: t('admin.broadcast.title'),
+      path: '/admin/broadcast',
+      color: '#3B82F6',
+      group: 'system',
+      adminOnly: true,
     },
     {
       emoji: '📣',
       label: t('admin.announce.title'),
-      desc: t('admin.announce.desc'),
       path: '/admin/announcements',
       color: '#F5C518',
+      group: 'system',
       superOnly: true,
     },
     {
-      emoji: '👔',
-      label: t('admin.hr.title'),
-      desc: t('admin.hr.desc'),
-      path: '/admin/hr',
-      color: '#0EA5E9',
+      emoji: '📋',
+      label: t('admin.audit.title'),
+      path: '/admin/audit',
+      color: '#F59E0B',
+      group: 'system',
       adminOnly: true,
     },
   ];
@@ -179,7 +194,7 @@ const PREVIEW_ROLES_BASE: { role: Role; tKey: string; emoji: string; color: stri
 ];
 
 export function AdminHomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const setPreviewRole = useAuthStore((s) => s.setPreviewRole);
@@ -189,6 +204,7 @@ export function AdminHomePage() {
   const isSuper = role === 'SUPER_ADMIN';
 
   const { data: widgets, isFetching } = useAdminDashboard();
+  const { data: recentPayments } = useRecentPayments(8);
   const { data: pendingTransfers } = useAllTransfers('PENDING');
   const { data: pendingTrials } = useAllTrials('PENDING');
   const { data: openTickets } = useAllTickets('OPEN');
@@ -354,30 +370,76 @@ export function AdminHomePage() {
         </div>
       )}
 
-      {/* Quick links */}
-      <h2 className="text-tg-hint mb-3 text-xs font-semibold uppercase tracking-wide">
-        {t('admin.home.sections')}
-      </h2>
-      <div className="stagger grid grid-cols-2 gap-3">
-        {getQuickLinks(t as TFn)
-          .filter((l) => (!l.adminOnly || isAdmin) && (!l.superOnly || isSuper))
-          .map((link) => (
-            <button
-              key={link.path}
-              onClick={() => navigate(link.path)}
-              className="glass-card press rounded-2xl p-4 text-left"
-            >
+      {/* Последние оплаты (ADMIN+) */}
+      {isAdmin && recentPayments && recentPayments.length > 0 && (
+        <div className="mb-5">
+          <button
+            onClick={() => navigate('/admin/finance')}
+            className="text-tg-hint mb-2 flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wide"
+          >
+            {t('admin.home.recent_payments')}
+            <ChevronRight size={14} />
+          </button>
+          <div className="glass-section overflow-hidden rounded-2xl">
+            {recentPayments.map((p, i) => (
               <div
-                className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl text-xl"
-                style={{ background: `${link.color}20` }}
+                key={p.id}
+                className={`flex items-center gap-3 px-3.5 py-2.5 ${
+                  i < recentPayments.length - 1 ? 'border-hairline border-b' : ''
+                }`}
               >
-                {link.emoji}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{p.student}</p>
+                  <p className="text-tg-hint truncate text-xs">
+                    {p.class_title ?? '—'} · {p.provider}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-ok text-sm font-bold">{formatUzs(p.amount_uzs)}</p>
+                  <p className="text-tg-hint text-[11px]">
+                    {new Date(p.paid_at).toLocaleDateString(i18n.language)}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm font-semibold">{link.label}</p>
-              <p className="text-tg-hint mt-0.5 text-xs">{link.desc}</p>
-            </button>
-          ))}
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick links — компактные секции вместо больших карточек */}
+      {GROUP_ORDER.map((grp) => {
+        const links = getQuickLinks(t as TFn).filter(
+          (l) => l.group === grp.key && (!l.adminOnly || isAdmin) && (!l.superOnly || isSuper),
+        );
+        if (!links.length) return null;
+        return (
+          <div key={grp.key} className="mb-4">
+            <h2 className="text-tg-hint mb-2 text-xs font-semibold uppercase tracking-wide">
+              {t(grp.tKey)}
+            </h2>
+            <div className="glass-section overflow-hidden rounded-2xl">
+              {links.map((link, i) => (
+                <button
+                  key={link.path}
+                  onClick={() => navigate(link.path)}
+                  className={`press flex w-full items-center gap-3 px-3.5 py-2.5 text-left ${
+                    i < links.length - 1 ? 'border-hairline border-b' : ''
+                  }`}
+                >
+                  <span
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base"
+                    style={{ background: `${link.color}1f` }}
+                  >
+                    {link.emoji}
+                  </span>
+                  <span className="flex-1 truncate text-sm font-medium">{link.label}</span>
+                  <ChevronRight size={16} className="text-tg-hint shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
 
       {/* Role preview — только ADMIN/SUPER_ADMIN (менеджеру не нужен) */}
       {isAdmin && (
