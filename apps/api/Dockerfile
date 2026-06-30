@@ -33,7 +33,6 @@ WORKDIR /app
 RUN pnpm --filter @linguolab/api deploy --prod --legacy /deploy
 
 # prisma теперь в dependencies → pnpm deploy --prod включит его в /deploy/node_modules
-# generate запускается в CMD (при старте), чтобы не зависеть от путей pnpm hoist
 
 # ---------- runtime ----------
 FROM base AS runtime
@@ -44,11 +43,16 @@ WORKDIR /app
 # Копируем готовый bundle
 COPY --from=builder /deploy ./
 
+# Генерируем Prisma-клиент в образ НА СБОРКЕ (прямой бинарь, без pnpm/сети).
+# Раньше generate был в CMD → каждый старт дёргал pnpm через corepack,
+# который качает pnpm из сети; при сетевом сбое `pnpm install` падал (exit 1)
+# и контейнер уходил в рестарт → окна 502. Теперь рантайм не зависит от pnpm.
+RUN node_modules/.bin/prisma generate
+
 ENTRYPOINT ["/sbin/tini", "--"]
 
-# При старте: миграция (если DB готова) + запуск.
-# `prisma migrate deploy` идемпотентна — безопасна на каждый рестарт.
-CMD ["sh", "-c", "pnpm prisma generate && pnpm prisma migrate deploy && node dist/main.js"]
+# При старте: миграция (идемпотентна) + запуск. Прямой бинарь prisma — без pnpm.
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/main.js"]
 
 EXPOSE 3000
 
