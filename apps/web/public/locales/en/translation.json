@@ -1160,6 +1160,13 @@
       "lessons_n": "{{n}} lessons",
       "history": "Run history"
     },
+    "points_award": {
+      "title": "Award points",
+      "amount_ph": "How many points",
+      "desc_ph": "Reason (optional)",
+      "confirm": "Award",
+      "done": "Awarded +{{n}} points"
+    },
     "students": {
       "title": "Students",
       "desc": "Search, list",

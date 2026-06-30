@@ -9,8 +9,10 @@ import WebApp from '@twa-dev/sdk';
 import { useBackButton } from '../../hooks/useBackButton';
 
 import { useAdminStudents } from '../../api/admin';
+import { useAwardPoints } from '../../api/points';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/auth';
+import { toast } from '../../store/toast';
 
 // Скачать CSV (через axios с Bearer-токеном)
 async function downloadCsv(endpoint: string, filename: string, onError: () => void) {
@@ -41,7 +43,29 @@ export function AdminStudentsPage() {
 
   const { data, isLoading } = useAdminStudents(page, debouncedSearch || undefined);
 
+  const award = useAwardPoints();
+  const [awardFor, setAwardFor] = useState<{ id: string; name: string } | null>(null);
+  const [amount, setAmount] = useState('');
+  const [desc, setDesc] = useState('');
+
   useBackButton(() => navigate('/admin'));
+
+  const submitAward = () => {
+    if (!awardFor) return;
+    const amt = parseInt(amount, 10);
+    if (!amt || amt <= 0) return;
+    award.mutate(
+      { user_id: awardFor.id, amount: amt, description: desc.trim() || undefined },
+      {
+        onSuccess: () => {
+          WebApp.HapticFeedback.notificationOccurred('success');
+          toast.success(t('admin.points_award.done', { n: amt }));
+          setAwardFor(null);
+        },
+        onError: () => toast.error(t('app.server_error')),
+      },
+    );
+  };
 
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -123,6 +147,20 @@ export function AdminStudentsPage() {
                       {new Date(s.created_at).toLocaleDateString(i18n.language)}
                     </p>
                   </div>
+                  <button
+                    onClick={() => {
+                      setAwardFor({
+                        id: s.id,
+                        name: `${s.first_name} ${s.last_name ?? ''}`.trim(),
+                      });
+                      setAmount('');
+                      setDesc('');
+                    }}
+                    aria-label={t('admin.points_award.title')}
+                    className="bg-warn/15 text-warn press shrink-0 rounded-lg px-2 py-1 text-sm font-semibold"
+                  >
+                    🎁
+                  </button>
                   <div
                     className="h-2 w-2 shrink-0 rounded-full"
                     style={{ background: s.is_active ? '#10B981' : '#EF4444' }}
@@ -131,6 +169,46 @@ export function AdminStudentsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Начисление баллов */}
+      {awardFor && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/65"
+          onClick={() => setAwardFor(null)}
+        >
+          <div
+            className="w-full rounded-t-3xl px-5 pb-10 pt-5"
+            style={{ background: 'var(--surface)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+            <h2 className="mb-1 font-bold">🎁 {t('admin.points_award.title')}</h2>
+            <p className="text-muted mb-4 text-xs">{awardFor.name}</p>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={t('admin.points_award.amount_ph')}
+              className="bg-surface-2 border-hairline mb-3 w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+            />
+            <input
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder={t('admin.points_award.desc_ph')}
+              className="bg-surface-2 border-hairline mb-4 w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+            />
+            <button
+              onClick={submitAward}
+              disabled={award.isPending || !amount}
+              className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg,#F59E0B,#fbbf24)' }}
+            >
+              {award.isPending ? '…' : t('admin.points_award.confirm')}
+            </button>
+          </div>
         </div>
       )}
 

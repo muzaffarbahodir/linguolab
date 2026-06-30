@@ -116,6 +116,20 @@ export class PointsService {
     await this.addPoints(userId, points, 'refund', `Возврат баллов за заказ`, paymentId);
   }
 
+  /** Ручное начисление баллов админом/менеджером. */
+  async awardBonus(userId: string, amount: number, description?: string): Promise<void> {
+    const amt = Math.round(amount);
+    if (amt <= 0) return;
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!user) return;
+    await this.addPoints(
+      userId,
+      amt,
+      'earn_bonus',
+      description?.trim() || `Бонусные баллы: +${amt}`,
+    );
+  }
+
   private async maybeReferralBonus(inviteeId: string, paymentId: string): Promise<void> {
     const ref = await this.prisma.referral.findFirst({
       where: { invitee_id: inviteeId, points_granted: false },

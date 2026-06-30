@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
 
 export type PointsLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
@@ -42,5 +42,15 @@ export function usePointsLeaderboard() {
     queryKey: ['points', 'leaderboard'],
     queryFn: async () => (await apiClient.get<PointsLeaderEntry[]>('/points/leaderboard')).data,
     staleTime: 60_000,
+  });
+}
+
+/** Ручное начисление баллов админом/менеджером. */
+export function useAwardPoints() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (dto: { user_id: string; amount: number; description?: string }) =>
+      (await apiClient.post('/points/admin/award', dto)).data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['points'] }),
   });
 }

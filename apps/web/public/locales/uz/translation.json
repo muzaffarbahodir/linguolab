@@ -1160,6 +1160,13 @@
       "lessons_n": "{{n}} dars",
       "history": "Hisoblar tarixi"
     },
+    "points_award": {
+      "title": "Ball berish",
+      "amount_ph": "Necha ball",
+      "desc_ph": "Sabab (ixtiyoriy)",
+      "confirm": "Berish",
+      "done": "+{{n}} ball berildi"
+    },
     "students": {
       "title": "Talabalar",
       "desc": "Qidirish, ro'yxat",
