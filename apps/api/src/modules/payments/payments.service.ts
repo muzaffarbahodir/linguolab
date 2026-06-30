@@ -16,6 +16,13 @@ import { TelegramService } from '../telegram/telegram.service';
 import { PromoService } from '../promo/promo.service';
 import { PointsService } from '../points/points.service';
 
+/**
+ * Возврат денег разрешён только пока студент учился ≤ этого числа проведённых занятий.
+ * Бизнес-правило: «учился 3 дня — возврат; выше — деньги не возвращаются».
+ * Кешбэк-баллы при возврате НЕ возвращаются (см. PointsService).
+ */
+const REFUND_MAX_STUDY_SESSIONS = 3;
+
 export interface CheckoutDto {
   provider: PaymentProvider;
   class_id: string;
@@ -634,7 +641,7 @@ export class PaymentsService {
    * кабинете дополнительно прилетит как CancelTransaction — обработается идемпотентно.
    * `provider_action_required: true` в ответе — сигнал админу довершить в кассе.
    */
-  async adminRefund(paymentId: string, reason?: string) {
+  async adminRefund(paymentId: string, reason?: string, force = false) {
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!payment) throw new NotFoundException('Payment not found');
 
@@ -652,6 +659,13 @@ export class PaymentsService {
       throw new BadRequestException('Only PAID payments can be refunded');
     }
 
+    // Окно возврата: деньги возвращаем только пока студент учился ≤3 занятий.
+    // force=true (только SUPER_ADMIN) пропускает проверку для исключений.
+    const studied = await this.studiedSessions(payment.user_id, payment.class_id);
+    if (!force && studied > REFUND_MAX_STUDY_SESSIONS) {
+      throw new BadRequestException('REFUND_WINDOW_EXPIRED');
+    }
+
     const updated = await this.prisma.payment.update({
       where: { id: paymentId },
       data: {
@@ -664,6 +678,9 @@ export class PaymentsService {
     // Снимаем запись на курс (бенефициар = user_id).
     await this.revokeEnrollment(updated.user_id, updated.class_id);
 
+    // Пытаемся вернуть деньги через API провайдера (пока не автоматизировано).
+    const autoRefunded = await this.attemptProviderRefund(updated);
+
     // Фискализация возврата + уведомление (fire-and-forget).
     void this.fiscal.scheduleRefundReceipt(updated.id);
     void this.notifications.schedulePaymentRefunded(
@@ -672,16 +689,58 @@ export class PaymentsService {
       updated.amount_tiyin,
     );
 
-    this.logger.log(`Refund: payment ${updated.id} (${updated.provider}) reason="${reason ?? ''}"`);
+    this.logger.log(
+      `Refund: payment ${updated.id} (${updated.provider}) studied=${studied} auto=${autoRefunded} reason="${reason ?? ''}"`,
+    );
 
     return {
       ok: true,
       payment_id: updated.id,
       status: updated.status,
       already: false,
-      // Деньги вернуть в кабинете провайдера (API merchant-refund — через кабинет).
-      provider_action_required: true,
+      // Если авто-возврат не выполнен — деньги вернуть в кабинете провайдера.
+      provider_action_required: !autoRefunded,
     };
+  }
+
+  /**
+   * Число проведённых занятий, которые студент реально посетил (PRESENT/LATE)
+   * в оплаченном классе. 0 — ещё не учился (возврат возможен).
+   */
+  private async studiedSessions(studentId: string, classId: string | null): Promise<number> {
+    if (!classId) return 0;
+    return this.prisma.lessonAttendance.count({
+      where: {
+        student_id: studentId,
+        status: { in: ['PRESENT', 'LATE'] },
+        lesson: { class_id: classId, status: 'COMPLETED' },
+      },
+    });
+  }
+
+  /**
+   * Реальный возврат денег через merchant-refund API провайдера.
+   * TODO: реализовать когда будут боевые креды Payme/Click (кабинет merchant).
+   * Сейчас всегда false → деньги возвращаются вручную в кабинете.
+   * @returns true если деньги вернулись автоматически.
+   */
+  private async attemptProviderRefund(payment: {
+    id: string;
+    provider: PaymentProvider;
+    amount_tiyin: bigint;
+  }): Promise<boolean> {
+    switch (payment.provider) {
+      case PaymentProvider.PAYME:
+      case PaymentProvider.CLICK:
+        // Здесь будет HTTP-вызов merchant-refund API провайдера.
+        this.logger.warn(
+          `Auto-refund not configured for ${payment.provider}; manual cabinet refund required (payment ${payment.id})`,
+        );
+        return false;
+      default:
+        // CASH / UZUMBANK — авто-возврата нет.
+        return false;
+    }
   }
 
   /** Снимает запись студента на курс при возврате (ACTIVE/PENDING → DROPPED). */

@@ -1402,6 +1402,7 @@
       "refund_done": "Qaytarish rasmiylashtirildi",
       "refund_done_cabinet": "Qaytarish rasmiylashtirildi. Yozuv bekor qilindi. Pulni provayder kabinetida (Payme/Click) qaytaring.",
       "refund_error": "Qaytarib bo'lmadi",
+      "refund_too_late": "Qaytarish mumkin emas: talaba 3 darsdan ko'p o'qigan. Pul qaytarilmaydi.",
       "cash_confirm_btn": "Naqdni tasdiqlash",
       "cash_confirm": "Naqd pul qabul qilinganini tasdiqlaysizmi? Talaba kursga yoziladi.",
       "cash_done": "To'lov tasdiqlandi. Talaba kursga yozildi.",

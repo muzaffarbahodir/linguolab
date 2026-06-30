@@ -220,7 +220,18 @@ function PaymentsSection() {
                 : t('admin.finance.refund_done'),
             );
           },
-          onError: () => WebApp.showAlert(t('admin.finance.refund_error')),
+          onError: (e: unknown) => {
+            const msg =
+              typeof e === 'object' && e !== null
+                ? ((e as { response?: { data?: { message?: string } } }).response?.data?.message ??
+                  '')
+                : '';
+            WebApp.showAlert(
+              msg === 'REFUND_WINDOW_EXPIRED'
+                ? t('admin.finance.refund_too_late')
+                : t('admin.finance.refund_error'),
+            );
+          },
         },
       );
     });

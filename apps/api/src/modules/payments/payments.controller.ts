@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PaymentProvider, PaymentStatus, Role } from '@prisma/client';
+import { PaymentStatus, Role } from '@prisma/client';
 
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -171,10 +171,20 @@ export class PaymentsController {
     return this.paymentsService.adminConfirmCash(id);
   }
 
-  /** POST /payments/admin/:id/refund — ADMIN+ */
+  /**
+   * POST /payments/admin/:id/refund — ADMIN+
+   * Возврат блокируется если студент учился >3 занятий. SUPER_ADMIN может
+   * передать force=true чтобы обойти окно (исключения).
+   */
   @Post('admin/:id/refund')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  refund(@Param('id') id: string, @Body('reason') reason?: string) {
-    return this.paymentsService.adminRefund(id, reason);
+  refund(
+    @Param('id') id: string,
+    @CurrentUser() user: RequestUser,
+    @Body('reason') reason?: string,
+    @Body('force') force?: boolean,
+  ) {
+    const allowForce = user.role === Role.SUPER_ADMIN && force === true;
+    return this.paymentsService.adminRefund(id, reason, allowForce);
   }
 }

@@ -1402,6 +1402,7 @@
       "refund_done": "Refund recorded",
       "refund_done_cabinet": "Refund recorded. Enrollment dropped. Return the money in the provider cabinet (Payme/Click).",
       "refund_error": "Refund failed",
+      "refund_too_late": "Refund unavailable: the student attended more than 3 lessons. Money is not refundable.",
       "cash_confirm_btn": "Confirm cash",
       "cash_confirm": "Confirm cash received? The student will be enrolled.",
       "cash_done": "Payment confirmed. Student enrolled.",
