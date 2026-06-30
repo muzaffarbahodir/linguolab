@@ -42,6 +42,14 @@ function writeLocal(v: string): void {
 /** Текущий locale — инициализируется один раз при загрузке модуля */
 let _locale = 'ru';
 
+/**
+ * Пользователь явно выбрал язык в этой сессии (в памяти, не в storage).
+ * Защищает от гонки: асинхронный ответ CloudStorage не должен перетереть
+ * только что выбранный язык — особенно если localStorage в клиенте заблокирован
+ * и `hadLocal` всегда false. Это и был «язык сам меняется».
+ */
+let userChose = false;
+
 function resolveInitial(): string {
   const cached = readLocal();
   if (cached && LANGUAGES.some((l) => l.code === cached)) return cached;
@@ -61,7 +69,7 @@ if (i18n.language !== _locale) {
 // иначе асинхронный ответ мог перетереть только что выбранный язык (язык «менялся»).
 const hadLocal = !!readLocal();
 WebApp.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
-  if (err || !value || hadLocal || value === _locale) return;
+  if (err || !value || hadLocal || userChose || value === _locale) return;
   if (!LANGUAGES.some((l) => l.code === value)) return;
   _locale = value;
   writeLocal(value);
@@ -77,6 +85,7 @@ WebApp.CloudStorage.getItem(STORAGE_KEY, (err, value) => {
  * Вызывает i18n.changeLanguage() → react-i18next перерисует все компоненты.
  */
 export function applyLocale(code: string): void {
+  userChose = true;
   _locale = code;
   writeLocal(code);
   document.documentElement.lang = code;

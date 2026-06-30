@@ -230,7 +230,7 @@ export function MemoryDashboardPage() {
           backgroundSize: '60px 60px',
         }}
       />
-      <SoundToggle />
+      {phase !== 'review' && <SoundToggle />}
 
       {phase === 'intro' && (
         <Intro

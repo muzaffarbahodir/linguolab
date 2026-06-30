@@ -259,7 +259,7 @@ export function ReflexGamePage() {
               : 'radial-gradient(circle at 50% 45%, #FF5C7A, transparent 70%)',
         }}
       />
-      <SoundToggle />
+      {phase !== 'play' && <SoundToggle />}
       <DiscoBurst level={hud.level} label={t('games.level')} />
 
       {phase === 'intro' && (

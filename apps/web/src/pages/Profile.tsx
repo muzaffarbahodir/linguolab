@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +28,7 @@ import {
   Gamepad2,
   UserRound,
   Cake,
+  Target,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -644,6 +645,27 @@ export function ProfilePage() {
   const tgUser = WebApp.initDataUnsafe?.user;
   const unreadCount = useUnreadCount();
 
+  // Разовая плавная подсказка новичку: тапни кружок-аватар → настройки профиля.
+  const [showHint, setShowHint] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('lg_hint_settings_seen')) {
+        const id = window.setTimeout(() => setShowHint(true), 700);
+        return () => window.clearTimeout(id);
+      }
+    } catch {
+      /* localStorage недоступен */
+    }
+  }, []);
+  const dismissHint = () => {
+    setShowHint(false);
+    try {
+      localStorage.setItem('lg_hint_settings_seen', '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
   // Prefer Telegram photo (fresh, no R2 yet) over stored avatar_url
   const photoUrl = tgUser?.photo_url ?? user?.avatar_url;
   const firstName = user?.first_name ?? tgUser?.first_name ?? t('home.student');
@@ -684,6 +706,11 @@ export function ProfilePage() {
     { Icon: Calendar, label: t('profile.schedule'), onClick: () => navigate('/schedule') },
     { Icon: PencilLine, label: t('profile.homework'), onClick: () => navigate('/homework') },
     { Icon: BookOpen, label: t('profile.my_courses'), onClick: () => navigate('/courses') },
+    {
+      Icon: Target,
+      label: t('profile.placement_test'),
+      onClick: () => navigate('/placement-test'),
+    },
     { Icon: Trophy, label: t('profile.achievements'), onClick: () => navigate('/achievements') },
     {
       Icon: GraduationCap,
@@ -744,13 +771,30 @@ export function ProfilePage() {
     <div className="glass-fade-in flex flex-col gap-5 px-4 pb-8 pt-6">
       {/* User info */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/settings')}
-          aria-label={t('profile.settings')}
-          className="press shrink-0 rounded-full"
-        >
-          <Avatar src={photoUrl} name={firstName} />
-        </button>
+        <div className="relative shrink-0">
+          {showHint && (
+            <span className="ring-brand pointer-events-none absolute -inset-1 animate-ping rounded-full ring-2" />
+          )}
+          <button
+            onClick={() => {
+              dismissHint();
+              navigate('/settings');
+            }}
+            aria-label={t('profile.settings')}
+            className="press relative shrink-0 rounded-full"
+          >
+            <Avatar src={photoUrl} name={firstName} />
+          </button>
+          {showHint && (
+            <button
+              onClick={dismissHint}
+              className="hint-pop bg-brand absolute left-1/2 top-full z-30 mt-3 w-max max-w-[220px] -translate-x-1/4 rounded-xl px-3 py-2 text-left text-xs font-medium text-white shadow-lg"
+            >
+              {t('profile.hint_settings')}
+              <span className="bg-brand absolute -top-1 left-5 h-2.5 w-2.5 rotate-45 rounded-[2px]" />
+            </button>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-bold">
             {firstName} {lastName}

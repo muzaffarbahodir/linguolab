@@ -275,7 +275,7 @@ export function ChainLinkPage() {
           backgroundSize: '60px 60px',
         }}
       />
-      <SoundToggle />
+      {phase !== 'play' && <SoundToggle />}
       <DiscoBurst level={hud.boards} label={t('games.level')} />
 
       {phase === 'intro' && (

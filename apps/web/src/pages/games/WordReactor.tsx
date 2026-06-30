@@ -352,7 +352,7 @@ export function WordReactorPage() {
               : 'radial-gradient(circle at 50% 80%, #FF5C7A, transparent 70%)',
         }}
       />
-      <SoundToggle />
+      {phase !== 'play' && <SoundToggle />}
       <DiscoBurst level={hud.level} label={t('games.level')} />
 
       {phase === 'intro' && (
