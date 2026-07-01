@@ -13,11 +13,13 @@
 
 ---
 
-## 1. Compose — две реплики вместо одной
+## 1. Compose — две реплики с ОБЩИМ сетевым алиасом
 
 Файл на сервере: `/opt/linguolab/compose/docker-compose.yml` (и репо
 `infra/compose/docker-compose.yml`). Заменить сервис `linguolab_api` на две реплики
-с YAML-якорем (чтобы не дублировать конфиг):
+с YAML-якорем. Ключевое — **обе реплики получают алиас `linguolab_api` в сети
+`shared_web`**, тогда Docker-DNS отдаёт оба IP на имя `linguolab_api`, а текущий
+`proxy_pass http://linguolab_api:3000` в nginx уже балансирует по ним (round-robin).
 
 ```yaml
   linguolab_api_1: &linguolab_api
@@ -26,8 +28,10 @@
     restart: unless-stopped
     env_file: .env
     networks:
-      - linguolab_internal
-      - shared_web
+      linguolab_internal:
+      shared_web:
+        aliases:
+          - linguolab_api # общий алиас → DNS round-robin по обеим репликам
     depends_on:
       linguolab_postgres:
         condition: service_healthy
@@ -45,9 +49,8 @@
     container_name: linguolab_api_2
 ```
 
-Ключевое: **убрали единый `container_name: linguolab_api`** (он блокировал несколько
-инстансов). Обе реплики в сети `shared_web` → `main_nginx` видит их по именам
-`linguolab_api_1` / `linguolab_api_2` через Docker DNS.
+Убрали единый `container_name: linguolab_api` (мешал двум инстансам), но имя
+`linguolab_api` сохранили как **алиас** → nginx-конфиг менять для резолва НЕ нужно.
 
 Миграции: CMD образа уже идемпотентен (`prisma migrate deploy && node`), а Prisma
 берёт advisory-lock на миграцию → две реплики не конфликтуют. При rolling-выкате они
@@ -57,42 +60,40 @@
 
 ---
 
-## 2. main_nginx — upstream с переключением на живую реплику
+## 2. main_nginx — добавить только `proxy_next_upstream` (3 строки × 2 локации)
 
-В конфиге vhost `api-linguolab.muzaffarbahodir.uz` (внутри `main_nginx`).
-Заменить прямой `proxy_pass http://linguolab_api:3000;` на пул:
+Файл: `/etc/nginx/conf.d/linguolab/api.linguolab.conf`. `upstream{}` НЕ нужен —
+резолв уже динамический через `$upstream`. В обе локации (`location /` и webhook)
+после `proxy_read_timeout` добавить:
 
 ```nginx
-upstream linguolab_api_pool {
-    server linguolab_api_1:3000 max_fails=3 fail_timeout=10s;
-    server linguolab_api_2:3000 max_fails=3 fail_timeout=10s;
-    keepalive 32;
-}
+        # Реплика перезапускается/недоступна → молча уходим на живую. Убирает 502 при деплое.
+        proxy_next_upstream error timeout http_502 http_503 http_504;
+        proxy_next_upstream_tries 2;
+        proxy_connect_timeout 3s;
+```
 
-server {
-    server_name api-linguolab.muzaffarbahodir.uz;
-    # ... существующие ssl/listen/заголовки без изменений ...
+Итоговый `location /`:
 
+```nginx
     location / {
-        proxy_pass http://linguolab_api_pool;
+        set $upstream http://linguolab_api:3000;
+        proxy_pass         $upstream;
         proxy_http_version 1.1;
-        proxy_set_header Connection "";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Если реплика перезапускается/недоступна — молча уходим на другую.
-        # ИМЕННО это убирает 502 при деплое.
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Connection "";
+        proxy_read_timeout 60s;
         proxy_next_upstream error timeout http_502 http_503 http_504;
         proxy_next_upstream_tries 2;
         proxy_connect_timeout 3s;
     }
-}
 ```
 
-Проверка перед reload: `docker exec main_nginx nginx -t`, затем
-`docker exec main_nginx nginx -s reload` (reload без даунтайма).
+Проверка: `docker exec main_nginx nginx -t` → `docker exec main_nginx nginx -s reload`
+(reload без даунтайма, другие vhost не затронуты).
 
 ---
 
