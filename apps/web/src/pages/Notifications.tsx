@@ -80,10 +80,12 @@ function NotificationCard({ notif }: { notif: NotificationItem }) {
           <p className="text-sm font-semibold leading-tight">{notif.title}</p>
           {!isRead && <span className="bg-brand mt-0.5 h-2 w-2 shrink-0 rounded-full" />}
         </div>
-        <p
-          className="mt-0.5 text-xs leading-relaxed text-white/70"
-          dangerouslySetInnerHTML={{ __html: notif.body.replace(/\n/g, '<br/>') }}
-        />
+        {/* Текст, а НЕ innerHTML: React экранирует → защита от stored XSS
+            (в body сервер подставляет имена/названия). HTML-теги форматирования
+            Telegram (<b> и т.п.) вырезаем, переносы строк — через CSS. */}
+        <p className="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-white/70">
+          {notif.body.replace(/<[^>]*>/g, '')}
+        </p>
         <p className="text-tg-hint mt-1 text-[10px]">{timeAgo(notif.created_at, t)}</p>
       </div>
     </div>
