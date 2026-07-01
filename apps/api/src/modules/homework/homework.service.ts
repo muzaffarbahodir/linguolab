@@ -3,8 +3,9 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { HomeworkSubmissionStatus } from '@prisma/client';
+import { HomeworkSubmissionStatus, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { AchievementsService } from '../achievements/achievements.service';
@@ -14,6 +15,12 @@ import { CreateHomeworkDto } from './dto/create-homework.dto';
 import { SubmitHomeworkDto } from './dto/submit-homework.dto';
 import { GradeHomeworkDto } from './dto/grade-homework.dto';
 
+/** Действующее лицо запроса (для проверки доступа). */
+export interface HwActor {
+  id: string;
+  role: Role;
+}
+
 @Injectable()
 export class HomeworkService {
   constructor(
@@ -22,8 +29,22 @@ export class HomeworkService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  /** Создать ДЗ (учитель / менеджер) */
-  async create(dto: CreateHomeworkDto) {
+  /**
+   * Проверяет, что actor вправе управлять этим классом.
+   * TEACHER — только свой класс; MANAGER/ADMIN/SUPER_ADMIN — любой.
+   */
+  private async assertClassAccess(classId: string, actor: HwActor): Promise<void> {
+    if (actor.role !== Role.TEACHER) return;
+    const owns = await this.prisma.class.findFirst({
+      where: { id: classId, teacher: { user_id: actor.id } },
+      select: { id: true },
+    });
+    if (!owns) throw new ForbiddenException('Not your class');
+  }
+
+  /** Создать ДЗ (учитель — свой класс / менеджер+) */
+  async create(dto: CreateHomeworkDto, actor: HwActor) {
+    await this.assertClassAccess(dto.class_id, actor);
     const homework = await this.prisma.homework.create({
       data: {
         class_id: dto.class_id,
@@ -60,8 +81,9 @@ export class HomeworkService {
     return homework;
   }
 
-  /** Список ДЗ для класса */
-  async listByClass(classId: string) {
+  /** Список ДЗ для класса (учитель — свой класс / менеджер+) */
+  async listByClass(classId: string, actor: HwActor) {
+    await this.assertClassAccess(classId, actor);
     return this.prisma.homework.findMany({
       where: { class_id: classId },
       orderBy: { due_date: 'asc' },
@@ -103,6 +125,13 @@ export class HomeworkService {
     const hw = await this.prisma.homework.findUnique({ where: { id: homeworkId } });
     if (!hw) throw new NotFoundException('Homework not found');
 
+    // Сдавать можно только ДЗ класса, в котором студент реально записан.
+    const enrolled = await this.prisma.enrollment.findFirst({
+      where: { class_id: hw.class_id, student_id: studentId, status: 'ACTIVE' },
+      select: { id: true },
+    });
+    if (!enrolled) throw new ForbiddenException('Not enrolled in this class');
+
     const existing = await this.prisma.homeworkSubmission.findUnique({
       where: { homework_id_student_id: { homework_id: homeworkId, student_id: studentId } },
     });
@@ -126,8 +155,8 @@ export class HomeworkService {
     return submission;
   }
 
-  /** Выставить оценку (учитель) */
-  async grade(submissionId: string, dto: GradeHomeworkDto) {
+  /** Выставить оценку (учитель — свой класс / менеджер+) */
+  async grade(submissionId: string, dto: GradeHomeworkDto, actor: HwActor) {
     const submission = await this.prisma.homeworkSubmission.findUnique({
       where: { id: submissionId },
       include: {
@@ -136,6 +165,8 @@ export class HomeworkService {
       },
     });
     if (!submission) throw new NotFoundException('Submission not found');
+
+    await this.assertClassAccess(submission.homework.class_id, actor);
 
     const updated = await this.prisma.homeworkSubmission.update({
       where: { id: submissionId },
@@ -182,8 +213,15 @@ export class HomeworkService {
     return updated;
   }
 
-  /** Список сданных работ для ДЗ (учитель) */
-  async listSubmissions(homeworkId: string) {
+  /** Список сданных работ для ДЗ (учитель — свой класс / менеджер+) */
+  async listSubmissions(homeworkId: string, actor: HwActor) {
+    const hw = await this.prisma.homework.findUnique({
+      where: { id: homeworkId },
+      select: { class_id: true },
+    });
+    if (!hw) throw new NotFoundException('Homework not found');
+    await this.assertClassAccess(hw.class_id, actor);
+
     return this.prisma.homeworkSubmission.findMany({
       where: { homework_id: homeworkId },
       include: { student: { select: { id: true, first_name: true, last_name: true } } },

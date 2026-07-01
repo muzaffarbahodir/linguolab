@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 import { PaymentProvider, PaymentStatus } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -229,7 +229,11 @@ export class ClickService {
       params.sign_time;
 
     const expected = createHash('md5').update(raw).digest('hex');
-    return expected === params.sign_string;
+    // Сравнение за постоянное время — защита от timing-атак на подпись.
+    const expectedBuf = Buffer.from(expected, 'utf8');
+    const receivedBuf = Buffer.from(params.sign_string ?? '', 'utf8');
+    if (expectedBuf.length !== receivedBuf.length) return false;
+    return timingSafeEqual(expectedBuf, receivedBuf);
   }
 
   /**

@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { randomUUID } from 'crypto';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
@@ -17,9 +23,18 @@ export class CertificatesService {
 
   /**
    * Генерирует PDF-сертификат, загружает в R2, сохраняет запись.
-   * Вызывается менеджером после завершения курса студентом.
+   * Учитель — только для своего класса; менеджер/админ — для любого.
    */
-  async issue(studentId: string, classId: string) {
+  async issue(studentId: string, classId: string, actor: { id: string; role: Role }) {
+    // Учитель вправе выдавать сертификат только по своему классу.
+    if (actor.role === Role.TEACHER) {
+      const owns = await this.prisma.class.findFirst({
+        where: { id: classId, teacher: { user_id: actor.id } },
+        select: { id: true },
+      });
+      if (!owns) throw new ForbiddenException('Not your class');
+    }
+
     // Проверка дубля
     const existing = await this.prisma.certificate.findUnique({
       where: { student_id_class_id: { student_id: studentId, class_id: classId } },
@@ -41,11 +56,7 @@ export class CertificatesService {
 
     const key = `certificates/${studentId}/${randomUUID()}.pdf`;
 
-    // Загружаем через S3 PutObject напрямую (не presigned — серверная загрузка)
-    const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
-    const { ConfigService } = await import('@nestjs/config');
-
-    // Используем storage service endpoint через storage service
+    // Серверная загрузка через presigned PUT в R2.
     const uploadUrl = await this.storage.presignedUpload(key, 'application/pdf', 300);
 
     // Server-side upload через fetch на presigned URL

@@ -14,6 +14,15 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaymentStatus, Role } from '@prisma/client';
+import { timingSafeEqual } from 'crypto';
+
+/** Сравнение строк за постоянное время — защита от timing-атак на секрет. */
+function timingSafeStrEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -101,7 +110,7 @@ export class PaymentsController {
     const password = colonIdx >= 0 ? decoded.slice(colonIdx + 1) : '';
 
     const merchantKey = this.config.get<string>('PAYME_MERCHANT_KEY') ?? '';
-    if (!password || !merchantKey || password !== merchantKey) {
+    if (!password || !merchantKey || !timingSafeStrEqual(password, merchantKey)) {
       throw new UnauthorizedException('Invalid Payme credentials');
     }
   }
