@@ -65,14 +65,20 @@ import { PointsModule } from './modules/points/points.module';
       isGlobal: true,
       cache: true,
     }),
-    // Rate limiting: 20 req/sec (burst) + 300 req/min (sustained)
-    // skipIf: отключаем в тестах чтобы не мешать unit-тестам
+    // Rate limiting: 20 req/sec (burst) + 300 req/min (sustained) per IP.
+    // Лимиты настраиваемы через env (THROTTLE_SHORT_LIMIT / THROTTLE_MEDIUM_LIMIT)
+    // — дефолты сохраняют текущее поведение; можно временно поднять для нагрузочного теста.
+    // skipIf: отключаем в тестах чтобы не мешать unit-тестам.
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         throttlers: [
-          { name: 'short', ttl: 1_000, limit: 20 },
-          { name: 'medium', ttl: 60_000, limit: 300 },
+          { name: 'short', ttl: 1_000, limit: Number(config.get('THROTTLE_SHORT_LIMIT') ?? 20) },
+          {
+            name: 'medium',
+            ttl: 60_000,
+            limit: Number(config.get('THROTTLE_MEDIUM_LIMIT') ?? 300),
+          },
         ],
         skipIf: () => config.get('NODE_ENV') === 'test',
       }),
