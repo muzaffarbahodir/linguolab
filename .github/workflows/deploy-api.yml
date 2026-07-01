@@ -69,14 +69,20 @@ jobs:
           R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
           ENVEOF"
 
-      - name: Pull & restart on server
+      - name: Pull & rolling restart on server
         run: |
           SHA="${{ github.sha }}"
+          # 1) Записываем тег и тянем образ для обеих реплик.
           ssh -i ~/.ssh/id_ed25519 \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "cd /opt/linguolab/compose && \
              sed -i '/^API_TAG=/d' .env && echo \"API_TAG=${SHA}\" >> .env && \
-             docker compose pull linguolab_api && docker compose up -d linguolab_api"
+             docker compose pull linguolab_api linguolab_api_2"
+          # 2) Rolling: обновляем реплики ПО ОЧЕРЕДИ. Пока одна поднимается,
+          #    вторая держит трафик (nginx proxy_next_upstream) → ноль простоя.
+          ssh -i ~/.ssh/id_ed25519 \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'cd /opt/linguolab/compose && for s in linguolab_api linguolab_api_2; do docker compose up -d --no-deps "$s"; for i in $(seq 1 30); do h=$(docker inspect -f "{{.State.Health.Status}}" "$s" 2>/dev/null || echo starting); [ "$h" = healthy ] && break; sleep 3; done; echo "$s -> $h"; done'
 
       - name: Run DB migration
         run: |

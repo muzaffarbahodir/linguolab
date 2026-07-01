@@ -1,0 +1,32 @@
+# Вторая реплика API — горизонтальное масштабирование + zero-downtime деплой.
+# docker compose автоматически подмешивает этот файл к docker-compose.yml.
+#
+# Обе реплики (linguolab_api + linguolab_api_2) получают общий сетевой алиас
+# `linguolab_api` в shared_web → Docker-DNS отдаёт оба IP на это имя, а nginx
+# (proxy_pass http://linguolab_api:3000 + proxy_next_upstream) балансирует и
+# уходит на живую реплику, пока вторая перезапускается.
+#
+# Оригинальный сервис linguolab_api остаётся в docker-compose.yml без изменений;
+# его дефолтный сетевой алиас = имя сервиса = linguolab_api.
+services:
+  linguolab_api_2:
+    image: ghcr.io/muzaffarbahodir/linguolab-api:${API_TAG:-latest}
+    container_name: linguolab_api_2
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      linguolab_internal:
+      shared_web:
+        aliases:
+          - linguolab_api
+    depends_on:
+      linguolab_postgres:
+        condition: service_healthy
+      linguolab_redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
