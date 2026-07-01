@@ -1,13 +1,16 @@
-# Вторая реплика API — горизонтальное масштабирование + zero-downtime деплой.
+# Оверрайд прода: вторая реплика API (Шаг 1) + pgbouncer (Шаг 2).
 # docker compose автоматически подмешивает этот файл к docker-compose.yml.
 #
-# Обе реплики (linguolab_api + linguolab_api_2) получают общий сетевой алиас
-# `linguolab_api` в shared_web → Docker-DNS отдаёт оба IP на это имя, а nginx
-# (proxy_pass http://linguolab_api:3000 + proxy_next_upstream) балансирует и
-# уходит на живую реплику, пока вторая перезапускается.
+# Шаг 1 — реплики: linguolab_api (в базовом compose) + linguolab_api_2 делят
+# сетевой алиас `linguolab_api` в shared_web → Docker-DNS round-robin, nginx
+# балансирует и уходит на живую реплику (proxy_next_upstream). Деплой — rolling.
 #
-# Оригинальный сервис linguolab_api остаётся в docker-compose.yml без изменений;
-# его дефолтный сетевой алиас = имя сервиса = linguolab_api.
+# Шаг 2 — pgbouncer (session-mode): пул коннектов к Postgres, контрольная точка,
+# защита от исчерпания соединений. На проде в .env `DATABASE_URL` указывает на
+# `linguolab_pgbouncer:6432` (а не на linguolab_postgres:5432 напрямую).
+# Session-mode выбран сознательно: миграции и prepared statements Prisma работают
+# без правки schema.prisma. Transaction-mode (макс. мультиплекс) — апгрейд на потом
+# (потребует Prisma directUrl + ?pgbouncer=true), когда коннекты станут узким местом.
 services:
   linguolab_api_2:
     image: ghcr.io/muzaffarbahodir/linguolab-api:${API_TAG:-latest}
@@ -30,3 +33,24 @@ services:
       timeout: 5s
       start_period: 40s
       retries: 3
+
+  linguolab_pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: linguolab_pgbouncer
+    restart: unless-stopped
+    environment:
+      DB_HOST: linguolab_postgres
+      DB_PORT: '5432'
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: session
+      LISTEN_PORT: '6432'
+      MAX_CLIENT_CONN: '1000'
+      DEFAULT_POOL_SIZE: '40'
+    networks:
+      - linguolab_internal
+    depends_on:
+      linguolab_postgres:
+        condition: service_healthy
