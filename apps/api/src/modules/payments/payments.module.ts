@@ -9,6 +9,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { PromoModule } from '../promo/promo.module';
 import { PointsModule } from '../points/points.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
+import { LessonsModule } from '../lessons/lessons.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     PromoModule,
     PointsModule,
     EnrollmentsModule,
+    LessonsModule,
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService, ClickService, BillingReminderService],

@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { ClassStatus } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { LessonsService } from '../lessons/lessons.service';
 
 /**
  * ClassLifecycleService — автоматические переходы статусов семестра.
@@ -20,7 +21,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ClassLifecycleService {
   private readonly logger = new Logger(ClassLifecycleService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly lessons: LessonsService,
+  ) {}
 
   @Cron('*/15 * * * *')
   async tick(): Promise<void> {
@@ -48,9 +52,13 @@ export class ClassLifecycleService {
    * ENROLLMENT_OPEN → ACTIVE:
    *   enrollment_closes_at ≤ now  (запись закрылась)
    *   OR starts_at ≤ now (и enrollment_closes_at не задан)
+   *
+   * При активации авто-генерируем уроки по расписанию класса (B1) — раньше это
+   * приходилось делать учителю вручную; забыл → пустое расписание, нет посещаемости,
+   * не открывается гейт оценки, зарплата PER_LESSON = 0.
    */
   private async activateClasses(now: Date): Promise<void> {
-    const { count } = await this.prisma.class.updateMany({
+    const toActivate = await this.prisma.class.findMany({
       where: {
         status: ClassStatus.ENROLLMENT_OPEN,
         OR: [
@@ -58,9 +66,25 @@ export class ClassLifecycleService {
           { starts_at: { lte: now }, enrollment_closes_at: null },
         ],
       },
+      select: { id: true, title: true },
+    });
+    if (toActivate.length === 0) return;
+
+    await this.prisma.class.updateMany({
+      where: { id: { in: toActivate.map((c) => c.id) } },
       data: { status: ClassStatus.ACTIVE },
     });
-    if (count > 0) this.logger.log(`Activated ${count} class(es)`);
+    this.logger.log(`Activated ${toActivate.length} class(es)`);
+
+    // Авто-генерация уроков (идемпотентно; молча пропускает классы без расписания).
+    for (const c of toActivate) {
+      try {
+        const { created } = await this.lessons.generateLessonsForClass(c.id);
+        if (created > 0) this.logger.log(`Auto-generated ${created} lesson(s) for "${c.title}"`);
+      } catch (err) {
+        this.logger.error(`Lesson auto-gen failed for class ${c.id}: ${String(err)}`);
+      }
+    }
   }
 
   /** ACTIVE → COMPLETED: ends_at ≤ now */

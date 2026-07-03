@@ -16,6 +16,7 @@ import { TelegramService } from '../telegram/telegram.service';
 import { PromoService } from '../promo/promo.service';
 import { PointsService } from '../points/points.service';
 import { EnrollmentsService } from '../enrollments/enrollments.service';
+import { LessonsService } from '../lessons/lessons.service';
 
 /**
  * Возврат денег разрешён только пока студент учился ≤ этого числа проведённых занятий.
@@ -55,6 +56,7 @@ export class PaymentsService {
     private readonly promo: PromoService,
     private readonly points: PointsService,
     private readonly enrollments: EnrollmentsService,
+    private readonly lessons: LessonsService,
   ) {}
 
   /**
@@ -405,11 +407,14 @@ export class PaymentsService {
       }
 
       // Авто-открытие группы: первый оплативший студент → класс ACTIVE и виден.
+      // Сразу генерируем уроки по расписанию (B1) — иначе у оплатившего пустое
+      // расписание. Идемпотентно (дубли по timestamp пропускаются). Fire-and-forget.
       if (payment.class.status === 'DRAFT' || payment.class.status === 'ENROLLMENT_OPEN') {
         await this.prisma.class.update({
-          where: { id: payment.class.id },
+          where: { id: classId },
           data: { status: 'ACTIVE', is_active: true },
         });
+        void this.lessons.generateLessonsForClass(classId);
       }
 
       // Инвайт в TG-группу класса

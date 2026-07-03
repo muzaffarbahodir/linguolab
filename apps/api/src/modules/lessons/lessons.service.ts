@@ -409,6 +409,33 @@ export class LessonsService {
       );
     }
 
+    return this.generateLessonsForClass(classId, weeks);
+  }
+
+  /**
+   * Генерация уроков по расписанию класса БЕЗ проверки прав — для авто-старта
+   * класса (крон ClassLifecycleService переводит класс в ACTIVE по дате).
+   * Если расписание не задано — ничего не создаёт (не бросает, чтобы не ронять крон).
+   * Идемпотентно: дубли по точному timestamp пропускаются.
+   */
+  async generateLessonsForClass(
+    classId: string,
+    weeks = 4,
+  ): Promise<{ created: number; skipped: number }> {
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
+        starts_at: true,
+        ends_at: true,
+      },
+    });
+    if (!cls || !cls.schedule_days.length || !cls.schedule_time) {
+      return { created: 0, skipped: 0 };
+    }
+
     const [hStr, mStr] = cls.schedule_time.split(':');
     const lessonHour = parseInt(hStr ?? '0', 10);
     const lessonMinute = parseInt(mStr ?? '0', 10);

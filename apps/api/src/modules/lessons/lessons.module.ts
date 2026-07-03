@@ -8,5 +8,6 @@ import { LessonsService } from './lessons.service';
   imports: [NotificationsModule],
   controllers: [LessonsController],
   providers: [LessonsService],
+  exports: [LessonsService],
 })
 export class LessonsModule {}
