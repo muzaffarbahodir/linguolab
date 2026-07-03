@@ -62,6 +62,11 @@ export class PaymentsService {
    * Создаёт Payment-запись, возвращает URL для редиректа в Payme/Click/Uzumbank.
    */
   async checkout(payerId: string, dto: CheckoutDto) {
+    // Payme отключён как способ оплаты — доступны Click и наличные.
+    if (dto.provider === PaymentProvider.PAYME) {
+      throw new BadRequestException('Payme отключён — выберите Click или наличные');
+    }
+
     // За кого платим: сам плательщик или его ребёнок.
     const studentId = dto.student_id ?? payerId;
     if (studentId !== payerId) {
@@ -184,12 +189,8 @@ export class PaymentsService {
   ): string {
     switch (provider) {
       case PaymentProvider.PAYME: {
-        const merchantId = this.config.get<string>('PAYME_MERCHANT_ID') ?? '';
-        // Payme URL: https://checkout.paycom.uz/<base64(m=merchantId;ac.order_id=orderId;a=amount)>
-        const raw = `m=${merchantId};ac.order_id=${orderId};a=${amountTiyin}`;
-        const encoded = Buffer.from(raw).toString('base64');
-        const base = this.config.get<string>('PAYME_CHECKOUT_URL') ?? 'https://checkout.paycom.uz';
-        return `${base}/${encoded}`;
+        // Payme отключён — checkout не должен сюда попадать (см. гард в checkout).
+        throw new BadRequestException('Payme отключён');
       }
       case PaymentProvider.CLICK: {
         const serviceId = this.config.get<string>('CLICK_SERVICE_ID') ?? '';
@@ -344,33 +345,48 @@ export class PaymentsService {
 
       // ── Оплата курса ──
       if (!payment.class || !payment.user) return;
+      const classId = payment.class.id;
+      const studentId = payment.user_id;
 
       // Продление оплаченного периода: от max(now, текущий paid_until) + N месяцев.
       // Так доплата за следующий месяц прибавляется к остатку, а не сгорает.
+      const now = new Date();
       const existingEnr = await this.prisma.enrollment.findUnique({
-        where: {
-          student_id_class_id: { student_id: payment.user_id, class_id: payment.class.id },
-        },
+        where: { student_id_class_id: { student_id: studentId, class_id: classId } },
         select: { paid_until: true },
       });
-      const now = new Date();
       const base =
         existingEnr?.paid_until && existingEnr.paid_until > now ? existingEnr.paid_until : now;
       const paidUntil = new Date(base);
       paidUntil.setMonth(paidUntil.getMonth() + (payment.period_months || 1));
 
-      await this.prisma.enrollment.upsert({
-        where: {
-          student_id_class_id: { student_id: payment.user_id, class_id: payment.class.id },
-        },
-        update: { status: 'ACTIVE', paid_until: paidUntil },
-        create: {
-          student_id: payment.user_id,
-          class_id: payment.class.id,
-          status: 'ACTIVE',
-          paid_until: paidUntil,
-        },
+      // A4 — идемпотентность. Продление paid_until кумулятивно (не идемпотентно), поэтому
+      // «застолбить» платёж (compare-and-set processed_at) и применить продление атомарно в
+      // одной транзакции. Повторный/гоночный вызов (дубль вебхука, ретрай) получит
+      // claim.count === 0 и выйдет ДО кэшбэка/инвайтов — ни двойного продления, ни двойного
+      // начисления баллов.
+      const applied = await this.prisma.$transaction(async (tx) => {
+        const claim = await tx.payment.updateMany({
+          where: { id: payment.id, processed_at: null },
+          data: { processed_at: new Date() },
+        });
+        if (claim.count === 0) return false;
+        await tx.enrollment.upsert({
+          where: { student_id_class_id: { student_id: studentId, class_id: classId } },
+          update: { status: 'ACTIVE', paid_until: paidUntil },
+          create: {
+            student_id: studentId,
+            class_id: classId,
+            status: 'ACTIVE',
+            paid_until: paidUntil,
+          },
+        });
+        return true;
       });
+      if (!applied) {
+        this.logger.log(`Payment ${payment.id} already processed — skip domain side-effects`);
+        return;
+      }
 
       // Баллы: списываем зарезервированные (если платили баллами) + кэшбэк +
       // реферальный бонус. Списание баллов — кошелёк плательщика. Не ломаем флоу.
@@ -732,15 +748,14 @@ export class PaymentsService {
     amount_tiyin: bigint;
   }): Promise<boolean> {
     switch (payment.provider) {
-      case PaymentProvider.PAYME:
       case PaymentProvider.CLICK:
-        // Здесь будет HTTP-вызов merchant-refund API провайдера.
+        // Здесь будет HTTP-вызов merchant-refund API Click.
         this.logger.warn(
           `Auto-refund not configured for ${payment.provider}; manual cabinet refund required (payment ${payment.id})`,
         );
         return false;
       default:
-        // CASH / UZUMBANK — авто-возврата нет.
+        // CASH / UZUMBANK / (legacy PAYME) — авто-возврата нет.
         return false;
     }
   }

@@ -15,7 +15,7 @@ import { FISCAL_QUEUE, FiscalJobData } from './jobs/fiscal-send.processor';
  *  - Предоставить REST-эндпоинты: GET /fiscal/receipt/:id, POST /fiscal/receipt/:id/retry.
  *
  * Правила:
- *  - scheduleReceipt() вызывается из PaymeService/ClickService после PaymentStatus.PAID.
+ *  - scheduleReceipt() вызывается из ClickService/PaymentsService после PaymentStatus.PAID.
  *  - scheduleRefundReceipt() вызывается из PaymentsService.adminRefund().
  *  - Оба метода idempotent: если FiscalReceipt уже существует — пропускают.
  */

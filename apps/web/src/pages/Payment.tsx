@@ -20,7 +20,6 @@ import { toast } from '../store/toast';
 import { EmptyState } from '../components/EmptyState';
 
 const PROVIDERS: { id: PaymentProvider; label: string; logo?: string; icon?: ReactNode }[] = [
-  { id: 'PAYME', label: 'Payme', logo: '💳' },
   { id: 'CLICK', label: 'Click', logo: '🔵' },
   { id: 'CASH', label: 'payment.cash', icon: <Banknote className="text-brand h-6 w-6" /> },
 ];
@@ -40,7 +39,7 @@ export default function Payment() {
       offlineTrialLanguageId?: string;
     };
 
-  const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('PAYME');
+  const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('CLICK');
   const [redirected, setRedirected] = useState(false);
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [months, setMonths] = useState(1);

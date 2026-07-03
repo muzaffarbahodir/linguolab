@@ -10,7 +10,6 @@ import { useBackButton } from '../../hooks/useBackButton';
 import { usePaymentProviders, useUpdatePaymentProvider } from '../../api/admin';
 
 const PROVIDER_INFO: Record<string, { label: string; logo: string; color: string }> = {
-  PAYME: { label: 'Payme', logo: '💳', color: '#00AACC' },
   CLICK: { label: 'Click', logo: '🔵', color: '#0078D4' },
   UZUMBANK: { label: 'Uzum Bank', logo: '🟠', color: '#FF6B00' },
 };
@@ -33,7 +32,10 @@ export function AdminPaymentSettingsPage() {
     );
   }
 
-  const sorted = [...(data ?? [])].sort((a, b) => a.display_order - b.display_order);
+  // Payme отключён как способ оплаты — не показываем его в настройках.
+  const sorted = [...(data ?? [])]
+    .filter((p) => p.provider !== 'PAYME')
+    .sort((a, b) => a.display_order - b.display_order);
 
   return (
     <div className="glass-fade-in min-h-screen pb-10">

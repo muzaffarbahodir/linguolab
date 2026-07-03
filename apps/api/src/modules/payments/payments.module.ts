@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
-import { PaymeService } from './payme/payme.service';
 import { ClickService } from './click/click.service';
 import { BillingReminderService } from './billing-reminder.service';
 import { TelegramModule } from '../telegram/telegram.module';
@@ -21,7 +20,7 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     EnrollmentsModule,
   ],
   controllers: [PaymentsController],
-  providers: [PaymentsService, PaymeService, ClickService, BillingReminderService],
+  providers: [PaymentsService, ClickService, BillingReminderService],
   exports: [PaymentsService],
 })
 export class PaymentsModule {}

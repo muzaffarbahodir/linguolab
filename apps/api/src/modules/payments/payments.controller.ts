@@ -5,24 +5,12 @@ import {
   Body,
   Param,
   Query,
-  Headers,
   HttpCode,
-  UnauthorizedException,
   ParseIntPipe,
   DefaultValuePipe,
   UseGuards,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PaymentStatus, Role } from '@prisma/client';
-import { timingSafeEqual } from 'crypto';
-
-/** Сравнение строк за постоянное время — защита от timing-атак на секрет. */
-function timingSafeStrEqual(a: string, b: string): boolean {
-  const ab = Buffer.from(a, 'utf8');
-  const bb = Buffer.from(b, 'utf8');
-  if (ab.length !== bb.length) return false;
-  return timingSafeEqual(ab, bb);
-}
 
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -30,9 +18,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ActiveUserGuard } from '../auth/guards/active-user.guard';
 import { RequestUser } from '../auth/strategies/jwt.strategy';
 import { PaymentsService, CheckoutDto } from './payments.service';
-import { PaymeService } from './payme/payme.service';
 import { ClickService } from './click/click.service';
-import { PaymeRpcRequest } from './payme/payme.types';
 import { ClickPrepareDto } from './click/dto/click-prepare.dto';
 import { ClickCompleteDto } from './click/dto/click-complete.dto';
 
@@ -40,9 +26,7 @@ import { ClickCompleteDto } from './click/dto/click-complete.dto';
 export class PaymentsController {
   constructor(
     private readonly paymentsService: PaymentsService,
-    private readonly paymeService: PaymeService,
     private readonly clickService: ClickService,
-    private readonly config: ConfigService,
   ) {}
 
   // ─── Student endpoints ───────────────────────────────────────────────────────
@@ -76,43 +60,6 @@ export class PaymentsController {
   @Get(':id')
   getOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.paymentsService.getPayment(id, user.id);
-  }
-
-  // ─── Payme webhook ───────────────────────────────────────────────────────────
-
-  /**
-   * POST /payments/payme/webhook
-   * Payme отправляет JSON-RPC 2.0 запросы с Basic Auth.
-   * Пароль = PAYME_MERCHANT_KEY из .env
-   * @Public() — JWT не проверяем, проверяем Basic Auth вручную
-   */
-  @Post('payme/webhook')
-  @Public()
-  @HttpCode(200)
-  async paymeWebhook(
-    @Headers('authorization') authorization: string,
-    @Body() body: PaymeRpcRequest,
-  ) {
-    // Проверяем Basic Auth
-    this.verifyPaymeAuth(authorization);
-    return this.paymeService.handle(body);
-  }
-
-  private verifyPaymeAuth(authorization: string) {
-    if (!authorization?.startsWith('Basic ')) {
-      throw new UnauthorizedException('Basic auth required');
-    }
-
-    const base64 = authorization.slice(6);
-    const decoded = Buffer.from(base64, 'base64').toString('utf-8');
-    // Формат: "Paycom:<merchant_key>"  или  "<login>:<password>"
-    const colonIdx = decoded.indexOf(':');
-    const password = colonIdx >= 0 ? decoded.slice(colonIdx + 1) : '';
-
-    const merchantKey = this.config.get<string>('PAYME_MERCHANT_KEY') ?? '';
-    if (!password || !merchantKey || !timingSafeStrEqual(password, merchantKey)) {
-      throw new UnauthorizedException('Invalid Payme credentials');
-    }
   }
 
   // ─── Click webhooks ──────────────────────────────────────────────────────────

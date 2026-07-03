@@ -704,6 +704,9 @@ model Payment {
   payload_in        Json? // входящий payload от провайдера
   payload_out       Json? // наш ответ провайдеру
   paid_at           DateTime?
+  /// Доменные side-effects (продление доступа + кэшбэк) применены ровно один раз.
+  /// Compare-and-set в handlePaidPayment: защита от дублей вебхука/ретраев/гонок.
+  processed_at      DateTime?
   refunded_at       DateTime? // когда оформлен возврат
   refund_reason     String? // причина возврата (админ)
   /// Если задан — платёж за ОЧНЫЙ пробный урок (а не за курс).

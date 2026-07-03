@@ -42,7 +42,7 @@ export class NotificationsService {
 
   /**
    * Уведомление об успешной оплате.
-   * Вызывается fire-and-forget из PaymeService / ClickService после PAID.
+   * Вызывается fire-and-forget из ClickService после PAID.
    */
   async schedulePaymentConfirmed(
     paymentId: string,
