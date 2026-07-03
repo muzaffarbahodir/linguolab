@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
@@ -96,5 +96,26 @@ export class NotificationSendProcessor extends WorkerHost {
     }
 
     this.logger.log(`Notification sent: type=${type} user=${userId}`);
+  }
+
+  /**
+   * D3 — видимость отказов. Обычно уведомление уходит; но если джоб упал все попытки,
+   * это тихая потеря (раньше не было алерта — в отличие от фискальной очереди).
+   * Логируем на error → попадает в агрегатор/Sentry. Алертить самим уведомлением нельзя
+   * (было бы циклом: сломанная очередь уведомлений уведомляет через себя же).
+   */
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<NotificationJobData>, err: Error): void {
+    const max = job.opts.attempts ?? 1;
+    if (job.attemptsMade >= max) {
+      this.logger.error(
+        `Notification permanently FAILED after ${job.attemptsMade} attempt(s): ` +
+          `type=${job.data.type} user=${job.data.userId}: ${err.message}`,
+      );
+    } else {
+      this.logger.warn(
+        `Notification job #${job.id} failed (attempt ${job.attemptsMade}/${max}), will retry: ${err.message}`,
+      );
+    }
   }
 }
