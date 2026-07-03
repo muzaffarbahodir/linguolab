@@ -1,13 +1,21 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { ClassStatus, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+
+/**
+ * Через сколько часов после начала урока, который так и не закрыли посещаемостью,
+ * он авто-помечается COMPLETED. Покрывает длительность занятия (обычно ≤3ч) + запас.
+ */
+const LESSON_AUTOCOMPLETE_GRACE_H = 6;
 
 /** Карта день недели → номер (JS getDay() формат) */
 const DAY_TO_JS: Record<string, number> = {
@@ -67,10 +75,36 @@ function getNextSession(days: string[], time: string, durationMinutes: number): 
 
 @Injectable()
 export class LessonsService {
+  private readonly logger = new Logger(LessonsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
   ) {}
+
+  /**
+   * B3 — фолбэк авто-завершения уроков. Обычно урок становится COMPLETED, когда
+   * учитель отмечает посещаемость (bulkAttendance). Если не отметил — урок висел бы
+   * SCHEDULED вечно: не считается в зарплату PER_LESSON, не открывается гейт оценки.
+   * Раз в час помечаем COMPLETED уроки, начавшиеся > грейса назад и всё ещё SCHEDULED.
+   * Только для реально идущих/завершённых классов (не DRAFT/ENROLLMENT_OPEN/CANCELLED),
+   * чтобы не раздувать зарплату уроками мёртвых групп.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async autoCompleteStaleLessons(): Promise<void> {
+    const cutoff = new Date(Date.now() - LESSON_AUTOCOMPLETE_GRACE_H * 3_600_000);
+    const res = await this.prisma.lesson.updateMany({
+      where: {
+        status: 'SCHEDULED',
+        scheduled_at: { lt: cutoff },
+        class: {
+          status: { in: [ClassStatus.ACTIVE, ClassStatus.EXAM, ClassStatus.COMPLETED] },
+        },
+      },
+      data: { status: 'COMPLETED' },
+    });
+    if (res.count > 0) this.logger.log(`Auto-completed ${res.count} stale lesson(s)`);
+  }
 
   /**
    * GET /lessons/upcoming — ближайший урок студента.
