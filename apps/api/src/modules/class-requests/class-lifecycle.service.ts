@@ -4,6 +4,7 @@ import { ClassStatus } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { LessonsService } from '../lessons/lessons.service';
+import { CertificatesService } from '../certificates/certificates.service';
 
 /**
  * ClassLifecycleService — автоматические переходы статусов семестра.
@@ -24,6 +25,7 @@ export class ClassLifecycleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly lessons: LessonsService,
+    private readonly certificates: CertificatesService,
   ) {}
 
   @Cron('*/15 * * * *')
@@ -87,15 +89,35 @@ export class ClassLifecycleService {
     }
   }
 
-  /** ACTIVE → COMPLETED: ends_at ≤ now */
+  /**
+   * ACTIVE → COMPLETED: ends_at ≤ now.
+   * При завершении авто-выдаём сертификаты всем завершившим студентам (B2) —
+   * раньше сертификат выдавался только вручную (забыли → студент без сертификата).
+   */
   private async completeClasses(now: Date): Promise<void> {
-    const { count } = await this.prisma.class.updateMany({
+    const toComplete = await this.prisma.class.findMany({
       where: {
         status: { in: [ClassStatus.ACTIVE, ClassStatus.EXAM] },
         ends_at: { lte: now },
       },
+      select: { id: true, title: true },
+    });
+    if (toComplete.length === 0) return;
+
+    await this.prisma.class.updateMany({
+      where: { id: { in: toComplete.map((c) => c.id) } },
       data: { status: ClassStatus.COMPLETED, is_active: false },
     });
-    if (count > 0) this.logger.log(`Completed ${count} class(es)`);
+    this.logger.log(`Completed ${toComplete.length} class(es)`);
+
+    // Авто-выдача сертификатов (идемпотентно; ошибка по классу не роняет крон).
+    for (const c of toComplete) {
+      try {
+        const { issued } = await this.certificates.issueForCompletedClass(c.id);
+        if (issued > 0) this.logger.log(`Auto-issued ${issued} certificate(s) for "${c.title}"`);
+      } catch (err) {
+        this.logger.error(`Cert auto-issue failed for class ${c.id}: ${String(err)}`);
+      }
+    }
   }
 }

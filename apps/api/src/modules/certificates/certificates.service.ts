@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   ConflictException,
   NotFoundException,
   ForbiddenException,
@@ -8,6 +9,7 @@ import { Role } from '@prisma/client';
 import { randomUUID } from 'crypto';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
+import JSZip from 'jszip';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -15,6 +17,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class CertificatesService {
+  private readonly logger = new Logger(CertificatesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
@@ -22,7 +26,7 @@ export class CertificatesService {
   ) {}
 
   /**
-   * Генерирует PDF-сертификат, загружает в R2, сохраняет запись.
+   * Ручная выдача (кнопкой). Генерирует ZIP-бандл, загружает в R2, сохраняет запись.
    * Учитель — только для своего класса; менеджер/админ — для любого.
    */
   async issue(studentId: string, classId: string, actor: { id: string; role: Role }) {
@@ -41,6 +45,42 @@ export class CertificatesService {
     });
     if (existing) throw new ConflictException('Certificate already issued');
 
+    return this.generateAndStore(studentId, classId);
+  }
+
+  /**
+   * B2 — авто-выдача сертификатов всем завершившим студентам при COMPLETED класса
+   * (крон ClassLifecycleService). Идемпотентно (пропускает уже выданные), без auth,
+   * без throw (ошибка по одному студенту не роняет остальных / крон).
+   * Сертификат получают ACTIVE не-пробные записи (реально проходили курс).
+   */
+  async issueForCompletedClass(classId: string): Promise<{ issued: number }> {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { class_id: classId, status: 'ACTIVE', is_trial: false },
+      select: { student_id: true },
+    });
+
+    let issued = 0;
+    for (const e of enrollments) {
+      const existing = await this.prisma.certificate.findUnique({
+        where: { student_id_class_id: { student_id: e.student_id, class_id: classId } },
+      });
+      if (existing) continue;
+      try {
+        await this.generateAndStore(e.student_id, classId);
+        issued++;
+      } catch (err) {
+        this.logger.error(`cert auto-issue failed (student ${e.student_id}): ${String(err)}`);
+      }
+    }
+    return { issued };
+  }
+
+  /**
+   * Ядро: PDF → ZIP-бандл → R2 → запись + уведомление. Дубль НЕ проверяет
+   * (вызывающий проверяет). Бросает при отсутствии студента/класса или сбое R2.
+   */
+  private async generateAndStore(studentId: string, classId: string) {
     const [student, cls] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: studentId } }),
       this.prisma.class.findUnique({
@@ -53,17 +93,16 @@ export class CertificatesService {
 
     const studentName = [student.first_name, student.last_name].filter(Boolean).join(' ');
     const pdfBuffer = await this.generatePdf(studentName, cls.title, cls.language.name_ru);
+    const zipBuffer = await this.buildBundle(pdfBuffer, studentName, cls.title);
 
-    const key = `certificates/${studentId}/${randomUUID()}.pdf`;
+    const key = `certificates/${studentId}/${randomUUID()}.zip`;
 
     // Серверная загрузка через presigned PUT в R2.
-    const uploadUrl = await this.storage.presignedUpload(key, 'application/pdf', 300);
-
-    // Server-side upload через fetch на presigned URL
+    const uploadUrl = await this.storage.presignedUpload(key, 'application/zip', 300);
     const resp = await fetch(uploadUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/pdf' },
-      body: new Uint8Array(pdfBuffer),
+      headers: { 'Content-Type': 'application/zip' },
+      body: new Uint8Array(zipBuffer),
     });
     if (!resp.ok) throw new Error(`R2 upload failed: ${resp.status}`);
 
@@ -73,10 +112,35 @@ export class CertificatesService {
       data: { student_id: studentId, class_id: classId, file_key: key, file_url: fileUrl },
     });
 
-    // Уведомляем студента
     void this.notifications.scheduleCertificateIssued(studentId, cls.title, cert.id);
 
     return cert;
+  }
+
+  /**
+   * ZIP-бандл сертификата. Сейчас: реальный PDF + пустые плейсхолдеры под будущие
+   * бонусы (промокод, голосовое, фото). Наполним реальным контентом позже —
+   * инфраструктура упаковки уже готова, останется положить файлы в bonus/.
+   */
+  private async buildBundle(
+    pdfBuffer: Buffer,
+    studentName: string,
+    classTitle: string,
+  ): Promise<Buffer> {
+    const zip = new JSZip();
+    zip.file('sertifikat.pdf', pdfBuffer);
+    zip.file(
+      'README.txt',
+      `Сертификат LinguoLab\nСтудент: ${studentName}\nКурс: ${classTitle}\n\n` +
+        `В папке bonus/ появятся дополнительные материалы (промокод, аудио, фото).`,
+    );
+    // Плейсхолдеры под бонусы — пока пустые (наполним при продаже проекта).
+    const bonus = zip.folder('bonus');
+    bonus?.file('promo-code.txt', '');
+    bonus?.file('voice-message.ogg', '');
+    bonus?.file('photo.jpg', '');
+
+    return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
   }
 
   /** Мои сертификаты */
