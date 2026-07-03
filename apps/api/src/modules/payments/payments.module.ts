@@ -9,9 +9,17 @@ import { FiscalModule } from '../fiscal/fiscal.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PromoModule } from '../promo/promo.module';
 import { PointsModule } from '../points/points.module';
+import { EnrollmentsModule } from '../enrollments/enrollments.module';
 
 @Module({
-  imports: [TelegramModule, FiscalModule, NotificationsModule, PromoModule, PointsModule],
+  imports: [
+    TelegramModule,
+    FiscalModule,
+    NotificationsModule,
+    PromoModule,
+    PointsModule,
+    EnrollmentsModule,
+  ],
   controllers: [PaymentsController],
   providers: [PaymentsService, PaymeService, ClickService, BillingReminderService],
   exports: [PaymentsService],

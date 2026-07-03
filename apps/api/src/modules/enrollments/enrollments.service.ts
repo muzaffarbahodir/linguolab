@@ -293,12 +293,16 @@ export class EnrollmentsService {
     });
     if (!next) return;
 
+    // enrolled_at сбрасываем на now: место повышается до PENDING «сейчас», и с этого
+    // момента идёт грейс на оплату (иначе cleanupStalePending снял бы его сразу —
+    // enrolled_at у ждавшего в очереди уже старый).
     await this.prisma.enrollment.update({
       where: { id: next.id },
-      data: { status: 'PENDING' },
+      data: { status: 'PENDING', enrolled_at: new Date() },
     });
 
-    void this.notifications.scheduleEnrollmentConfirmed(next.student_id, classTitle, next.id);
+    // Промотированный ещё НЕ записан окончательно — место закрепит оплата.
+    void this.notifications.scheduleWaitlistPromoted(next.student_id, classTitle, next.id);
   }
 
   // ─── Transfer requests ───────────────────────────────────────────────────

@@ -15,6 +15,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { PromoService } from '../promo/promo.service';
 import { PointsService } from '../points/points.service';
+import { EnrollmentsService } from '../enrollments/enrollments.service';
 
 /**
  * Возврат денег разрешён только пока студент учился ≤ этого числа проведённых занятий.
@@ -53,6 +54,7 @@ export class PaymentsService {
     private readonly telegram: TelegramService,
     private readonly promo: PromoService,
     private readonly points: PointsService,
+    private readonly enrollments: EnrollmentsService,
   ) {}
 
   /**
@@ -743,12 +745,22 @@ export class PaymentsService {
     }
   }
 
-  /** Снимает запись студента на курс при возврате (ACTIVE/PENDING → DROPPED). */
+  /**
+   * Снимает запись студента на курс при возврате (ACTIVE/PENDING → DROPPED).
+   * Освободившееся место отдаётся первому из листа ожидания (promoteWaitlist).
+   */
   private async revokeEnrollment(studentId: string, classId: string | null) {
     if (!classId) return;
-    await this.prisma.enrollment.updateMany({
+    const res = await this.prisma.enrollment.updateMany({
       where: { student_id: studentId, class_id: classId, status: { in: ['ACTIVE', 'PENDING'] } },
       data: { status: 'DROPPED' },
     });
+    if (res.count === 0) return;
+
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: { title: true },
+    });
+    if (cls) await this.enrollments.promoteWaitlist(classId, cls.title);
   }
 }

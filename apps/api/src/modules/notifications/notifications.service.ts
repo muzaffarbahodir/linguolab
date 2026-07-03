@@ -412,6 +412,42 @@ export class NotificationsService {
     });
   }
 
+  /**
+   * Освободилось место — студент из листа ожидания повышен до PENDING.
+   * Он ещё НЕ записан окончательно: место закрепится только после оплаты.
+   * (В отличие от scheduleEnrollmentConfirmed, который говорит «запись подтверждена».)
+   */
+  async scheduleWaitlistPromoted(userId: string, classTitle: string, enrollmentId: string) {
+    await this.enqueue({
+      type: NotificationType.ENROLLMENT_CONFIRMED,
+      userId,
+      title: '🎉 Освободилось место!',
+      body:
+        `В группе <b>${classTitle}</b> освободилось место — вы следующий в очереди!\n\n` +
+        `Чтобы закрепить место, оплатите обучение в разделе «Расписание». ` +
+        `Иначе через некоторое время место уйдёт следующему.`,
+      dedupKey: `notif:dedup:waitlist_promoted:${enrollmentId}`,
+      dedupTtlSec: DEDUP_TTL.ENROLLMENT_CONFIRMED,
+      payload: { enrollmentId },
+    });
+  }
+
+  /** Доступ к курсу приостановлен: оплата просрочена (paid_until + грейс истёк). */
+  async scheduleAccessExpired(userId: string, classTitle: string, enrollmentId: string) {
+    await this.enqueue({
+      type: NotificationType.ENROLLMENT_DROPPED,
+      userId,
+      title: '⏳ Доступ приостановлен',
+      body:
+        `Оплата за обучение в группе <b>${classTitle}</b> просрочена — доступ приостановлен.\n\n` +
+        `Чтобы вернуться, продлите оплату в разделе «Расписание». ` +
+        `Освободившееся место может занять студент из листа ожидания.`,
+      dedupKey: `notif:dedup:access_expired:${enrollmentId}`,
+      dedupTtlSec: DEDUP_TTL.ENROLLMENT_DROPPED,
+      payload: { enrollmentId },
+    });
+  }
+
   /** Пробный урок подтверждён */
   async scheduleTrialConfirmed(userId: string, languageName: string, trialId: string) {
     await this.enqueue({
