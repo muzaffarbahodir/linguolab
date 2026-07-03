@@ -42,6 +42,13 @@ const requestSelect = {
   approved_class: { select: { id: true, title: true, status: true } },
 } as const;
 
+/** Прибавляет N месяцев к дате (дефолт длительности семестра при апруве). */
+function addMonths(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setMonth(r.getMonth() + n);
+  return r;
+}
+
 @Injectable()
 export class ClassRequestsService {
   constructor(
@@ -152,7 +159,20 @@ export class ClassRequestsService {
       throw new BadRequestException('Can only approve PENDING requests');
     }
 
-    // Создаём Class в DRAFT (учитель и менеджер потом открывают запись вручную)
+    // D2 — гарантируем даты жизненного цикла, чтобы авто-переходы всегда работали.
+    // Без них класс завис бы в DRAFT навсегда (не открывается запись, не активируется,
+    // не завершается → нет авто-уроков и авто-сертификатов). Дефолты по модели
+    // «месячный семестр» (см. ClassLifecycleService); менеджер может переопределить любую
+    // дату в форме апрува.
+    const now = new Date();
+    const startsAt = dto.starts_at ? new Date(dto.starts_at) : (request.starts_at ?? now); // старт — от заявки/формы, иначе сейчас
+    const opensAt = dto.enrollment_opens_at ? new Date(dto.enrollment_opens_at) : now; // запись открывается сразу
+    const closesAt = dto.enrollment_closes_at ? new Date(dto.enrollment_closes_at) : startsAt; // запись закрывается к старту курса
+    const endsAt = dto.ends_at
+      ? new Date(dto.ends_at)
+      : (request.ends_at ?? addMonths(startsAt, 1)); // семестр ≈ 1 месяц
+
+    // Создаём Class в DRAFT; крон откроет запись/активирует/завершит по датам выше.
     const newClass = await this.prisma.class.create({
       data: {
         language_id: request.language_id,
@@ -169,15 +189,11 @@ export class ClassRequestsService {
         schedule_duration: dto.schedule_duration ?? request.schedule_duration ?? undefined,
         status: ClassStatus.DRAFT,
         semester_label: dto.semester_label ?? undefined,
-        enrollment_opens_at: dto.enrollment_opens_at
-          ? new Date(dto.enrollment_opens_at)
-          : undefined,
-        enrollment_closes_at: dto.enrollment_closes_at
-          ? new Date(dto.enrollment_closes_at)
-          : undefined,
-        starts_at: dto.starts_at ? new Date(dto.starts_at) : (request.starts_at ?? undefined),
-        ends_at: dto.ends_at ? new Date(dto.ends_at) : (request.ends_at ?? undefined),
-        is_active: false, // станет true когда откроют запись
+        enrollment_opens_at: opensAt,
+        enrollment_closes_at: closesAt,
+        starts_at: startsAt,
+        ends_at: endsAt,
+        is_active: false, // станет true когда крон откроет запись
       },
       select: { id: true, title: true },
     });
