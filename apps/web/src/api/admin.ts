@@ -353,6 +353,8 @@ export interface AdminClass {
   schedule_days?: string[];
   schedule_time?: string | null;
   schedule_duration?: number | null;
+  /** BigInt сериализуется в строку; null = TG-чат класса не привязан. */
+  telegram_chat_id?: string | null;
   language: { id: string; name_ru: string; flag_emoji: string; color: string | null };
   teacher: {
     id: string;
@@ -789,5 +791,17 @@ export function useSetClassRoom() {
       void qc.invalidateQueries({ queryKey: ['admin', 'classes'] });
       void qc.invalidateQueries({ queryKey: ['rooms'] });
     },
+  });
+}
+
+/** Привязка Telegram-чата к классу (MANAGER+). chatId — строка вида "-100123...". */
+export function useBindClassChat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ classId, chatId }: { classId: string; chatId: string }) =>
+      apiClient
+        .patch(`/classes/${classId}/group`, { telegram_chat_id: chatId })
+        .then((r) => r.data),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['admin', 'classes'] }),
   });
 }

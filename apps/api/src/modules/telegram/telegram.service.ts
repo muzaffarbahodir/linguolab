@@ -539,10 +539,36 @@ export class TelegramService implements OnModuleInit {
     // ── Автоматическое обновление tg_blocked ─────────────────────────────
 
     this.bot.on('my_chat_member', async (ctx) => {
+      const chat = ctx.myChatMember?.chat;
+      const newStatus = ctx.myChatMember?.new_chat_member?.status;
+
+      // Бот добавлен в группу/супергруппу → постим chat_id с инструкцией привязки.
+      // Telegram-боты не могут создавать группы сами; это делает привязку
+      // «добавил бота → скопировал ID из его сообщения» вместо поиска ID вручную.
+      if (
+        (chat?.type === 'group' || chat?.type === 'supergroup') &&
+        (newStatus === 'member' || newStatus === 'administrator')
+      ) {
+        try {
+          await this.bot!.api.sendMessage(
+            chat.id,
+            `🔗 <b>ID этого чата:</b> <code>${chat.id}</code>\n\n` +
+              `Чтобы получать инвайты, привяжите чат к классу: ` +
+              `Админка → Классы → «Привязать TG-чат» → вставьте этот ID.`,
+            { parse_mode: 'HTML' },
+          );
+        } catch (err) {
+          this.logger.warn(`chat-id hint failed for ${chat.id}: ${String(err)}`);
+        }
+        return;
+      }
+
+      // Дальше — только личные чаты (блокировка/разблокировка бота пользователем).
+      if (chat?.type !== 'private') return;
+
       const tgId = ctx.myChatMember?.from?.id;
       if (!tgId) return;
 
-      const newStatus = ctx.myChatMember?.new_chat_member?.status;
       const blocked = newStatus === 'kicked' || newStatus === 'left';
       const unblocked = newStatus === 'member';
 

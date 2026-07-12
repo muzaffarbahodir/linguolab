@@ -15,6 +15,7 @@ import {
   useUpdateClassStatus,
   useDeleteClass,
   useAdminTeachers,
+  useBindClassChat,
   type AdminClass,
   type ClassStatus,
 } from '../../api/admin';
@@ -408,8 +409,30 @@ function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) 
   const updateClass = useUpdateClass();
   const updateStatus = useUpdateClassStatus();
   const deleteClass = useDeleteClass();
+  const bindChat = useBindClassChat();
   const [showEdit, setShowEdit] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showBind, setShowBind] = useState(false);
+  const [chatIdInput, setChatIdInput] = useState('');
+
+  function handleBindChat() {
+    const chatId = chatIdInput.trim();
+    if (!/^-?\d+$/.test(chatId)) {
+      WebApp.showAlert(t('admin.classes.chat_id_invalid'));
+      return;
+    }
+    bindChat.mutate(
+      { classId: cls.id, chatId },
+      {
+        onSuccess: () => {
+          setShowBind(false);
+          setChatIdInput('');
+          WebApp.HapticFeedback.notificationOccurred('success');
+        },
+        onError: () => WebApp.showAlert(t('admin.classes.chat_bind_error')),
+      },
+    );
+  }
 
   const color = cls.language.color ?? '#6366f1';
   const levelColor = LEVEL_COLOR[cls.level] ?? '#6366f1';
@@ -500,6 +523,16 @@ function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) 
             👤 {cls.teacher.user.first_name} {cls.teacher.user.last_name ?? ''}
           </p>
 
+          {/* Нет TG-чата: инвайты студентам после оплаты не уйдут */}
+          {!cls.telegram_chat_id && cls.status !== 'CANCELLED' && cls.status !== 'COMPLETED' && (
+            <button
+              onClick={() => setShowBind(true)}
+              className="bg-warn/10 text-warn press mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium"
+            >
+              ⚠️ {t('admin.classes.no_chat_badge')}
+            </button>
+          )}
+
           {/* Prices + count */}
           <div className="mb-3 flex items-center justify-between">
             <div className="text-muted text-xs">
@@ -570,6 +603,42 @@ function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) 
       </div>
       {showEdit && <ClassForm initial={cls} onClose={() => setShowEdit(false)} />}
       {showSchedule && <ScheduleForm cls={cls} onClose={() => setShowSchedule(false)} />}
+      {showBind && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowBind(false)}
+        >
+          <div className="glass-card w-full rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-2 text-center text-lg font-semibold">
+              {t('admin.classes.chat_bind_title')}
+            </h3>
+            <p className="text-muted mb-3 text-xs">{t('admin.classes.chat_bind_hint')}</p>
+            <input
+              value={chatIdInput}
+              onChange={(e) => setChatIdInput(e.target.value)}
+              placeholder="-1001234567890"
+              inputMode="numeric"
+              className="bg-surface-2 border-hairline mb-4 w-full rounded-xl border px-4 py-3 text-sm outline-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBind(false)}
+                className="glass-option press flex-1 rounded-xl py-3 text-sm"
+              >
+                {t('homework.cancel')}
+              </button>
+              <button
+                onClick={handleBindChat}
+                disabled={!chatIdInput.trim() || bindChat.isPending}
+                className="glass-btn press flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              >
+                {bindChat.isPending ? '…' : t('admin.classes.chat_bind_btn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

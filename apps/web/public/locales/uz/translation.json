@@ -1274,7 +1274,13 @@
       "start_date_label": "Kurs boshlanish sanasi",
       "start_date_hint": "Darslar shu sanadan jadval bo'yicha yaratiladi. Bo'sh = bugundan.",
       "schedule_save": "Jadvalni saqlash",
-      "schedule_error": "Jadvalni saqlashda xato"
+      "schedule_error": "Jadvalni saqlashda xato",
+      "no_chat_badge": "TG-chat yo'q — talabalarga taklifnoma bormaydi. Bog'lash",
+      "chat_bind_title": "TG-chatni bog'lash",
+      "chat_bind_hint": "Botni guruhga qo'shing — u chat ID sini yozadi. Shu yerga kiriting.",
+      "chat_bind_btn": "Bog'lash",
+      "chat_id_invalid": "Chat ID — -1001234567890 ko'rinishidagi son",
+      "chat_bind_error": "Chatni bog'lab bo'lmadi"
     },
     "analytics": {
       "title": "Tahlil",

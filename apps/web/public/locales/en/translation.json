@@ -1274,7 +1274,13 @@
       "start_date_label": "Course start date",
       "start_date_hint": "Lessons are generated from this date by the schedule. Empty = from today.",
       "schedule_save": "Save schedule",
-      "schedule_error": "Schedule save error"
+      "schedule_error": "Schedule save error",
+      "no_chat_badge": "No TG chat — student invites won't be sent. Bind",
+      "chat_bind_title": "Bind TG chat",
+      "chat_bind_hint": "Add the bot to the class group — it will post the chat ID there. Paste it here.",
+      "chat_bind_btn": "Bind",
+      "chat_id_invalid": "Chat ID is a number like -1001234567890",
+      "chat_bind_error": "Failed to bind chat"
     },
     "analytics": {
       "title": "Analytics",
