@@ -17,6 +17,13 @@ import { NotificationsService } from '../notifications/notifications.service';
  */
 const LESSON_AUTOCOMPLETE_GRACE_H = 6;
 
+/**
+ * Через сколько часов после начала неотмеченного урока пингуем учителя
+ * «отметьте посещаемость». Должно быть меньше LESSON_AUTOCOMPLETE_GRACE_H,
+ * чтобы у учителя было окно до авто-закрытия урока.
+ */
+const ATTENDANCE_REMIND_AFTER_H = 2;
+
 /** Карта день недели → номер (JS getDay() формат) */
 const DAY_TO_JS: Record<string, number> = {
   SUN: 0,
@@ -104,6 +111,43 @@ export class LessonsService {
       data: { status: 'COMPLETED' },
     });
     if (res.count > 0) this.logger.log(`Auto-completed ${res.count} stale lesson(s)`);
+  }
+
+  /**
+   * Пинг учителю «отметьте посещаемость»: урок начался 2–6ч назад, всё ещё
+   * SCHEDULED (посещаемость не отмечена). Верхняя граница = окно авто-COMPLETED:
+   * позже пинговать поздно. Дедуп — по lesson id (один пинг за урок, TTL 24ч).
+   */
+  @Cron('*/30 * * * *')
+  async remindUnmarkedAttendance(): Promise<void> {
+    const now = Date.now();
+    const newest = new Date(now - ATTENDANCE_REMIND_AFTER_H * 3_600_000);
+    const oldest = new Date(now - LESSON_AUTOCOMPLETE_GRACE_H * 3_600_000);
+
+    const lessons = await this.prisma.lesson.findMany({
+      where: {
+        status: 'SCHEDULED',
+        scheduled_at: { gte: oldest, lt: newest },
+        class: { status: { in: [ClassStatus.ACTIVE, ClassStatus.EXAM] } },
+      },
+      select: {
+        id: true,
+        scheduled_at: true,
+        class: { select: { title: true, teacher: { select: { user_id: true } } } },
+      },
+    });
+
+    for (const l of lessons) {
+      void this.notifications.scheduleAttendanceReminder(
+        l.class.teacher.user_id,
+        l.class.title,
+        l.id,
+        l.scheduled_at,
+      );
+    }
+    if (lessons.length > 0) {
+      this.logger.log(`Attendance reminders queued: ${lessons.length}`);
+    }
   }
 
   /**
