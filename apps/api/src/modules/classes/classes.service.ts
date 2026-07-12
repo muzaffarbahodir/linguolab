@@ -279,7 +279,12 @@ export class ClassesService {
   ) {
     const cls = await this.prisma.class.findUnique({
       where: { id: classId },
-      select: { id: true, teacher_id: true, teacher: { select: { user_id: true } } },
+      select: {
+        id: true,
+        teacher_id: true,
+        room_id: true,
+        teacher: { select: { user_id: true } },
+      },
     });
     if (!cls) throw new NotFoundException('Class not found');
     if (teacherUserId && cls.teacher.user_id !== teacherUserId) {
@@ -304,6 +309,12 @@ export class ClassesService {
     const clash = siblings.find((s) => schedulesOverlap(mine, s));
     if (clash) {
       throw new BadRequestException(`SCHEDULE_CONFLICT: «${clash.title}»`);
+    }
+
+    // Если у класса назначен кабинет — новое время не должно занимать его вместе
+    // с другой группой.
+    if (cls.room_id) {
+      await this.assertRoomFree(cls.room_id, mine, classId);
     }
 
     // Дата начала курса — от неё генерируются уроки. undefined → не трогаем.
@@ -331,6 +342,68 @@ export class ClassesService {
         schedule_duration: true,
         starts_at: true,
       },
+    });
+  }
+
+  /**
+   * Кабинет свободен для этого расписания? Бросает ROOM_CONFLICT, если другая
+   * живая группа занимает его в пересекающееся время.
+   */
+  private async assertRoomFree(
+    roomId: string,
+    schedule: {
+      schedule_days: string[];
+      schedule_time: string | null;
+      schedule_duration: number | null;
+    },
+    excludeClassId?: string,
+  ) {
+    const occupants = await this.prisma.class.findMany({
+      where: {
+        room_id: roomId,
+        ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
+        status: { in: ['DRAFT', 'ENROLLMENT_OPEN', 'ACTIVE', 'EXAM'] },
+      },
+      select: {
+        title: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
+      },
+    });
+    const clash = occupants.find((o) => schedulesOverlap(schedule, o));
+    if (clash) {
+      throw new BadRequestException(`ROOM_CONFLICT: кабинет занят группой «${clash.title}»`);
+    }
+  }
+
+  /**
+   * PATCH /classes/:id/room — менеджер назначает/снимает кабинет.
+   * roomId=null — снять (онлайн-группа). Конфликт: две группы в одном кабинете
+   * в пересекающееся время — блокируется.
+   */
+  async setRoom(classId: string, roomId: string | null) {
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
+      },
+    });
+    if (!cls) throw new NotFoundException('Class not found');
+
+    if (roomId) {
+      const room = await this.prisma.room.findUnique({ where: { id: roomId } });
+      if (!room || !room.is_active) throw new NotFoundException('Room not found or inactive');
+      await this.assertRoomFree(roomId, cls, classId);
+    }
+
+    return this.prisma.class.update({
+      where: { id: classId },
+      data: { room_id: roomId },
+      select: { id: true, title: true, room: { select: { id: true, name: true } } },
     });
   }
 

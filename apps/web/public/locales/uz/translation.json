@@ -1485,6 +1485,20 @@
       "bonus_days": "+{{n}} kun bonus",
       "no_data": "Faollashtirilgan kodlar yo'q",
       "no_data_sub": "Talabalar do'stlarini taklif qila boshlaganda statistika shu yerda ko'rinadi"
+    },
+    "rooms": {
+      "title": "Xonalar",
+      "subtitle": "Markaz auditoriyalari. Xona guruhga ariza tasdiqlanganda beriladi; bitta xonada guruhlar to'qnashuvi bloklanadi.",
+      "add_title": "Yangi xona",
+      "name_ph": "Nomi (mas. 3-xona)",
+      "capacity_ph": "O'rin",
+      "add_btn": "Qo'shish",
+      "create_error": "Yaratib bo'lmadi (nom band?)",
+      "update_error": "Yangilab bo'lmadi",
+      "capacity_n": "{{n}} kishigacha",
+      "capacity_na": "sig'imi ko'rsatilmagan",
+      "classes_n": "guruhlar: {{n}}",
+      "no_data": "Hozircha xonalar yo'q"
     }
   },
   "status": {
@@ -1571,6 +1585,8 @@
     "tab_rejected": "Rad etilgan",
     "status_PENDING": "Ko'rib chiqilmoqda",
     "status_APPROVED": "Tasdiqlangan",
-    "status_REJECTED": "Rad etilgan"
+    "status_REJECTED": "Rad etilgan",
+    "room_label": "Xona (oflayn darslar)",
+    "room_none": "— xonasiz (onlayn) —"
   }
 }

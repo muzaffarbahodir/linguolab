@@ -186,6 +186,32 @@ export class ClassRequestsService {
       );
     }
 
+    // Кабинет: существует, активен и свободен в это время.
+    if (dto.room_id) {
+      const room = await this.prisma.room.findUnique({ where: { id: dto.room_id } });
+      if (!room || !room.is_active) {
+        throw new BadRequestException('Room not found or inactive');
+      }
+      const occupants = await this.prisma.class.findMany({
+        where: {
+          room_id: dto.room_id,
+          status: { in: ['DRAFT', 'ENROLLMENT_OPEN', 'ACTIVE', 'EXAM'] },
+        },
+        select: {
+          title: true,
+          schedule_days: true,
+          schedule_time: true,
+          schedule_duration: true,
+        },
+      });
+      const roomClash = occupants.find((o) => schedulesOverlap(newSchedule, o));
+      if (roomClash) {
+        throw new BadRequestException(
+          `ROOM_CONFLICT: кабинет занят группой «${roomClash.title}» в это время`,
+        );
+      }
+    }
+
     // D2 — гарантируем даты жизненного цикла, чтобы авто-переходы всегда работали.
     // Без них класс завис бы в DRAFT навсегда (не открывается запись, не активируется,
     // не завершается → нет авто-уроков и авто-сертификатов). Дефолты по модели
@@ -215,6 +241,7 @@ export class ClassRequestsService {
         schedule_time: dto.schedule_time ?? request.schedule_time ?? undefined,
         schedule_duration: dto.schedule_duration ?? request.schedule_duration ?? undefined,
         status: ClassStatus.DRAFT,
+        room_id: dto.room_id ?? undefined,
         semester_label: dto.semester_label ?? undefined,
         enrollment_opens_at: opensAt,
         enrollment_closes_at: closesAt,

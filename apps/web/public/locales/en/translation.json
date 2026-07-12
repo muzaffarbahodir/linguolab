@@ -1485,6 +1485,20 @@
       "bonus_days": "+{{n}} days bonus",
       "no_data": "No redeemed codes",
       "no_data_sub": "Statistics will appear here when students start inviting friends"
+    },
+    "rooms": {
+      "title": "Rooms",
+      "subtitle": "Center classrooms. A room is assigned on request approval; overlapping groups in one room are blocked.",
+      "add_title": "New room",
+      "name_ph": "Name (e.g. Room 3)",
+      "capacity_ph": "Seats",
+      "add_btn": "Add",
+      "create_error": "Failed to create (name taken?)",
+      "update_error": "Failed to update",
+      "capacity_n": "up to {{n}} ppl",
+      "capacity_na": "capacity not set",
+      "classes_n": "groups: {{n}}",
+      "no_data": "No rooms yet"
     }
   },
   "status": {
@@ -1571,6 +1585,8 @@
     "tab_rejected": "Rejected",
     "status_PENDING": "Under review",
     "status_APPROVED": "Approved",
-    "status_REJECTED": "Rejected"
+    "status_REJECTED": "Rejected",
+    "room_label": "Room (offline classes)",
+    "room_none": "— no room (online) —"
   }
 }

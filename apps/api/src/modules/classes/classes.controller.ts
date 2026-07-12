@@ -206,6 +206,16 @@ export class ClassesController {
   }
 
   /**
+   * PATCH /classes/:id/room — менеджер назначает кабинет (null = снять).
+   * Body: { room_id: string | null }
+   */
+  @Patch(':id/room')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  setRoom(@Param('id') classId: string, @Body('room_id') roomId: string | null) {
+    return this.classesService.setRoom(classId, roomId || null);
+  }
+
+  /**
    * PATCH /classes/:id/group — менеджер привязывает Telegram-группу.
    * Body: { telegram_chat_id: "-1001234567890" }
    * chat_id группы — отрицательное число, передаём как строку.

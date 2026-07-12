@@ -422,10 +422,13 @@ model Class {
   schedule_days        String[] // ["MON","WED","FRI"] — дни занятий
   schedule_time        String? // "10:00" — время начала (HH:MM, UTC+5)
   schedule_duration    Int? // длительность в минутах (60, 90, 120)
+  /// Аудитория для очных занятий (null = онлайн / не назначена)
+  room_id              String?
   created_at           DateTime    @default(now())
 
   language       Language               @relation(fields: [language_id], references: [id])
   teacher        Teacher                @relation(fields: [teacher_id], references: [id])
+  room           Room?                  @relation(fields: [room_id], references: [id])
   enrollments    Enrollment[]
   homeworks      Homework[]
   certificates   Certificate[]
@@ -442,6 +445,21 @@ model Class {
   @@index([level])
   @@index([status])
   @@index([semester_label])
+  @@index([room_id])
+}
+
+/// Аудитория (кабинет) очного центра. Двум группам нельзя пересекаться
+/// в одном кабинете по расписанию (проверяется при назначении/апруве).
+model Room {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  capacity   Int?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  classes Class[]
+
+  @@map("rooms")
 }
 
 // =====================

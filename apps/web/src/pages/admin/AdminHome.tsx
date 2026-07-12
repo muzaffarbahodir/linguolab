@@ -111,6 +111,14 @@ function getQuickLinks(t: TFn): QuickLink[] {
       group: 'learning',
     },
     {
+      emoji: '🚪',
+      label: t('admin.rooms.title'),
+      path: '/admin/rooms',
+      color: '#8B5CF6',
+      group: 'learning',
+      adminOnly: true,
+    },
+    {
       emoji: '🌐',
       label: t('admin.languages.title'),
       path: '/admin/languages',

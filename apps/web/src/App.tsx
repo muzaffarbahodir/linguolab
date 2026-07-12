@@ -185,6 +185,9 @@ const AdminPaymentSettingsPage = lazy(() =>
 const AdminReferralsPage = lazy(() =>
   import('./pages/admin/AdminReferrals').then((m) => ({ default: m.AdminReferralsPage })),
 );
+const AdminRoomsPage = lazy(() =>
+  import('./pages/admin/AdminRooms').then((m) => ({ default: m.AdminRoomsPage })),
+);
 const AdminLanguagesPage = lazy(() =>
   import('./pages/admin/AdminLanguages').then((m) => ({ default: m.AdminLanguagesPage })),
 );
@@ -489,6 +492,7 @@ function AuthenticatedApp() {
             <Route path="/admin/enrollments" element={<AdminEnrollmentsPage />} />
             <Route path="/admin/certificates" element={<AdminCertificatesPage />} />
             <Route path="/admin/payment-settings" element={<AdminPaymentSettingsPage />} />
+            <Route path="/admin/rooms" element={<AdminRoomsPage />} />
             <Route path="/admin/referrals" element={<AdminReferralsPage />} />
             <Route path="/admin/languages" element={<AdminLanguagesPage />} />
             <Route path="/admin/languages/:id/lessons" element={<AdminCurriculumPage />} />

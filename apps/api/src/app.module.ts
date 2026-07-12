@@ -41,6 +41,7 @@ import { TeacherOffersModule } from './modules/teacher-offers/teacher-offers.mod
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { HrModule } from './modules/hr/hr.module';
 import { PointsModule } from './modules/points/points.module';
+import { RoomsModule } from './modules/rooms/rooms.module';
 
 /**
  * AppModule — корневой модуль.
@@ -126,6 +127,7 @@ import { PointsModule } from './modules/points/points.module';
     AnnouncementsModule,
     HrModule,
     PointsModule,
+    RoomsModule,
     ScheduleModule.forRoot(),
     HealthModule,
   ],

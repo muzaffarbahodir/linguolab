@@ -13,6 +13,7 @@ import {
   useAdminClassRequests,
   useApproveClassRequest,
   useRejectClassRequest,
+  useRooms,
   type ClassRequestItem,
 } from '../../api/admin';
 import { toast } from '../../store/toast';
@@ -46,6 +47,8 @@ function ApproveModal({ req, onClose }: { req: ClassRequestItem; onClose: () => 
   const [startsAt, setStartsAt] = useState(req.starts_at ? req.starts_at.slice(0, 10) : '');
   const [endsAt, setEndsAt] = useState(req.ends_at ? req.ends_at.slice(0, 10) : '');
   const [adminNote, setAdminNote] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const { data: rooms } = useRooms();
 
   function handleApprove() {
     const uzs = parseInt(priceUzs, 10);
@@ -65,6 +68,7 @@ function ApproveModal({ req, onClose }: { req: ClassRequestItem; onClose: () => 
         enrollment_closes_at: enrollmentCloses || undefined,
         starts_at: startsAt || undefined,
         ends_at: endsAt || undefined,
+        room_id: roomId || undefined,
         admin_note: adminNote || undefined,
       },
       {
@@ -167,6 +171,24 @@ function ApproveModal({ req, onClose }: { req: ClassRequestItem; onClose: () => 
             />
           </div>
         </div>
+
+        {/* Кабинет */}
+        <p className="text-muted mb-1 text-xs font-semibold">{t('admin_cr.room_label')}</p>
+        <select
+          value={roomId}
+          onChange={(e) => setRoomId(e.target.value)}
+          className={`${inputCls} mb-3`}
+        >
+          <option value="">{t('admin_cr.room_none')}</option>
+          {(rooms ?? [])
+            .filter((r) => r.is_active)
+            .map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+                {r.capacity ? ` (${r.capacity})` : ''}
+              </option>
+            ))}
+        </select>
 
         {/* Комментарий */}
         <p className="text-muted mb-1 text-xs">{t('admin_cr.note_label')}</p>

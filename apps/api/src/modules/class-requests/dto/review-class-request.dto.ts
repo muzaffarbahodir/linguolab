@@ -71,6 +71,11 @@ export class ApproveClassRequestDto {
   @IsString()
   meeting_url?: string;
 
+  /** Кабинет для очных занятий (id из /rooms). Пусто = онлайн/не назначен. */
+  @IsOptional()
+  @IsString()
+  room_id?: string;
+
   /** Комментарий менеджера для учителя */
   @IsOptional()
   @IsString()

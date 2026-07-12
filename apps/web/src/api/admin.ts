@@ -482,6 +482,7 @@ export function useApproveClassRequest() {
       starts_at?: string;
       ends_at?: string;
       semester_label?: string;
+      room_id?: string;
       admin_note?: string;
     }) => {
       const res = await apiClient.patch(`/class-requests/${id}/approve`, dto);
@@ -733,6 +734,60 @@ export function useConfirmCashPayment() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'payments'] });
       void qc.invalidateQueries({ queryKey: ['enrollments'] });
+    },
+  });
+}
+
+// ─── Rooms (кабинеты) ─────────────────────────────────────────────────────────
+
+export interface RoomItem {
+  id: string;
+  name: string;
+  capacity: number | null;
+  is_active: boolean;
+  _count?: { classes: number };
+}
+
+export function useRooms() {
+  return useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => (await apiClient.get<RoomItem[]>('/rooms')).data,
+  });
+}
+
+export function useCreateRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { name: string; capacity?: number }) =>
+      apiClient.post('/rooms', p).then((r) => r.data),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['rooms'] }),
+  });
+}
+
+export function useUpdateRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...p
+    }: {
+      id: string;
+      name?: string;
+      capacity?: number | null;
+      is_active?: boolean;
+    }) => apiClient.patch(`/rooms/${id}`, p).then((r) => r.data),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['rooms'] }),
+  });
+}
+
+export function useSetClassRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ classId, roomId }: { classId: string; roomId: string | null }) =>
+      apiClient.patch(`/classes/${classId}/room`, { room_id: roomId }).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'classes'] });
+      void qc.invalidateQueries({ queryKey: ['rooms'] });
     },
   });
 }
