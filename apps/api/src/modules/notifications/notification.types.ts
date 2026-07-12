@@ -20,6 +20,12 @@ export enum NotificationType {
   PAYMENT_REFUNDED = 'payment_refunded',
   /** Напоминание о занятии за 1 час */
   LESSON_REMINDER = 'lesson_reminder',
+  /** Занятие отменено */
+  LESSON_CANCELLED = 'lesson_cancelled',
+  /** Занятие перенесено */
+  LESSON_RESCHEDULED = 'lesson_rescheduled',
+  /** Учителю: отметьте посещаемость прошедшего урока */
+  ATTENDANCE_REMINDER = 'attendance_reminder',
   /** Новое домашнее задание */
   HOMEWORK_NEW = 'homework_new',
   /** Преподаватель оценил ДЗ */
@@ -87,6 +93,9 @@ export const DEDUP_TTL = {
   PAYMENT_CONFIRMED: 86_400, // 24ч — оплата уникальна по paymentId
   PAYMENT_REFUNDED: 86_400, // 24ч
   LESSON_REMINDER: 7_200, // 2ч — на случай повторного триггера
+  LESSON_CANCELLED: 86_400, // 24ч — одна отмена = одно уведомление
+  LESSON_RESCHEDULED: 3_600, // 1ч — перенос могут поправить ещё раз
+  ATTENDANCE_REMINDER: 86_400, // 24ч — один пинг учителю за урок
   HOMEWORK_NEW: 86_400, // 24ч
   GRADE_RECEIVED: 3_600, // 1ч
   // Родительские

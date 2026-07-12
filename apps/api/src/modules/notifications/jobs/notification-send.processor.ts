@@ -5,7 +5,7 @@ import { Job } from 'bullmq';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RedisService } from '../../../redis/redis.service';
 import { TelegramService } from '../../telegram/telegram.service';
-import { NOTIFICATIONS_QUEUE, NotificationJobData } from '../notification.types';
+import { NOTIFICATIONS_QUEUE, NotificationJobData, NotificationType } from '../notification.types';
 
 /**
  * NotificationSendProcessor — BullMQ-воркер для отправки уведомлений.
@@ -44,6 +44,22 @@ export class NotificationSendProcessor extends WorkerHost {
       const exists = await this.redis.get(dedupKey);
       if (exists) {
         this.logger.debug(`Duplicate skipped: ${dedupKey}`);
+        return;
+      }
+    }
+
+    // ── 1.5 Staleness-гвард напоминаний об уроке ──────────────────────────────
+    // Delayed-job ставится при создании урока; если урок потом отменили или
+    // перенесли — старое напоминание не должно уйти. Отправляем только если
+    // урок всё ещё SCHEDULED и начинается в ближайшие ~2ч.
+    if (type === NotificationType.LESSON_REMINDER && payload?.lessonId) {
+      const lesson = await this.prisma.lesson.findUnique({
+        where: { id: String(payload.lessonId) },
+        select: { status: true, scheduled_at: true },
+      });
+      const msToStart = lesson ? lesson.scheduled_at.getTime() - Date.now() : -1;
+      if (!lesson || lesson.status !== 'SCHEDULED' || msToStart < 0 || msToStart > 2 * 3_600_000) {
+        this.logger.debug(`Stale lesson reminder skipped: lesson=${String(payload.lessonId)}`);
         return;
       }
     }

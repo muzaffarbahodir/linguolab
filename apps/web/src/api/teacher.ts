@@ -390,6 +390,32 @@ export function useSetMeetingUrl(classId: string) {
   });
 }
 
+export function useCancelLesson(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (lessonId: string) =>
+      apiClient.patch(`/lessons/${lessonId}/cancel`).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teacher', 'class', classId, 'lessons'] });
+      void qc.invalidateQueries({ queryKey: ['teacher', 'today'] });
+    },
+  });
+}
+
+export function useRescheduleLesson(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ lessonId, scheduledAt }: { lessonId: string; scheduledAt: string }) =>
+      apiClient
+        .patch(`/lessons/${lessonId}/reschedule`, { scheduled_at: scheduledAt })
+        .then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teacher', 'class', classId, 'lessons'] });
+      void qc.invalidateQueries({ queryKey: ['teacher', 'today'] });
+    },
+  });
+}
+
 export function useGenerateLessons(classId: string) {
   const qc = useQueryClient();
   return useMutation({

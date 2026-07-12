@@ -330,6 +330,72 @@ export class LessonsService {
     return lesson;
   }
 
+  /** Урок + гвард «учитель может трогать только свой класс». */
+  private async getLessonForTeacherAction(lessonId: string, userId: string, userRole: Role) {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { class: { select: { id: true, title: true, teacher_id: true } } },
+    });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+
+    if (userRole === Role.TEACHER) {
+      const teacher = await this.prisma.teacher.findUnique({ where: { user_id: userId } });
+      if (!teacher || teacher.id !== lesson.class.teacher_id) {
+        throw new ForbiddenException('Not your class');
+      }
+    }
+    return lesson;
+  }
+
+  /**
+   * PATCH /lessons/:id/cancel — отменить занятие (учитель заболел и т.п.).
+   * Только SCHEDULED. CANCELLED уроки не попадают в зарплату PER_LESSON,
+   * journey студента и авто-COMPLETED. Студенты уведомляются.
+   */
+  async cancelLesson(lessonId: string, userId: string, userRole: Role) {
+    const lesson = await this.getLessonForTeacherAction(lessonId, userId, userRole);
+    if (lesson.status !== 'SCHEDULED') {
+      throw new BadRequestException('Only scheduled lessons can be cancelled');
+    }
+
+    await this.prisma.lesson.update({
+      where: { id: lessonId },
+      data: { status: 'CANCELLED' },
+    });
+
+    void this.notifications.scheduleLessonCancelled(lesson.class.id, lessonId, lesson.scheduled_at);
+
+    return { ok: true, id: lessonId, status: 'CANCELLED' as const };
+  }
+
+  /**
+   * PATCH /lessons/:id/reschedule — перенести занятие на новую дату/время.
+   * Только SCHEDULED и только на будущее. Студенты уведомляются «было → стало»,
+   * планируется новое напоминание за 1ч.
+   */
+  async rescheduleLesson(lessonId: string, userId: string, userRole: Role, scheduledAt: string) {
+    const lesson = await this.getLessonForTeacherAction(lessonId, userId, userRole);
+    if (lesson.status !== 'SCHEDULED') {
+      throw new BadRequestException('Only scheduled lessons can be rescheduled');
+    }
+
+    const newAt = new Date(scheduledAt);
+    if (isNaN(newAt.getTime())) throw new BadRequestException('Invalid date');
+    if (newAt <= new Date()) throw new BadRequestException('New time must be in the future');
+
+    const oldAt = lesson.scheduled_at;
+    const updated = await this.prisma.lesson.update({
+      where: { id: lessonId },
+      data: { scheduled_at: newAt },
+    });
+
+    void this.notifications.scheduleLessonRescheduled(lesson.class.id, lessonId, oldAt, newAt);
+    // Новое напоминание за 1ч (старое отфильтрует staleness-гвард процессора).
+    void this.notifications.scheduleLessonReminder(lessonId, lesson.class.id, newAt);
+
+    return updated;
+  }
+
   /**
    * GET /lessons/class/:classId — все уроки класса.
    */

@@ -16,6 +16,8 @@ import {
   useCreateLesson,
   useCreateHomework,
   useGenerateLessons,
+  useCancelLesson,
+  useRescheduleLesson,
   useClassSetup,
   useSetTeacherSchedule,
   useSetMeetingUrl,
@@ -64,6 +66,9 @@ export function TeacherClassPage() {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonTime, setLessonTime] = useState('');
   const [lessonTitle, setLessonTitle] = useState('');
+  const [reschedId, setReschedId] = useState<string | null>(null);
+  const [reschedDate, setReschedDate] = useState('');
+  const [reschedTime, setReschedTime] = useState('');
   const [hwTitle, setHwTitle] = useState('');
   const [hwDesc, setHwDesc] = useState('');
   const [hwDue, setHwDue] = useState('');
@@ -76,6 +81,8 @@ export function TeacherClassPage() {
   const createLesson = useCreateLesson(classId ?? '');
   const createHw = useCreateHomework(classId ?? '');
   const generateLessons = useGenerateLessons(classId ?? '');
+  const cancelLesson = useCancelLesson(classId ?? '');
+  const rescheduleLesson = useRescheduleLesson(classId ?? '');
 
   useBackButton(() => navigate('/teacher'));
 
@@ -93,6 +100,37 @@ export function TeacherClassPage() {
     const result = await generateLessons.mutateAsync(generateWeeks);
     setGenerateResult(result);
     WebApp.HapticFeedback.notificationOccurred('success');
+  };
+
+  const handleCancelLesson = (lessonId: string) => {
+    WebApp.showConfirm(t('teacher.cancel_lesson_confirm'), (ok) => {
+      if (!ok) return;
+      cancelLesson.mutate(lessonId, {
+        onSuccess: () => {
+          toast.success(t('teacher.lesson_cancelled_ok'));
+          WebApp.HapticFeedback.notificationOccurred('success');
+        },
+        onError: () => toast.error(t('teacher.lesson_action_error')),
+      });
+    });
+  };
+
+  const handleReschedule = () => {
+    if (!reschedId || !reschedDate || !reschedTime) return;
+    const scheduledAt = new Date(`${reschedDate}T${reschedTime}:00`).toISOString();
+    rescheduleLesson.mutate(
+      { lessonId: reschedId, scheduledAt },
+      {
+        onSuccess: () => {
+          toast.success(t('teacher.lesson_rescheduled_ok'));
+          setReschedId(null);
+          setReschedDate('');
+          setReschedTime('');
+          WebApp.HapticFeedback.notificationOccurred('success');
+        },
+        onError: () => toast.error(t('teacher.lesson_action_error')),
+      },
+    );
   };
 
   const handleAddHw = async () => {
@@ -209,12 +247,20 @@ export function TeacherClassPage() {
             ) : (
               <div className="stagger space-y-3">
                 {(lessonsQuery.data ?? []).map((lesson) => (
-                  <button
+                  <div
                     key={lesson.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() =>
                       navigate(`/teacher/lesson/${lesson.id}/attendance?classId=${classId ?? ''}`)
                     }
-                    className="glass-card press w-full rounded-2xl p-4 text-left"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter')
+                        navigate(
+                          `/teacher/lesson/${lesson.id}/attendance?classId=${classId ?? ''}`,
+                        );
+                    }}
+                    className="glass-card press w-full cursor-pointer rounded-2xl p-4 text-left"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
@@ -252,7 +298,35 @@ export function TeacherClassPage() {
                         )}
                       </div>
                     </div>
-                  </button>
+                    {lesson.status === 'SCHEDULED' && (
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const d = new Date(lesson.scheduled_at);
+                            const tz = new Date(d.getTime() + 5 * 3600_000);
+                            setReschedDate(tz.toISOString().slice(0, 10));
+                            setReschedTime(tz.toISOString().slice(11, 16));
+                            setReschedId(lesson.id);
+                          }}
+                          className="glass-option press flex-1 rounded-xl py-2 text-xs font-medium"
+                        >
+                          🔁 {t('teacher.reschedule_lesson')}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelLesson(lesson.id);
+                          }}
+                          disabled={cancelLesson.isPending}
+                          className="glass-option press flex-1 rounded-xl py-2 text-xs font-medium disabled:opacity-50"
+                          style={{ color: '#EF4444' }}
+                        >
+                          ❌ {t('teacher.cancel_lesson')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ))}
                 {(lessonsQuery.data ?? []).length === 0 && (
                   <p className="text-tg-hint pt-4 text-center text-sm">
@@ -546,6 +620,49 @@ export function TeacherClassPage() {
                 className="glass-btn press flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {createLesson.isPending ? t('teacher.saving') : t('teacher.generate_btn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reschedule Lesson Modal ── */}
+      {reschedId && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+        >
+          <div className="glass-card w-full rounded-t-3xl p-6">
+            <h3 className="mb-4 text-center text-lg font-semibold">
+              {t('teacher.reschedule_title')}
+            </h3>
+            <input
+              type="date"
+              value={reschedDate}
+              onChange={(e) => setReschedDate(e.target.value)}
+              className={`mb-3 ${inputCls}`}
+              style={inputStyle}
+            />
+            <input
+              type="time"
+              value={reschedTime}
+              onChange={(e) => setReschedTime(e.target.value)}
+              className={`mb-4 ${inputCls}`}
+              style={inputStyle}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setReschedId(null)}
+                className="glass-option press flex-1 rounded-xl py-3 text-sm"
+              >
+                {t('homework.cancel')}
+              </button>
+              <button
+                onClick={handleReschedule}
+                disabled={!reschedDate || !reschedTime || rescheduleLesson.isPending}
+                className="glass-btn press flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              >
+                {rescheduleLesson.isPending ? t('teacher.saving') : t('teacher.reschedule_lesson')}
               </button>
             </div>
           </div>

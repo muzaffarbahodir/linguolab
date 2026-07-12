@@ -153,6 +153,109 @@ export class NotificationsService {
   }
 
   /**
+   * Занятие отменено — уведомляем всех ACTIVE студентов класса.
+   * Вызывается из LessonsService.cancelLesson().
+   */
+  async scheduleLessonCancelled(classId: string, lessonId: string, scheduledAt: Date) {
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        title: true,
+        enrollments: { where: { status: 'ACTIVE' }, select: { student_id: true } },
+      },
+    });
+    if (!cls || cls.enrollments.length === 0) return;
+
+    const dateStr = scheduledAt.toLocaleString('ru-RU', {
+      timeZone: 'Asia/Tashkent',
+      day: '2-digit',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    for (const { student_id } of cls.enrollments) {
+      await this.enqueue({
+        type: NotificationType.LESSON_CANCELLED,
+        userId: student_id,
+        title: '❌ Занятие отменено',
+        body: `Группа: <b>${cls.title}</b>\nЗанятие ${dateStr} (UTC+5) отменено.\n\nСледите за расписанием в приложении.`,
+        dedupKey: `notif:dedup:lesson_cancelled:${lessonId}:${student_id}`,
+        dedupTtlSec: DEDUP_TTL.LESSON_CANCELLED,
+        payload: { lessonId, classId },
+      });
+    }
+  }
+
+  /**
+   * Занятие перенесено — уведомляем всех ACTIVE студентов класса.
+   * Вызывается из LessonsService.rescheduleLesson().
+   */
+  async scheduleLessonRescheduled(classId: string, lessonId: string, oldAt: Date, newAt: Date) {
+    const cls = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        title: true,
+        enrollments: { where: { status: 'ACTIVE' }, select: { student_id: true } },
+      },
+    });
+    if (!cls || cls.enrollments.length === 0) return;
+
+    const fmt = (d: Date) =>
+      d.toLocaleString('ru-RU', {
+        timeZone: 'Asia/Tashkent',
+        day: '2-digit',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+    for (const { student_id } of cls.enrollments) {
+      await this.enqueue({
+        type: NotificationType.LESSON_RESCHEDULED,
+        userId: student_id,
+        title: '🔁 Занятие перенесено',
+        body:
+          `Группа: <b>${cls.title}</b>\n` +
+          `Было: ${fmt(oldAt)}\nСтало: <b>${fmt(newAt)}</b> (UTC+5)`,
+        dedupKey: `notif:dedup:lesson_rescheduled:${lessonId}:${newAt.getTime()}:${student_id}`,
+        dedupTtlSec: DEDUP_TTL.LESSON_RESCHEDULED,
+        payload: { lessonId, classId },
+      });
+    }
+  }
+
+  /**
+   * Учителю: прошедший урок не закрыт посещаемостью.
+   * Вызывается кроном LessonsService.remindUnmarkedAttendance().
+   */
+  async scheduleAttendanceReminder(
+    teacherUserId: string,
+    classTitle: string,
+    lessonId: string,
+    scheduledAt: Date,
+  ) {
+    const dateStr = scheduledAt.toLocaleString('ru-RU', {
+      timeZone: 'Asia/Tashkent',
+      day: '2-digit',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    await this.enqueue({
+      type: NotificationType.ATTENDANCE_REMINDER,
+      userId: teacherUserId,
+      title: '📋 Отметьте посещаемость',
+      body:
+        `Группа: <b>${classTitle}</b>\nЗанятие ${dateStr} (UTC+5) прошло, ` +
+        `но посещаемость не отмечена.\n\nОтметьте в приложении — иначе урок закроется автоматически без данных о студентах.`,
+      dedupKey: `notif:dedup:attendance_reminder:${lessonId}`,
+      dedupTtlSec: DEDUP_TTL.ATTENDANCE_REMINDER,
+      payload: { lessonId },
+    });
+  }
+
+  /**
    * Уведомление о новом домашнем задании.
    * Вызывается из HomeworkService.create() после создания ДЗ.
    * Оповещает всех ACTIVE студентов класса.

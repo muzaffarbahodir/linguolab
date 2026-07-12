@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -122,6 +122,29 @@ export class LessonsController {
     @Body('weeks') weeks?: number,
   ) {
     return this.lessonsService.generateLessons(classId, user.id, user.role, weeks ?? 4);
+  }
+
+  /**
+   * PATCH /lessons/:id/cancel — отменить занятие (TEACHER свой класс, MANAGER+ любой).
+   */
+  @Patch(':id/cancel')
+  @Roles(Role.TEACHER, Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  cancel(@CurrentUser() user: RequestUser, @Param('id') lessonId: string) {
+    return this.lessonsService.cancelLesson(lessonId, user.id, user.role);
+  }
+
+  /**
+   * PATCH /lessons/:id/reschedule — перенести занятие.
+   * Body: { scheduled_at: ISO }
+   */
+  @Patch(':id/reschedule')
+  @Roles(Role.TEACHER, Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  reschedule(
+    @CurrentUser() user: RequestUser,
+    @Param('id') lessonId: string,
+    @Body('scheduled_at') scheduledAt: string,
+  ) {
+    return this.lessonsService.rescheduleLesson(lessonId, user.id, user.role, scheduledAt);
   }
 
   /**
