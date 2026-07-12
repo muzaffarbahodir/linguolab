@@ -9,6 +9,7 @@ import { ClassStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { schedulesOverlap } from '../../common/schedule';
 import { CreateClassRequestDto } from './dto/create-class-request.dto';
 import { ApproveClassRequestDto, RejectClassRequestDto } from './dto/review-class-request.dto';
 
@@ -157,6 +158,32 @@ export class ClassRequestsService {
     if (!request) throw new NotFoundException('Class request not found');
     if (request.status !== 'PENDING') {
       throw new BadRequestException('Can only approve PENDING requests');
+    }
+
+    // Конфликт расписания у учителя: новая группа не должна пересекаться
+    // с его живыми группами по дням/времени.
+    const newSchedule = {
+      schedule_days: dto.schedule_days ?? request.schedule_days,
+      schedule_time: dto.schedule_time ?? request.schedule_time ?? null,
+      schedule_duration: dto.schedule_duration ?? request.schedule_duration ?? null,
+    };
+    const teacherClasses = await this.prisma.class.findMany({
+      where: {
+        teacher_id: request.teacher.id,
+        status: { in: ['DRAFT', 'ENROLLMENT_OPEN', 'ACTIVE', 'EXAM'] },
+      },
+      select: {
+        title: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
+      },
+    });
+    const clash = teacherClasses.find((c) => schedulesOverlap(newSchedule, c));
+    if (clash) {
+      throw new BadRequestException(
+        `SCHEDULE_CONFLICT: у учителя уже есть группа «${clash.title}» в это время`,
+      );
     }
 
     // D2 — гарантируем даты жизненного цикла, чтобы авто-переходы всегда работали.

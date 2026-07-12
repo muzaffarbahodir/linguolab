@@ -466,7 +466,8 @@
     "alert_success": "✅ Application sent!\n\nThe manager will contact you for confirmation and payment.",
     "alert_duplicate": "You are already enrolled in this class.",
     "alert_no_spots": "No spots left. Please choose another group.",
-    "alert_error": "Error. Please try again later."
+    "alert_error": "Error. Please try again later.",
+    "alert_conflict": "This time overlaps with another of your groups. Pick a group with a different schedule."
   },
   "language_select": {
     "title": "Language / Til / Язык"

@@ -11,6 +11,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { RedisService } from '../../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { schedulesOverlap } from '../../common/schedule';
 
 const CLASSES_CACHE_TTL = 300; // 5 минут
 
@@ -278,11 +279,31 @@ export class ClassesService {
   ) {
     const cls = await this.prisma.class.findUnique({
       where: { id: classId },
-      select: { id: true, teacher: { select: { user_id: true } } },
+      select: { id: true, teacher_id: true, teacher: { select: { user_id: true } } },
     });
     if (!cls) throw new NotFoundException('Class not found');
     if (teacherUserId && cls.teacher.user_id !== teacherUserId) {
       throw new ForbiddenException('Not your class');
+    }
+
+    // Конфликт расписания у учителя: другая его живая группа в то же время.
+    const siblings = await this.prisma.class.findMany({
+      where: {
+        teacher_id: cls.teacher_id,
+        id: { not: classId },
+        status: { in: ['DRAFT', 'ENROLLMENT_OPEN', 'ACTIVE', 'EXAM'] },
+      },
+      select: {
+        title: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
+      },
+    });
+    const mine = { schedule_days: days, schedule_time: time, schedule_duration: duration };
+    const clash = siblings.find((s) => schedulesOverlap(mine, s));
+    if (clash) {
+      throw new BadRequestException(`SCHEDULE_CONFLICT: «${clash.title}»`);
     }
 
     // Дата начала курса — от неё генерируются уроки. undefined → не трогаем.
@@ -358,6 +379,9 @@ export class ClassesService {
         id: true,
         is_active: true,
         max_students: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
         _count: {
           select: {
             enrollments: {
@@ -382,6 +406,25 @@ export class ClassesService {
 
     if (existing) {
       throw new ConflictException('Already enrolled in this class');
+    }
+
+    // Конфликт расписания: студент уже записан в группу, идущую в то же время.
+    const myEnrollments = await this.prisma.enrollment.findMany({
+      where: { student_id: studentId, status: { in: ['ACTIVE', 'PENDING'] } },
+      select: {
+        class: {
+          select: {
+            title: true,
+            schedule_days: true,
+            schedule_time: true,
+            schedule_duration: true,
+          },
+        },
+      },
+    });
+    const clash = myEnrollments.find((e) => schedulesOverlap(cls, e.class));
+    if (clash) {
+      throw new BadRequestException(`SCHEDULE_CONFLICT: «${clash.class.title}»`);
     }
 
     const enrollment = await this.prisma.enrollment.create({

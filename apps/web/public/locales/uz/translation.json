@@ -466,7 +466,8 @@
     "alert_success": "✅ Ariza yuborildi!\n\nMenejer tasdiqlash va to'lov uchun siz bilan bog'lanadi.",
     "alert_duplicate": "Siz bu sinfga allaqachon yozilgansiz.",
     "alert_no_spots": "Joy qolmadi. Iltimos, boshqa guruhni tanlang.",
-    "alert_error": "Xato. Keyinroq urinib ko'ring."
+    "alert_error": "Xato. Keyinroq urinib ko'ring.",
+    "alert_conflict": "Bu vaqt boshqa guruhingiz bilan to'qnashadi. Boshqa jadvalli guruhni tanlang."
   },
   "language_select": {
     "title": "Til / Language / Язык"

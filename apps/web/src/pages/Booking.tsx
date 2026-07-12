@@ -203,9 +203,14 @@ function StepConfirm({
       onError: (err) => {
         if (axios.isAxiosError(err)) {
           const status = err.response?.status;
+          const msg = String(
+            (err.response?.data as { message?: string } | undefined)?.message ?? '',
+          );
           if (status === 409) {
             toast.info(t('booking.alert_duplicate'));
             onSuccess();
+          } else if (status === 400 && msg.startsWith('SCHEDULE_CONFLICT')) {
+            toast.error(t('booking.alert_conflict'));
           } else if (status === 400) {
             toast.error(t('booking.alert_no_spots'));
           } else {
