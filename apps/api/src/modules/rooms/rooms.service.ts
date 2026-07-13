@@ -44,6 +44,15 @@ export class RoomsService {
   async update(id: string, data: { name?: string; capacity?: number | null; is_active?: boolean }) {
     const room = await this.prisma.room.findUnique({ where: { id } });
     if (!room) throw new NotFoundException('Room not found');
+
+    // Переименование в занятое имя: без пре-чека упало бы P2002 → 500.
+    if (data.name !== undefined) {
+      const dupe = await this.prisma.room.findUnique({ where: { name: data.name.trim() } });
+      if (dupe && dupe.id !== id) {
+        throw new ConflictException('Room with this name already exists');
+      }
+    }
+
     return this.prisma.room.update({
       where: { id },
       data: {

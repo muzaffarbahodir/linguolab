@@ -473,6 +473,12 @@ export class LessonsService {
     });
     if (!lesson) throw new NotFoundException('Lesson not found');
 
+    // Отменённый урок не имеет посещаемости — иначе родителям уйдёт
+    // «ребёнок пропустил» за занятие, которого не было.
+    if (lesson.status === 'CANCELLED') {
+      throw new BadRequestException('Cannot mark attendance on a cancelled lesson');
+    }
+
     // Teacher guard
     if (userRole === Role.TEACHER) {
       const teacher = await this.prisma.teacher.findUnique({ where: { user_id: userId } });
