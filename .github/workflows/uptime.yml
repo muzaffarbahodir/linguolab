@@ -12,9 +12,11 @@
 # Без секретов workflow просто краснеет в Actions (тоже сигнал — GitHub шлёт email).
 name: Uptime
 
+# Расписание ВЫКЛЮЧЕНО до продажи сервиса (экономим Actions-минуты).
+# Включить: раскомментировать schedule-блок ниже. Пока — только ручной запуск.
 on:
-  schedule:
-    - cron: '*/30 * * * *'
+  # schedule:
+  #   - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:

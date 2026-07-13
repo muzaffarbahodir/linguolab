@@ -482,23 +482,7 @@ export class ClassesService {
     }
 
     // Конфликт расписания: студент уже записан в группу, идущую в то же время.
-    const myEnrollments = await this.prisma.enrollment.findMany({
-      where: { student_id: studentId, status: { in: ['ACTIVE', 'PENDING'] } },
-      select: {
-        class: {
-          select: {
-            title: true,
-            schedule_days: true,
-            schedule_time: true,
-            schedule_duration: true,
-          },
-        },
-      },
-    });
-    const clash = myEnrollments.find((e) => schedulesOverlap(cls, e.class));
-    if (clash) {
-      throw new BadRequestException(`SCHEDULE_CONFLICT: «${clash.class.title}»`);
-    }
+    await this.assertNoStudentClash(studentId, cls);
 
     const enrollment = await this.prisma.enrollment.create({
       data: {
@@ -519,6 +503,37 @@ export class ClassesService {
     void this.notifyStaffOfEnrollment(classId, studentId, enrollment.id);
 
     return enrollment;
+  }
+
+  /**
+   * Студент не должен иметь ACTIVE/PENDING запись в группу, идущую в то же
+   * время, что и целевая. Используется при записи и вступлении в лист ожидания.
+   */
+  private async assertNoStudentClash(
+    studentId: string,
+    target: {
+      schedule_days: string[];
+      schedule_time: string | null;
+      schedule_duration: number | null;
+    },
+  ) {
+    const myEnrollments = await this.prisma.enrollment.findMany({
+      where: { student_id: studentId, status: { in: ['ACTIVE', 'PENDING'] } },
+      select: {
+        class: {
+          select: {
+            title: true,
+            schedule_days: true,
+            schedule_time: true,
+            schedule_duration: true,
+          },
+        },
+      },
+    });
+    const clash = myEnrollments.find((e) => schedulesOverlap(target, e.class));
+    if (clash) {
+      throw new BadRequestException(`SCHEDULE_CONFLICT: «${clash.class.title}»`);
+    }
   }
 
   /** Уведомление менеджерам/админам о новой заявке на запись (fire-and-forget). */
@@ -995,6 +1010,9 @@ export class ClassesService {
         id: true,
         is_active: true,
         max_students: true,
+        schedule_days: true,
+        schedule_time: true,
+        schedule_duration: true,
         _count: { select: { enrollments: { where: { status: { in: ['ACTIVE', 'PENDING'] } } } } },
       },
     });
@@ -1012,6 +1030,9 @@ export class ClassesService {
     if (cls._count.enrollments < cls.max_students) {
       throw new BadRequestException('Class has spots available — use /enroll instead');
     }
+
+    // Конфликт расписания — иначе промоушен из очереди даст пересекающуюся группу.
+    await this.assertNoStudentClash(studentId, cls);
 
     const enrollment = await this.prisma.enrollment.create({
       data: { student_id: studentId, class_id: classId, status: 'WAITLIST' },

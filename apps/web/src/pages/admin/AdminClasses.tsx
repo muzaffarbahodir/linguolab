@@ -23,6 +23,7 @@ import { useLanguages } from '../../api/languages';
 import { useSetClassSchedule } from '../../api/classes';
 import { useAuthStore } from '../../store/auth';
 import { formatUzs } from '../../lib/money';
+import { extractConflict } from '../../lib/conflict';
 
 const DAY_KEYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;
 
@@ -71,7 +72,16 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
           WebApp.HapticFeedback.notificationOccurred('success');
           onClose();
         },
-        onError: () => WebApp.showAlert(t('admin.classes.schedule_error')),
+        onError: (err) => {
+          const conflict = extractConflict(err);
+          WebApp.showAlert(
+            conflict
+              ? t(conflict.kind === 'room' ? 'errors.room_conflict' : 'errors.schedule_conflict', {
+                  title: conflict.title ?? '…',
+                })
+              : t('admin.classes.schedule_error'),
+          );
+        },
       },
     );
   }

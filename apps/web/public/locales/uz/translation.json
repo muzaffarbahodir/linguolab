@@ -1594,5 +1594,9 @@
     "status_REJECTED": "Rad etilgan",
     "room_label": "Xona (oflayn darslar)",
     "room_none": "— xonasiz (onlayn) —"
+  },
+  "errors": {
+    "schedule_conflict": "Vaqt «{{title}}» guruhi bilan to'qnashadi. Boshqa vaqt tanlang.",
+    "room_conflict": "Bu vaqtda xona «{{title}}» guruhi bilan band."
   }
 }

@@ -24,6 +24,7 @@ import {
   type ClassSetup,
 } from '../../api/teacher';
 import { toast } from '../../store/toast';
+import { extractConflict } from '../../lib/conflict';
 
 type Tab = 'lessons' | 'students' | 'homework';
 
@@ -88,7 +89,8 @@ export function TeacherClassPage() {
 
   const handleAddLesson = async () => {
     if (!lessonDate || !lessonTime || !classId) return;
-    const scheduledAt = new Date(`${lessonDate}T${lessonTime}:00`).toISOString();
+    // Время всегда вводится в Ташкенте (+05:00) — не зависит от таймзоны устройства.
+    const scheduledAt = new Date(`${lessonDate}T${lessonTime}:00+05:00`).toISOString();
     await createLesson.mutateAsync({ classId, title: lessonTitle || undefined, scheduledAt });
     setShowAddLesson(false);
     setLessonDate('');
@@ -117,7 +119,8 @@ export function TeacherClassPage() {
 
   const handleReschedule = () => {
     if (!reschedId || !reschedDate || !reschedTime) return;
-    const scheduledAt = new Date(`${reschedDate}T${reschedTime}:00`).toISOString();
+    // Прифилл модалки — в Ташкенте; парсим так же (+05:00), а не таймзоной устройства.
+    const scheduledAt = new Date(`${reschedDate}T${reschedTime}:00+05:00`).toISOString();
     rescheduleLesson.mutate(
       { lessonId: reschedId, scheduledAt },
       {
@@ -829,8 +832,17 @@ function ClassSetupSheet({
       }
       WebApp.HapticFeedback.notificationOccurred('success');
       onClose();
-    } catch {
-      toast.error(t('teacher.save_error'));
+    } catch (err) {
+      const conflict = extractConflict(err);
+      if (conflict) {
+        toast.error(
+          t(conflict.kind === 'room' ? 'errors.room_conflict' : 'errors.schedule_conflict', {
+            title: conflict.title ?? '…',
+          }),
+        );
+      } else {
+        toast.error(t('teacher.save_error'));
+      }
     }
   }
 

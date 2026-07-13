@@ -1594,5 +1594,9 @@
     "status_REJECTED": "Rejected",
     "room_label": "Room (offline classes)",
     "room_none": "— no room (online) —"
+  },
+  "errors": {
+    "schedule_conflict": "Time overlaps with group “{{title}}”. Pick another time.",
+    "room_conflict": "The room is taken by group “{{title}}” at this time."
   }
 }

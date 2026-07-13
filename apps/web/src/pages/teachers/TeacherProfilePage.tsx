@@ -14,6 +14,7 @@ import { useEnrollClass } from '../../api/classes';
 import { useAuthStore } from '../../store/auth';
 import { useCurrency } from '../../hooks/useCurrency';
 import { toast } from '../../store/toast';
+import { extractConflict } from '../../lib/conflict';
 import { EmptyState } from '../../components/EmptyState';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -273,15 +274,26 @@ function ClassCard({
   const { fmt } = useCurrency();
   const [done, setDone] = useState(false);
 
+  const onEnrollError = (err: unknown) => {
+    const conflict = extractConflict(err);
+    toast.error(
+      conflict
+        ? t('errors.schedule_conflict', { title: conflict.title ?? '…' })
+        : t('booking.alert_error'),
+    );
+  };
+
   const handleEnroll = () => {
     enroll.mutate(cls.id, {
       onSuccess: () => setDone(true),
+      onError: onEnrollError,
     });
   };
 
   const handleWaitlist = () => {
     joinWaitlist.mutate(undefined, {
       onSuccess: () => setDone(true),
+      onError: onEnrollError,
     });
   };
 
