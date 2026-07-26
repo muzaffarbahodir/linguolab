@@ -30,8 +30,16 @@ export class AnalyticsRefreshService {
     }
   }
 
-  /** On the 1st of every month, ensure the NEXT month's partition exists. */
-  @Cron('0 0 1 * *')
+  /**
+   * Держит наготове партицию на два месяца вперёд.
+   *
+   * Ежедневно, а не первого числа: функция идемпотентна и стоит копейки, тогда
+   * как запуск раз в месяц означал, что недоступность API ровно в этот день
+   * (деплой, перезапуск, сбой) отодвигает следующую попытку на месяц. Дешевле
+   * пробовать каждый день, чем однажды обнаружить события в
+   * analytics_events_default.
+   */
+  @Cron('0 0 * * *')
   async ensureNextPartition(): Promise<void> {
     const nextMonth = new Date();
     nextMonth.setMonth(nextMonth.getMonth() + 2, 1);
