@@ -828,6 +828,11 @@ model Lesson {
   status       LessonStatus @default(SCHEDULED)
   notes        String? // заметки учителя
   created_at   DateTime     @default(now())
+  /// Когда учитель фактически отметил посещаемость.
+  /// null у урока в статусе COMPLETED означает, что его закрыл авто-джоб:
+  /// подтверждения, что занятие состоялось, нет, и посещаемость потеряна.
+  /// Отличать одно от другого важно и для зарплаты, и для статистики.
+  attendance_marked_at DateTime?
 
   class       Class              @relation(fields: [class_id], references: [id])
   attendances LessonAttendance[]
@@ -836,6 +841,8 @@ model Lesson {
   @@index([scheduled_at])
   // Зарплата (COMPLETED-уроки за период) + аналитика/статистика по проведённым.
   @@index([status, scheduled_at])
+  // Поиск неподтверждённых: COMPLETED + attendance_marked_at IS NULL.
+  @@index([status, attendance_marked_at])
   @@map("lessons")
 }
 

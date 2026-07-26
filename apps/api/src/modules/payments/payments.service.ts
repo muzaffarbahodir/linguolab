@@ -17,6 +17,7 @@ import { PromoService } from '../promo/promo.service';
 import { PointsService } from '../points/points.service';
 import { EnrollmentsService } from '../enrollments/enrollments.service';
 import { LessonsService } from '../lessons/lessons.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 /**
  * Возврат денег разрешён только пока студент учился ≤ этого числа проведённых занятий.
@@ -57,6 +58,7 @@ export class PaymentsService {
     private readonly points: PointsService,
     private readonly enrollments: EnrollmentsService,
     private readonly lessons: LessonsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   /**
@@ -243,6 +245,23 @@ export class PaymentsService {
         },
       });
       if (!payment) return;
+
+      // Единственная точка, через которую проходят все провайдеры (Click,
+      // наличные и любой будущий), поэтому событие пишется здесь, а не в
+      // каждом вебхуке отдельно. Без него воронка «запись → оплата» всегда
+      // показывала 0 %, хотя оплаты в базе были.
+      void this.analytics.track('payment_paid', {
+        userId: payment.user_id,
+        userRole: 'STUDENT',
+        entityId: payment.id,
+        entityType: 'payment',
+        properties: {
+          provider: payment.provider,
+          amount_tiyin: Number(payment.amount_tiyin),
+          class_id: payment.class_id ?? undefined,
+          is_trial: Boolean(payment.trial),
+        },
+      });
 
       // ── Очный пробный урок (legacy: заявка уже была привязана) ──
       if (payment.trial) {

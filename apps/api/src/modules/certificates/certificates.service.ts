@@ -14,6 +14,7 @@ import JSZip from 'jszip';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 @Injectable()
 export class CertificatesService {
@@ -23,6 +24,7 @@ export class CertificatesService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly notifications: NotificationsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   /**
@@ -113,6 +115,14 @@ export class CertificatesService {
     });
 
     void this.notifications.scheduleCertificateIssued(studentId, cls.title, cert.id);
+
+    void this.analytics.track('certificate_issued', {
+      userId: studentId,
+      userRole: 'STUDENT',
+      entityId: cert.id,
+      entityType: 'certificate',
+      properties: { class_id: classId, class_title: cls.title },
+    });
 
     return cert;
   }

@@ -10,6 +10,7 @@ import { ClassStatus, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 /**
  * Через сколько часов после начала урока, который так и не закрыли посещаемостью,
@@ -23,6 +24,14 @@ const LESSON_AUTOCOMPLETE_GRACE_H = 6;
  * чтобы у учителя было окно до авто-закрытия урока.
  */
 const ATTENDANCE_REMIND_AFTER_H = 2;
+
+/**
+ * Сколько всего часов после урока продолжаем напоминать. Раньше границей был
+ * LESSON_AUTOCOMPLETE_GRACE_H, то есть напоминания обрывались ровно тогда,
+ * когда урок авто-закрывался — и посещаемость оставалась неотмеченной навсегда.
+ * Трое суток дают учителю выходные, чтобы вернуться и отметить.
+ */
+const ATTENDANCE_REMIND_UNTIL_H = 72;
 
 /** Карта день недели → номер (JS getDay() формат) */
 const DAY_TO_JS: Record<string, number> = {
@@ -87,6 +96,7 @@ export class LessonsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   /**
@@ -122,11 +132,16 @@ export class LessonsService {
   async remindUnmarkedAttendance(): Promise<void> {
     const now = Date.now();
     const newest = new Date(now - ATTENDANCE_REMIND_AFTER_H * 3_600_000);
-    const oldest = new Date(now - LESSON_AUTOCOMPLETE_GRACE_H * 3_600_000);
+    const oldest = new Date(now - ATTENDANCE_REMIND_UNTIL_H * 3_600_000);
 
     const lessons = await this.prisma.lesson.findMany({
       where: {
-        status: 'SCHEDULED',
+        // Не только SCHEDULED: авто-джоб закрывает урок через грейс, и раньше
+        // напоминания на этом обрывались — учитель переставал получать пинг, а
+        // посещаемость по занятию так и оставалась неотмеченной навсегда.
+        // Признак «не отмечено» — attendance_marked_at, а не статус.
+        attendance_marked_at: null,
+        status: { in: ['SCHEDULED', 'COMPLETED'] },
         scheduled_at: { gte: oldest, lt: newest },
         class: { status: { in: [ClassStatus.ACTIVE, ClassStatus.EXAM] } },
       },
@@ -498,9 +513,29 @@ export class LessonsService {
       ),
     );
 
-    // Помечаем урок как COMPLETED если ещё SCHEDULED
-    if (lesson.status === 'SCHEDULED') {
-      await this.prisma.lesson.update({ where: { id: lessonId }, data: { status: 'COMPLETED' } });
+    // Отмечаем факт подтверждения человеком. Ставим дату и для уже COMPLETED
+    // урока: его мог закрыть авто-джоб, а учитель отмечает посещаемость позже —
+    // именно так теряются данные, если этот случай не обработать.
+    await this.prisma.lesson.update({
+      where: { id: lessonId },
+      data: { status: 'COMPLETED', attendance_marked_at: new Date() },
+    });
+
+    // Событие на каждого студента, а не одно на урок: посещаемость нужна
+    // в разрезе человека — именно она показывает, кто вот-вот перестанет ходить.
+    for (const a of attendances) {
+      void this.analytics.track('lesson_attend', {
+        userId: a.studentId,
+        userRole: 'STUDENT',
+        entityId: lessonId,
+        entityType: 'lesson',
+        properties: {
+          status: a.status,
+          class_id: lesson.class_id,
+          teacher_id: lesson.class.teacher_id,
+          scheduled_at: lesson.scheduled_at.toISOString(),
+        },
+      });
     }
 
     // Уведомляем родителей об отсутствующих студентах (fire-and-forget)

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CEFR } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 // ─── Вопросы теста (встроенные, без отдельной таблицы) ───────────────────────
 
@@ -159,7 +160,10 @@ function scoreToLevel(score: number): CEFR {
 
 @Injectable()
 export class PlacementTestsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly analytics: AnalyticsService,
+  ) {}
 
   /** Начать placement test для языка */
   async start(userId: string, languageId: string) {
@@ -261,6 +265,14 @@ export class PlacementTestsService {
 
     // Сохраняем уровень в профиль пользователя (поле placement_level если добавим)
     // TODO: users.placement_level — добавить в Этапе 12.9
+
+    void this.analytics.track('placement_complete', {
+      userId,
+      userRole: 'STUDENT',
+      entityId: testId,
+      entityType: 'placement_test',
+      properties: { language_id: test.language_id, score, level, correct, total },
+    });
 
     return { score, level, correct, total };
   }

@@ -14,6 +14,7 @@ import { NotFoundException } from '@nestjs/common';
 import { CEFR } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AnalyticsService } from '../../analytics/analytics.service';
 import { PlacementTestsService } from '../placement-tests.service';
 
 // ─── Моки ─────────────────────────────────────────────────────────────────────
@@ -31,6 +32,10 @@ const mockPrisma = {
   },
 };
 
+// Аналитика — fire-and-forget: сервис не ждёт результата и не обязан
+// продолжать работать, если она упала.
+const mockAnalytics = { track: jest.fn().mockResolvedValue(undefined) };
+
 // ─── Тесты ────────────────────────────────────────────────────────────────────
 
 describe('PlacementTestsService', () => {
@@ -41,7 +46,11 @@ describe('PlacementTestsService', () => {
     jest.resetAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PlacementTestsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        PlacementTestsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AnalyticsService, useValue: mockAnalytics },
+      ],
     }).compile();
 
     service = module.get<PlacementTestsService>(PlacementTestsService);

@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Res,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { Response } from 'express';
 
@@ -16,6 +28,17 @@ export class HrController {
   @Get('employees')
   listEmployees() {
     return this.hr.listEmployees();
+  }
+
+  /**
+   * GET /hr/lessons/unconfirmed?days=60
+   * Занятия, закрытые авто-джобом без отметки посещаемости: в зарплату «за урок»
+   * они попали, но подтверждения, что урок состоялся, нет. Рабочий список
+   * менеджера перед финализацией прогона.
+   */
+  @Get('lessons/unconfirmed')
+  listUnconfirmedLessons(@Query('days', new DefaultValuePipe(60), ParseIntPipe) days: number) {
+    return this.hr.listUnconfirmedLessons(days);
   }
 
   @Post('employees')

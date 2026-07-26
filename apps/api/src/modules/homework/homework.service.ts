@@ -11,6 +11,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.types';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateHomeworkDto } from './dto/create-homework.dto';
 import { SubmitHomeworkDto } from './dto/submit-homework.dto';
 import { GradeHomeworkDto } from './dto/grade-homework.dto';
@@ -27,6 +28,7 @@ export class HomeworkService {
     private readonly prisma: PrismaService,
     private readonly achievements: AchievementsService,
     private readonly notifications: NotificationsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   /**
@@ -151,6 +153,19 @@ export class HomeworkService {
 
     // Триггер достижений
     await this.achievements.onHomeworkSubmitted(studentId);
+
+    void this.analytics.track('homework_submit', {
+      userId: studentId,
+      userRole: 'STUDENT',
+      entityId: submission.id,
+      entityType: 'homework_submission',
+      properties: {
+        homework_id: homeworkId,
+        class_id: hw.class_id,
+        is_late: isLate,
+        has_file: Boolean(dto.file_key),
+      },
+    });
 
     return submission;
   }

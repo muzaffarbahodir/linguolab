@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
   ConflictException,
@@ -61,7 +62,40 @@ const employeeSelect = {
 
 @Injectable()
 export class HrService {
+  private readonly logger = new Logger(HrService.name);
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Занятия, закрытые автоматически: посещаемость так и не отмечена, значит
+   * подтверждения, что урок состоялся, нет — а в зарплату «за урок» он попал.
+   * Список для менеджера: с кого спросить и что доотметить.
+   */
+  async listUnconfirmedLessons(days = 60) {
+    const since = new Date(Date.now() - days * 86_400_000);
+    return this.prisma.lesson.findMany({
+      where: {
+        status: LessonStatus.COMPLETED,
+        attendance_marked_at: null,
+        scheduled_at: { gte: since },
+      },
+      select: {
+        id: true,
+        title: true,
+        scheduled_at: true,
+        class: {
+          select: {
+            id: true,
+            title: true,
+            teacher: {
+              select: { user: { select: { first_name: true, last_name: true } } },
+            },
+          },
+        },
+      },
+      orderBy: { scheduled_at: 'desc' },
+    });
+  }
 
   // ─── Employees ───────────────────────────────────────────────────────────────
 
@@ -178,7 +212,17 @@ export class HrService {
     }[] = [];
 
     for (const emp of employees) {
-      const { gross, lessons } = await this.computeGross(emp, start, end);
+      const { gross, lessons, unconfirmed } = await this.computeGross(emp, start, end);
+      if (unconfirmed > 0) {
+        // Оплачиваем как есть — менять правило начисления молча нельзя.
+        // Но в оплату попали занятия, посещаемость которых никто не отметил,
+        // и это должно быть видно до того, как прогон финализируют.
+        const name = `${emp.user.first_name} ${emp.user.last_name ?? ''}`.trim();
+        this.logger.warn(
+          `Payroll ${period}: ${name} — ${unconfirmed} of ${lessons} lessons paid ` +
+            `without confirmed attendance (auto-closed). See GET /hr/lessons/unconfirmed`,
+        );
+      }
       const isStaff = emp.employment_type === EmploymentType.STAFF;
       const ndfl = isStaff ? Math.round((gross * NDFL_RATE) / 100) : 0;
       const social = isStaff ? Math.round((gross * SOCIAL_RATE) / 100) : 0;
@@ -307,20 +351,26 @@ export class HrService {
     },
     start: Date,
     end: Date,
-  ): Promise<{ gross: number; lessons: number }> {
+  ): Promise<{ gross: number; lessons: number; unconfirmed: number }> {
     if (emp.salary_type === SalaryType.FIXED) {
-      return { gross: emp.rate_uzs, lessons: 0 };
+      return { gross: emp.rate_uzs, lessons: 0, unconfirmed: 0 };
     }
 
     if (emp.salary_type === SalaryType.PER_LESSON) {
-      const lessons = await this.prisma.lesson.count({
-        where: {
-          status: LessonStatus.COMPLETED,
-          scheduled_at: { gte: start, lt: end },
-          class: { teacher: { user_id: emp.user_id } },
-        },
-      });
-      return { gross: lessons * emp.rate_uzs, lessons };
+      const where = {
+        status: LessonStatus.COMPLETED,
+        scheduled_at: { gte: start, lt: end },
+        class: { teacher: { user_id: emp.user_id } },
+      };
+      const [lessons, unconfirmed] = await Promise.all([
+        this.prisma.lesson.count({ where }),
+        // Уроки, которые закрыл авто-джоб: учитель не отметил посещаемость,
+        // то есть подтверждения, что занятие состоялось, нет. Они всё ещё
+        // входят в оплату — менять это молча нельзя, это решение владельца.
+        // Но число видно в расчётнике, чтобы было что спросить с учителя.
+        this.prisma.lesson.count({ where: { ...where, attendance_marked_at: null } }),
+      ]);
+      return { gross: lessons * emp.rate_uzs, lessons, unconfirmed };
     }
 
     // REVENUE_SHARE — % от PAID-выручки его групп за период
@@ -333,7 +383,7 @@ export class HrService {
       _sum: { amount_tiyin: true },
     });
     const revenueUzs = Math.round(Number(agg._sum.amount_tiyin ?? 0n) / 100);
-    return { gross: Math.round((revenueUzs * emp.rate_percent) / 100), lessons: 0 };
+    return { gross: Math.round((revenueUzs * emp.rate_percent) / 100), lessons: 0, unconfirmed: 0 };
   }
 
   private async resolveUserId(dto: UpsertEmployeeDto): Promise<string> {

@@ -4,6 +4,7 @@ import { TrialType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramService } from '../telegram/telegram.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 /** Сколько дней действует бесплатный онлайн-пробный доступ */
 const TRIAL_DAYS = 7;
@@ -24,7 +25,30 @@ export class TrialLessonsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly telegram: TelegramService,
+    private readonly analytics: AnalyticsService,
   ) {}
+
+  /**
+   * Вершина воронки. Вызывается только на успешных исходах request(): заявка,
+   * по которой ничего не вышло, не должна раздувать знаменатель конверсии.
+   * У очного пробного записи ещё нет — она появится после оплаты, поэтому
+   * trialId там отсутствует.
+   */
+  private trackTrialRequest(
+    studentId: string,
+    languageId: string,
+    type: TrialType,
+    trialId?: string,
+    classId?: string,
+  ) {
+    void this.analytics.track('trial_request', {
+      userId: studentId,
+      userRole: 'STUDENT',
+      entityId: trialId,
+      entityType: 'trial_request',
+      properties: { language_id: languageId, type, class_id: classId },
+    });
+  }
 
   /**
    * POST /trial-lessons/request
@@ -63,6 +87,7 @@ export class TrialLessonsService {
         select: { id: true, name_ru: true, flag_emoji: true, color: true },
       });
       if (!lang) throw new NotFoundException('Language not found');
+      this.trackTrialRequest(studentId, languageId, TrialType.OFFLINE, undefined, openClass.id);
       return {
         id: '',
         type: TrialType.OFFLINE,
@@ -95,6 +120,7 @@ export class TrialLessonsService {
         created.language.name_ru,
         'онлайн (нет открытого курса)',
       );
+      this.trackTrialRequest(studentId, languageId, TrialType.ONLINE, created.id);
       return { ...created, needs_payment: false };
     }
 
@@ -128,6 +154,7 @@ export class TrialLessonsService {
 
     void this.sendTrialAccess(studentId, openClass);
     void this.notifications.scheduleTrialConfirmed(studentId, created.language.name_ru, created.id);
+    this.trackTrialRequest(studentId, languageId, TrialType.ONLINE, created.id, openClass.id);
 
     return { ...created, needs_payment: false };
   }
