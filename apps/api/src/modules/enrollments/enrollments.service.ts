@@ -270,6 +270,14 @@ export class EnrollmentsService {
     }
 
     if (status === 'DROPPED') {
+      // Убираем из чата класса — иначе отчисленный остаётся в группе навсегда
+      // и продолжает читать переписку.
+      if (enrollment.class.telegram_chat_id && enrollment.student.telegram_user_id) {
+        void this.telegram.removeFromClassChat(
+          enrollment.student.telegram_user_id,
+          enrollment.class.telegram_chat_id,
+        );
+      }
       void this.notifications.scheduleEnrollmentDropped(
         enrollment.student_id,
         enrollment.class.title,

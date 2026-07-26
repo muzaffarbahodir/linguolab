@@ -62,14 +62,49 @@ export class PaymentsService {
   ) {}
 
   /**
+   * Провайдеры, у которых нет обработчика вебхука: оплату они принять не могут,
+   * подтверждение о ней никогда не придёт, и заказ навсегда останется PENDING.
+   * Держим их закрытыми в коде, чтобы случайное включение тумблера в админке
+   * не отправило студента на страницу, откуда деньги не вернутся к нам.
+   */
+  private static readonly PROVIDERS_WITHOUT_WEBHOOK: ReadonlySet<PaymentProvider> = new Set([
+    PaymentProvider.PAYME,
+    PaymentProvider.UZUMBANK,
+  ]);
+
+  /**
+   * Пускаем к оплате только тем способом, который реально работает.
+   *
+   * Тумблер is_enabled в админке раньше не читался нигде: провайдера можно было
+   * выключить, а checkout продолжал им пользоваться. На проде из-за этого
+   * студент с выбором Click уходил на страницу кассы, собранную из пустых
+   * service_id и merchant_id, — заплатить там было невозможно.
+   *
+   * Отсутствие строки в конфиге = разрешено: так настроены наличные, у которых
+   * онлайн-кассы нет и никогда не будет.
+   */
+  private async assertProviderAvailable(provider: PaymentProvider): Promise<void> {
+    if (PaymentsService.PROVIDERS_WITHOUT_WEBHOOK.has(provider)) {
+      throw new BadRequestException(
+        `${provider} пока не подключён — выберите другой способ оплаты`,
+      );
+    }
+
+    const cfg = await this.prisma.paymentProviderConfig.findUnique({
+      where: { provider },
+      select: { is_enabled: true },
+    });
+    if (cfg && !cfg.is_enabled) {
+      throw new BadRequestException(`${provider} временно недоступен — выберите другой способ`);
+    }
+  }
+
+  /**
    * POST /payments/checkout
    * Создаёт Payment-запись, возвращает URL для редиректа в Payme/Click/Uzumbank.
    */
   async checkout(payerId: string, dto: CheckoutDto) {
-    // Payme отключён как способ оплаты — доступны Click и наличные.
-    if (dto.provider === PaymentProvider.PAYME) {
-      throw new BadRequestException('Payme отключён — выберите Click или наличные');
-    }
+    await this.assertProviderAvailable(dto.provider);
 
     // За кого платим: сам плательщик или его ребёнок.
     const studentId = dto.student_id ?? payerId;
@@ -193,7 +228,7 @@ export class PaymentsService {
   ): string {
     switch (provider) {
       case PaymentProvider.PAYME: {
-        // Payme отключён — checkout не должен сюда попадать (см. гард в checkout).
+        // Отключён — checkout сюда не пускает (см. assertProviderAvailable).
         throw new BadRequestException('Payme отключён');
       }
       case PaymentProvider.CLICK: {
@@ -206,8 +241,9 @@ export class PaymentsService {
         );
       }
       case PaymentProvider.UZUMBANK: {
-        // Uzumbank — placeholder, реальная интеграция в следующей итерации
-        return `https://uzumbank.uz/pay?order=${orderId}&amount=${amountTiyin}`;
+        // Интеграции нет: этот URL был выдуманным и вёл в никуда. Бросаем, как
+        // и Payme, — сюда не должно доходить (см. assertProviderAvailable).
+        throw new BadRequestException('Uzumbank не подключён');
       }
       case PaymentProvider.CASH: {
         // Наличные — нет онлайн-кассы. Платёж PENDING, менеджер подтверждает вручную.

@@ -656,27 +656,71 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-  async sendGroupInvite(telegramUserId: bigint, chatId: bigint, classTitle: string): Promise<void> {
-    if (!this.bot) return;
+  /** Сколько живёт персональная ссылка-приглашение в группу класса. */
+  private static readonly INVITE_TTL_H = 72;
+
+  /**
+   * Возвращает true, если приглашение доставлено. Раньше метод молча глотал
+   * ошибку: студент оплачивал, в группу не попадал, и никто об этом не узнавал.
+   */
+  async sendGroupInvite(
+    telegramUserId: bigint,
+    chatId: bigint,
+    classTitle: string,
+  ): Promise<boolean> {
+    if (!this.bot) return false;
 
     try {
       const invite = await this.bot.api.createChatInviteLink(Number(chatId), {
         member_limit: 1,
         name: classTitle,
+        // Без срока ссылка жила вечно и оставалась рабочей даже после
+        // отчисления студента.
+        expire_date: Math.floor(Date.now() / 1000) + TelegramService.INVITE_TTL_H * 3600,
       });
 
       await this.bot.api.sendMessage(
         telegramUserId.toString(),
         `🎉 <b>Заявка одобрена!</b>\n\n` +
           `Вы зачислены в группу: <b>${classTitle}</b>\n\n` +
-          `Нажмите кнопку ниже чтобы вступить в Telegram-группу класса:`,
+          `Нажмите кнопку ниже чтобы вступить в Telegram-группу класса ` +
+          `(ссылка действует ${TelegramService.INVITE_TTL_H} часа):`,
         {
           parse_mode: 'HTML',
           reply_markup: new InlineKeyboard().url('Вступить в группу 👥', invite.invite_link),
         },
       );
+      return true;
     } catch (err) {
       this.logger.warn(`Failed to send group invite to ${telegramUserId}: ${String(err)}`);
+      return false;
+    }
+  }
+
+  /**
+   * Убирает студента из чата класса, когда его запись закончилась.
+   *
+   * Раньше не вызывалось нигде: отчисленные, переведённые и те, у кого истёк
+   * оплаченный период, оставались в группе навсегда и продолжали читать
+   * переписку класса.
+   *
+   * ban + сразу unban — стандартный приём: kick без unban оставляет человека
+   * в чёрном списке, и вернуть его в группу позже уже нельзя.
+   */
+  async removeFromClassChat(telegramUserId: bigint, chatId: bigint): Promise<boolean> {
+    if (!this.bot) return false;
+
+    try {
+      await this.bot.api.banChatMember(Number(chatId), Number(telegramUserId));
+      await this.bot.api.unbanChatMember(Number(chatId), Number(telegramUserId), {
+        only_if_banned: true,
+      });
+      return true;
+    } catch (err) {
+      // Частые и безобидные причины: студент так и не вступил, вышел сам,
+      // или у бота нет прав администратора в этой группе.
+      this.logger.warn(`Failed to remove ${telegramUserId} from chat ${chatId}: ${String(err)}`);
+      return false;
     }
   }
 

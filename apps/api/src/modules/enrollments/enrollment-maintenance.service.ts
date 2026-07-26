@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EnrollmentsService } from './enrollments.service';
+import { TelegramService } from '../telegram/telegram.service';
 
 /**
  * Грейс после истечения оплаты, прежде чем снять доступ.
@@ -33,7 +34,35 @@ export class EnrollmentMaintenanceService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly enrollments: EnrollmentsService,
+    private readonly telegram: TelegramService,
   ) {}
+
+  /**
+   * Убирает студентов из чатов их классов после массового отчисления.
+   *
+   * Раньше не вызывалось нигде: у кого истёк пробный или оплаченный период,
+   * оставался в группе класса навсегда и продолжал читать переписку.
+   */
+  private async removeFromClassChats(enrollmentIds: string[]): Promise<void> {
+    if (enrollmentIds.length === 0) return;
+
+    const rows = await this.prisma.enrollment.findMany({
+      where: { id: { in: enrollmentIds } },
+      select: {
+        student: { select: { telegram_user_id: true } },
+        class: { select: { telegram_chat_id: true } },
+      },
+    });
+
+    for (const r of rows) {
+      if (r.class.telegram_chat_id && r.student.telegram_user_id) {
+        await this.telegram.removeFromClassChat(
+          r.student.telegram_user_id,
+          r.class.telegram_chat_id,
+        );
+      }
+    }
+  }
 
   /**
    * Ежедневное обслуживание записей (01:00 UTC).
@@ -78,6 +107,8 @@ export class EnrollmentMaintenanceService {
       data: { status: 'DROPPED' },
     });
 
+    await this.removeFromClassChats(expired.map((e) => e.id));
+
     for (const e of expired) {
       void this.notifications.scheduleEnrollmentDropped(e.student_id, e.class.title, e.id);
     }
@@ -116,6 +147,8 @@ export class EnrollmentMaintenanceService {
       data: { status: 'DROPPED' },
     });
 
+    await this.removeFromClassChats(expired.map((e) => e.id));
+
     for (const e of expired) {
       void this.notifications.scheduleAccessExpired(e.student_id, e.class.title, e.id);
     }
@@ -152,6 +185,8 @@ export class EnrollmentMaintenanceService {
       where: { id: { in: stale.map((e) => e.id) } },
       data: { status: 'DROPPED' },
     });
+
+    await this.removeFromClassChats(stale.map((e) => e.id));
 
     for (const e of stale) {
       void this.notifications.scheduleEnrollmentDropped(e.student_id, e.class.title, e.id);
