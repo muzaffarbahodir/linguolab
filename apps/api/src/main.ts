@@ -37,6 +37,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    // Подпись вебхука Zoom считается по ТОЧНОМУ телу запроса. Пересобирать его
+    // из распарсенного JSON нельзя: порядок ключей и пробелы не сохраняются,
+    // и подпись перестаёт сходиться.
+    rawBody: true,
   });
 
   const config = app.get(ConfigService);

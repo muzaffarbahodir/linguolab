@@ -14,6 +14,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { UsersModule } from './modules/users/users.module';
 import { LanguagesModule } from './modules/languages/languages.module';
 import { LessonsModule } from './modules/lessons/lessons.module';
+import { ZoomModule } from './modules/zoom/zoom.module';
 import { ClassesModule } from './modules/classes/classes.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { TelegramModule } from './modules/telegram/telegram.module';
@@ -102,6 +103,7 @@ import { RoomsModule } from './modules/rooms/rooms.module';
     UsersModule,
     LanguagesModule,
     LessonsModule,
+    ZoomModule,
     ClassesModule,
     EnrollmentsModule,
     TrialLessonsModule,

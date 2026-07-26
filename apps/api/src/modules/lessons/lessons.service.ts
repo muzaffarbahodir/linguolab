@@ -11,6 +11,7 @@ import { ClassStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { ZoomService } from '../zoom/zoom.service';
 
 /**
  * Через сколько часов после начала урока, который так и не закрыли посещаемостью,
@@ -97,6 +98,7 @@ export class LessonsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly analytics: AnalyticsService,
+    private readonly zoom: ZoomService,
   ) {}
 
   /**
@@ -382,6 +384,27 @@ export class LessonsService {
         notes: dto.notes,
       },
     });
+
+    // Своя конференция на занятие — если Zoom подключён и группа не привязана
+    // к аудитории (то есть занимается онлайн). Не срослось — не беда: урок
+    // важнее ссылки, останется общая ссылка курса.
+    if (this.zoom.isConfigured && !cls.room_id) {
+      const meeting = await this.zoom.createMeeting({
+        topic: `${cls.title}${dto.title ? ` — ${dto.title}` : ''}`,
+        startAt: lesson.scheduled_at,
+        durationMin: lesson.duration_min,
+      });
+      if (meeting) {
+        await this.prisma.lesson.update({
+          where: { id: lesson.id },
+          data: {
+            zoom_meeting_id: meeting.meeting_id,
+            zoom_join_url: meeting.join_url,
+            zoom_start_url: meeting.start_url,
+          },
+        });
+      }
+    }
 
     // Планируем напоминание за 1ч до урока (fire-and-forget)
     void this.notifications.scheduleLessonReminder(lesson.id, dto.classId, lesson.scheduled_at);

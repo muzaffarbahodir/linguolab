@@ -13,6 +13,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AnalyticsService } from '../../analytics/analytics.service';
 import { NotificationsService } from '../../notifications/notifications.service';
+import { ZoomService } from '../../zoom/zoom.service';
 import { LessonsService } from '../lessons.service';
 
 const mockPrisma = {
@@ -31,6 +32,8 @@ const mockNotifications = {
   notifyParentsOfAbsent: jest.fn().mockResolvedValue(undefined),
 };
 const mockAnalytics = { track: jest.fn().mockResolvedValue(undefined) };
+// Zoom не подключён — сервис выключен, конференции не создаются.
+const mockZoom = { isConfigured: false, createMeeting: jest.fn() };
 
 const TEACHER_USER_ID = 'teacher-user-1';
 
@@ -63,6 +66,7 @@ describe('LessonsService — подтверждение посещаемости
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotifications },
         { provide: AnalyticsService, useValue: mockAnalytics },
+        { provide: ZoomService, useValue: mockZoom },
       ],
     }).compile();
 

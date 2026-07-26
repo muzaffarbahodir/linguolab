@@ -833,6 +833,20 @@ model Lesson {
   /// подтверждения, что занятие состоялось, нет, и посещаемость потеряна.
   /// Отличать одно от другого важно и для зарплаты, и для статистики.
   attendance_marked_at DateTime?
+  /// Кто отметил посещаемость — человек или отчёт Zoom. Обе считаются
+  /// подтверждением, но менеджеру важно видеть, что цифры пришли автоматически.
+  attendance_source    AttendanceSource?
+
+  /// Конференция этого занятия. Отдельная на урок, а не одна на весь курс:
+  /// общую ссылку можно переслать кому угодно, её нельзя связать с записью
+  /// и по ней не понять, кто был на конкретном занятии.
+  zoom_meeting_id  String?
+  /// Ссылка для студентов.
+  zoom_join_url    String?
+  /// Ссылка хоста — только преподавателю, даёт права ведущего.
+  zoom_start_url   String?
+  /// Запись занятия, приходит вебхуком после обработки на стороне Zoom.
+  zoom_recording_url String?
 
   class       Class              @relation(fields: [class_id], references: [id])
   attendances LessonAttendance[]
@@ -843,6 +857,8 @@ model Lesson {
   @@index([status, scheduled_at])
   // Поиск неподтверждённых: COMPLETED + attendance_marked_at IS NULL.
   @@index([status, attendance_marked_at])
+  // Вебхук Zoom приходит с id конференции — по нему находим урок.
+  @@index([zoom_meeting_id])
   @@map("lessons")
 }
 
@@ -851,6 +867,14 @@ enum AttendanceStatus {
   ABSENT
   LATE
   EXCUSED
+}
+
+/// Откуда взялась посещаемость занятия.
+enum AttendanceSource {
+  /// Преподаватель отметил вручную.
+  MANUAL
+  /// Выведено из отчёта Zoom об участниках конференции.
+  ZOOM
 }
 
 /// Посещаемость студента на конкретном уроке
