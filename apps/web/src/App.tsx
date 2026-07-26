@@ -8,6 +8,7 @@ const SentryRoutes = withSentryReactRouterV6Routing(Routes);
 
 import { useAuthStore } from './store/auth';
 import { useUIStore } from './store/ui';
+import { usePageViewTracking } from './hooks/usePageViewTracking';
 import { useMe } from './api/users';
 import { BottomNav } from './components/BottomNav';
 import { ToastViewport } from './components/ToastViewport';
@@ -231,6 +232,10 @@ function PageLoader() {
 export default function App() {
   const status = useAuthStore((s) => s.status);
   const { t } = useTranslation();
+
+  // Вызываем до любых ранних return: правила хуков требуют одинакового порядка
+  // вызовов при каждом рендере. Пока авторизации нет, хук ничего не делает.
+  usePageViewTracking();
 
   // Загрузка / ожидание auth init
   if (status === 'idle' || status === 'loading') {

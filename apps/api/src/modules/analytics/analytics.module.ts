@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
+import { PageViewController } from './page-view.controller';
 import { AnalyticsRefreshService } from './analytics-refresh.service';
 
 /**
@@ -9,7 +10,7 @@ import { AnalyticsRefreshService } from './analytics-refresh.service';
  */
 @Global()
 @Module({
-  controllers: [AnalyticsController],
+  controllers: [AnalyticsController, PageViewController],
   providers: [AnalyticsService, AnalyticsRefreshService],
   exports: [AnalyticsService],
 })
