@@ -8,13 +8,17 @@ import { Prisma, Role } from '@prisma/client';
 import type { StudyFormat, StudyMode, LanguageCategory } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 /** Roles that cannot be self-assigned through the admin activate endpoint */
 const PROTECTED_ROLES: Role[] = [Role.SUPER_ADMIN];
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async findMe(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -415,6 +419,110 @@ export class UsersService {
       data: { role, is_active: true },
       select: { id: true, role: true, is_active: true },
     });
+  }
+
+  /**
+   * GET /users/me/teacher-status — что показать человеку, выбравшему «я
+   * преподаватель».
+   *
+   * Три исхода:
+   *   already   — администратор завёл его заранее: пускаем в кабинет сразу,
+   *               анкету спрашивать незачем;
+   *   pending   — заявка уже отправлена, ждёт ответа;
+   *   apply     — нужно заполнить анкету.
+   */
+  async teacherStatus(userId: string) {
+    const [user, teacher, application] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+      this.prisma.teacher.findUnique({ where: { user_id: userId }, select: { id: true } }),
+      this.prisma.teacherApplication.findFirst({
+        where: { user_id: userId },
+        orderBy: { created_at: 'desc' },
+        select: { id: true, status: true, admin_note: true, created_at: true },
+      }),
+    ]);
+    if (!user) throw new NotFoundException('User not found');
+
+    // Заведён заранее — либо есть карточка преподавателя, либо роль уже выдана.
+    if (teacher || user.role === Role.TEACHER) {
+      // Активируем: человека ждали, держать его на экране выбора роли незачем.
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: Role.TEACHER, is_active: true },
+      });
+      return { state: 'already' as const };
+    }
+
+    if (application?.status === 'PENDING') {
+      return { state: 'pending' as const, submitted_at: application.created_at };
+    }
+    if (application?.status === 'REJECTED') {
+      return { state: 'apply' as const, previous_rejection: application.admin_note };
+    }
+
+    return { state: 'apply' as const };
+  }
+
+  /**
+   * POST /users/me/teacher-application — анкета кандидата в преподаватели.
+   *
+   * Роль по анкете НЕ выдаётся: решение принимает человек в центре. Здесь мы
+   * только доносим заявку до менеджера в том виде, в котором с ней можно
+   * работать, — вместо переписки в личных сообщениях.
+   */
+  async submitTeacherApplication(
+    userId: string,
+    dto: {
+      subject: string;
+      age?: number | null;
+      experience_years?: number | null;
+      certificates?: string | null;
+      about?: string | null;
+    },
+  ) {
+    const subject = dto.subject?.trim();
+    if (!subject) throw new BadRequestException('Укажите, что готовы преподавать');
+
+    const existing = await this.prisma.teacherApplication.findFirst({
+      where: { user_id: userId, status: 'PENDING' },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new BadRequestException('Заявка уже отправлена — дождитесь ответа');
+    }
+
+    const application = await this.prisma.teacherApplication.create({
+      data: {
+        user_id: userId,
+        subject,
+        age: dto.age ?? null,
+        experience_years: dto.experience_years ?? null,
+        certificates: dto.certificates?.trim() || null,
+        about: dto.about?.trim() || null,
+      },
+      select: { id: true, status: true, created_at: true },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { first_name: true, last_name: true, telegram_username: true },
+    });
+
+    const who = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || 'Без имени';
+    const uname = user?.telegram_username ? ` (@${user.telegram_username})` : '';
+
+    void this.notifications.notifyStaffNewRequest(
+      '👨‍🏫 Заявка в преподаватели',
+      `<b>${who}</b>${uname}\n` +
+        `Предмет: <b>${subject}</b>\n` +
+        (dto.age ? `Возраст: ${dto.age}\n` : '') +
+        (dto.experience_years ? `Опыт: ${dto.experience_years} г.\n` : '') +
+        (dto.certificates ? `Сертификаты: ${dto.certificates}\n` : '') +
+        (dto.about ? `\n${dto.about}` : ''),
+      `teacher_application:${application.id}`,
+    );
+
+    return application;
   }
 
   /**

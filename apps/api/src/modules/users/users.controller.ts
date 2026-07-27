@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Put,
   Body,
@@ -52,6 +53,31 @@ export class UsersController {
   @Patch('me/onboard')
   onboard(@CurrentUser() user: RequestUser, @Body() dto: { role: Role }) {
     return this.usersService.onboardSelf(user.id, dto.role);
+  }
+
+  /**
+   * GET /users/me/teacher-status — что показать выбравшему «я преподаватель»:
+   * пустить в кабинет, показать «заявка на рассмотрении» или дать анкету.
+   */
+  @Get('me/teacher-status')
+  teacherStatus(@CurrentUser() user: RequestUser) {
+    return this.usersService.teacherStatus(user.id);
+  }
+
+  /** POST /users/me/teacher-application — анкета кандидата в преподаватели */
+  @Post('me/teacher-application')
+  teacherApplication(
+    @CurrentUser() user: RequestUser,
+    @Body()
+    dto: {
+      subject: string;
+      age?: number | null;
+      experience_years?: number | null;
+      certificates?: string | null;
+      about?: string | null;
+    },
+  ) {
+    return this.usersService.submitTeacherApplication(user.id, dto);
   }
 
   /** PATCH /users/me/discovery — сохранить ответы опроса подбора курса */

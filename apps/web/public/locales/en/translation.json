@@ -492,7 +492,10 @@
     "parent_desc": "Enroll and pay for my child's courses",
     "hint": "You can change this later in settings",
     "browse": "Browse courses first →",
-    "error": "Could not save. Please try again"
+    "error": "Could not save. Please try again",
+    "teacher_title": "I'm a teacher",
+    "teacher_desc": "I teach at this centre",
+    "saving": "Saving…"
   },
   "app": {
     "server_error": "Could not connect to the server.",

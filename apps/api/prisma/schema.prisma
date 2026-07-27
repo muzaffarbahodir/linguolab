@@ -194,6 +194,7 @@ model User {
   certificates         Certificate[]
   notifications        Notification[]
   placement_tests      PlacementTest[]
+  teacher_applications TeacherApplication[]
   lesson_attendances   LessonAttendance[]
   payments             Payment[]              @relation("PaymentUser")
   payments_as_payer    Payment[]              @relation("PaymentPayer")
@@ -366,6 +367,44 @@ model Teacher {
   badges         TeacherBadge[]
   class_requests ClassRequest[]
   offers         TeacherOffer[]
+}
+
+enum TeacherApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Заявка «хочу преподавать» от человека, которого ещё нет среди учителей.
+///
+/// Кандидата, заведённого администратором заранее, приложение пускает в
+/// преподавательский кабинет сразу. Всем остальным нужен разговор с центром, и
+/// эта форма — его начало: анкета уходит менеджеру, а не пропадает в переписке.
+model TeacherApplication {
+  id           String                   @id @default(cuid())
+  user_id      String
+  /// Что готов преподавать — свободным текстом: направления не всегда
+  /// совпадают с уже заведёнными в системе языками.
+  subject      String
+  /// Полных лет. Для несовершеннолетних кандидатов у центра свои правила.
+  age          Int?
+  /// Стаж преподавания в годах.
+  experience_years Int?
+  /// Сертификаты, дипломы, ссылки на портфолио — свободным текстом.
+  certificates String?
+  /// О себе: чем занимался, где преподавал, чего хочет.
+  about        String?
+  status       TeacherApplicationStatus @default(PENDING)
+  /// Ответ менеджера — виден кандидату при отказе.
+  admin_note   String?
+  created_at   DateTime                 @default(now())
+  reviewed_at  DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([status, created_at])
+  @@index([user_id])
+  @@map("teacher_applications")
 }
 
 /// Оффер учителя: «готов учить предмет X» ещё до создания группы.

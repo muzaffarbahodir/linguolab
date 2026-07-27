@@ -492,7 +492,10 @@
     "parent_desc": "Farzandim uchun kurslarga yozaman va to'layman",
     "hint": "Buni keyinroq sozlamalarda o'zgartirish mumkin",
     "browse": "Avval kurslarni ko'rish →",
-    "error": "Saqlab bo'lmadi. Qayta urinib ko'ring"
+    "error": "Saqlab bo'lmadi. Qayta urinib ko'ring",
+    "teacher_title": "Men o'qituvchiman",
+    "teacher_desc": "Shu markazda dars beraman",
+    "saving": "Saqlanmoqda…"
   },
   "app": {
     "server_error": "Serverga ulanib bo'lmadi.",

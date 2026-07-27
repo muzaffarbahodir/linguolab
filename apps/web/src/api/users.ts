@@ -199,6 +199,44 @@ export function useOnboard() {
   });
 }
 
+export interface TeacherStatus {
+  /** already — заведён заранее, пускаем в кабинет; pending — ждёт ответа; apply — нужна анкета. */
+  state: 'already' | 'pending' | 'apply';
+  submitted_at?: string;
+  previous_rejection?: string | null;
+}
+
+/**
+ * Что показать выбравшему «я преподаватель». Запрашивается по нажатию, а не
+ * заранее: большинство приходит учиться, и дёргать проверку у всех незачем.
+ */
+export function useTeacherStatus() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.get('/users/me/teacher-status');
+      return res.data as TeacherStatus;
+    },
+  });
+}
+
+export interface TeacherApplicationInput {
+  subject: string;
+  age?: number | null;
+  experience_years?: number | null;
+  certificates?: string | null;
+  about?: string | null;
+}
+
+/** Анкета кандидата в преподаватели — уходит менеджеру, роль не выдаёт. */
+export function useSubmitTeacherApplication() {
+  return useMutation({
+    mutationFn: async (dto: TeacherApplicationInput) => {
+      const res = await apiClient.post('/users/me/teacher-application', dto);
+      return res.data as { id: string; status: string };
+    },
+  });
+}
+
 /** Сохранить ответы опроса подбора курса + отметить визард пройденным. */
 export function useSaveDiscovery() {
   const qc = useQueryClient();
