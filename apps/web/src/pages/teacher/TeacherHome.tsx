@@ -6,10 +6,9 @@
  *   2. ДЗ на проверке — badge с кол-вом + быстрый список
  *   3. Мои классы — компактный список всех классов
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import WebApp from '@twa-dev/sdk';
 import { Briefcase } from 'lucide-react';
 import {
   useMyClasses,
@@ -18,9 +17,7 @@ import {
   type TodayLesson,
 } from '../../api/teacher';
 import { useAuthStore } from '../../store/auth';
-import { useTeacherProfileByUserId, useUpdateTeacherProfile } from '../../api/teachers';
-import { uploadImage } from '../../api/uploads';
-import { toast } from '../../store/toast';
+import { EditProfileSheet } from './EditProfileSheet';
 
 /** Форматирует время урока из UTC → UTC+5 (Ташкент) */
 function fmtTime(iso: string): string {
@@ -32,180 +29,6 @@ function fmtTime(iso: string): string {
 function todayLabel(locale: string): string {
   const now = new Date(new Date().getTime() + 5 * 60 * 60 * 1000);
   return now.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'long' });
-}
-
-// ─── Edit Profile Sheet ───────────────────────────────────────────────────────
-
-function EditProfileSheet({ userId, onClose }: { userId: string; onClose: () => void }) {
-  const { t } = useTranslation();
-  const { data: profile } = useTeacherProfileByUserId(userId);
-  const update = useUpdateTeacherProfile();
-
-  const [bio, setBio] = useState(profile?.bio ?? '');
-  const [photo, setPhoto] = useState(profile?.photo_url ?? '');
-  const [uploading, setUploading] = useState(false);
-  const [website, setWebsite] = useState(profile?.website_url ?? '');
-  const [instagram, setInstagram] = useState(profile?.instagram_url ?? '');
-  const [telegram, setTelegram] = useState(profile?.telegram_url ?? '');
-  const [done, setDone] = useState(false);
-
-  // Sync when profile loads (may arrive after mount)
-  useEffect(() => {
-    if (profile) {
-      setBio(profile.bio ?? '');
-      setPhoto(profile.photo_url ?? '');
-      setWebsite(profile.website_url ?? '');
-      setInstagram(profile.instagram_url ?? '');
-      setTelegram(profile.telegram_url ?? '');
-    }
-  }, [profile]);
-
-  async function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // позволяем выбрать тот же файл повторно
-    if (!file) return;
-    setUploading(true);
-    try {
-      const url = await uploadImage(file);
-      setPhoto(url);
-      WebApp.HapticFeedback.notificationOccurred('success');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('teacher.save_error'));
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function handleSave() {
-    update.mutate(
-      {
-        bio: bio.trim() || undefined,
-        photo_url: photo.trim() ? photo.trim() : null,
-        website_url: website.trim() || undefined,
-        instagram_url: instagram.trim() || undefined,
-        telegram_url: telegram.trim() || undefined,
-      },
-      {
-        onSuccess: () => {
-          WebApp.HapticFeedback.notificationOccurred('success');
-          setDone(true);
-          setTimeout(onClose, 900);
-        },
-        onError: () => toast.error(t('teacher.save_error')),
-      },
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/65" onClick={onClose}>
-      <div
-        className="border-hairline w-full rounded-t-3xl border px-5 pb-10 pt-5"
-        style={{ background: '#1a2538' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Handle */}
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
-
-        {done ? (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <span className="text-4xl">✅</span>
-            <p className="font-bold text-white">{t('teacher.profile_updated')}</p>
-          </div>
-        ) : (
-          <>
-            <h2 className="mb-4 text-base font-bold text-white">{t('teacher.edit_profile')}</h2>
-
-            {/* Photo */}
-            <div className="mb-4 flex items-center gap-4">
-              <div className="bg-surface-2 h-16 w-16 shrink-0 overflow-hidden rounded-full">
-                {(photo || profile?.user.avatar_url) && (
-                  <img
-                    src={photo || profile?.user.avatar_url || ''}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="bg-surface-2 press inline-block cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-white">
-                  {uploading ? t('teacher.photo_uploading') : t('teacher.photo_change')}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => void handlePhotoPick(e)}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
-                {photo && (
-                  <button
-                    onClick={() => setPhoto('')}
-                    className="text-faint text-left text-[11px] underline"
-                  >
-                    {t('teacher.photo_remove')}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Bio */}
-            <label className="text-muted mb-1 block text-xs font-medium">
-              {t('admin.teachers.bio_label')}
-            </label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder={t('teacher.bio_ph')}
-              rows={3}
-              maxLength={500}
-              className="bg-surface-2 border-hairline mb-3 w-full resize-none rounded-2xl border px-4 py-3 text-sm text-white outline-none"
-            />
-
-            {/* Website */}
-            <label className="text-muted mb-1 block text-xs font-medium">
-              {t('teacher.website_label')}
-            </label>
-            <input
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://example.com"
-              type="url"
-              className="bg-surface-2 border-hairline mb-3 w-full rounded-2xl border px-4 py-2.5 text-sm text-white outline-none"
-            />
-
-            {/* Instagram */}
-            <label className="text-muted mb-1 block text-xs font-medium">📸 Instagram</label>
-            <input
-              value={instagram}
-              onChange={(e) => setInstagram(e.target.value)}
-              placeholder="https://instagram.com/username"
-              type="url"
-              className="bg-surface-2 border-hairline mb-3 w-full rounded-2xl border px-4 py-2.5 text-sm text-white outline-none"
-            />
-
-            {/* Telegram */}
-            <label className="text-muted mb-1 block text-xs font-medium">✈️ Telegram</label>
-            <input
-              value={telegram}
-              onChange={(e) => setTelegram(e.target.value)}
-              placeholder="https://t.me/username"
-              type="url"
-              className="bg-surface-2 border-hairline mb-4 w-full rounded-2xl border px-4 py-2.5 text-sm text-white outline-none"
-            />
-
-            <button
-              onClick={handleSave}
-              disabled={update.isPending}
-              className="press w-full rounded-2xl py-3 text-sm font-bold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg,#6366f1,#a5b4fc)' }}
-            >
-              {update.isPending ? '...' : t('teacher.save')}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export function TeacherHomePage() {

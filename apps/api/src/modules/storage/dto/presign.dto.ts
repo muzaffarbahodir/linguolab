@@ -6,6 +6,12 @@ const ALLOWED_TYPES = [
   'image/webp',
   'application/pdf',
   'application/zip',
+  // Видео — визитка преподавателя в профиле. Отдельного порога размера для
+  // него нет: общие 50 МБ ниже покрывают пару минут с телефона и при этом не
+  // превращают хранилище в файлообменник.
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
 ];
 
 export class PresignDto {

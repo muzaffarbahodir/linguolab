@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
 import axios from 'axios';
+import { ChevronRight } from 'lucide-react';
 
 import { useLanguages, type Language } from '../api/languages';
 import { useClasses, useEnrollClass, type ClassItem } from '../api/classes';
 import { useCurrency } from '../hooks/useCurrency';
 import { toast } from '../store/toast';
 import { EmptyState } from '../components/EmptyState';
+import { cx } from '../components/ui';
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -71,6 +73,7 @@ function StepClass({
   onSelect: (cls: ClassItem) => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: classes, isLoading, isError } = useClasses(language.id);
   const { fmt, currency } = useCurrency();
 
@@ -105,11 +108,21 @@ function StepClass({
           const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
 
           return (
-            <button
+            // Карточка — div, а не button: внутри лежит отдельная кнопка
+            // перехода в профиль преподавателя, а кнопку в кнопку вкладывать
+            // нельзя.
+            <div
               key={cls.id}
+              role="button"
+              tabIndex={isFull ? -1 : 0}
               onClick={() => !isFull && onSelect(cls)}
-              disabled={isFull}
-              className="bg-tg-secondary-bg press shadow-e1 overflow-hidden rounded-2xl text-left disabled:opacity-50"
+              onKeyDown={(e) => {
+                if (!isFull && (e.key === 'Enter' || e.key === ' ')) onSelect(cls);
+              }}
+              className={cx(
+                'bg-tg-secondary-bg press shadow-e1 overflow-hidden rounded-2xl text-left',
+                isFull && 'pointer-events-none opacity-50',
+              )}
             >
               <div className="h-1" style={{ backgroundColor: language.color ?? '#6366f1' }} />
               <div className="p-4">
@@ -122,8 +135,16 @@ function StepClass({
                     {cls.level}
                   </span>
                 </div>
-                {/* Преподаватель — выбор свободного учителя по курсу */}
-                <div className="bg-surface mb-2 flex items-center gap-2 rounded-xl px-2.5 py-1.5">
+                {/* Преподаватель — открывает профиль с видео и отзывами.
+                    stopPropagation, иначе нажатие заодно выберет курс. */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/teachers/${cls.teacher.id}`);
+                  }}
+                  className="bg-surface press mb-2 flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left"
+                >
                   {cls.teacher.user.avatar_url ? (
                     <img
                       src={cls.teacher.user.avatar_url}
@@ -149,7 +170,8 @@ function StepClass({
                       {t('booking.teacher_free')}
                     </span>
                   )}
-                </div>
+                  <ChevronRight size={14} className="text-faint flex-none" />
+                </button>
                 <div className="flex items-center justify-between">
                   <span className="font-bold">
                     {currency === 'USD' && cls.price_usd > 0
@@ -166,7 +188,7 @@ function StepClass({
                   </span>
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>

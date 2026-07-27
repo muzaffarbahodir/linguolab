@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Star } from 'lucide-react';
+import { Search, Users, Star, ChevronRight } from 'lucide-react';
 
 import {
   useLanguages,
@@ -136,6 +136,24 @@ export function CoursesPage() {
           ))}
         </div>
       )}
+
+      {/*
+        Вход в каталог преподавателей.
+        Курс выбирают по языку, а учиться идут к человеку — до этой ссылки
+        профили открывались только из уже своего класса, то есть когда выбор
+        давно сделан.
+      */}
+      <button
+        onClick={() => navigate('/teachers')}
+        className="glass-option press flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+      >
+        <Users size={18} className="text-brand-400 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{t('teacher.catalog_title')}</p>
+          <p className="text-faint truncate text-xs">{t('teacher.catalog_sub')}</p>
+        </div>
+        <ChevronRight size={16} className="text-faint shrink-0" />
+      </button>
     </div>
   );
 }

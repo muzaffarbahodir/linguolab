@@ -15,21 +15,75 @@ import {
   useDeleteTeacher,
   type AdminTeacher,
 } from '../../api/admin';
-import { useTeacherProfile, useAwardBadge, useRemoveBadge } from '../../api/teachers';
+import {
+  useTeacherProfile,
+  useAwardBadge,
+  useRemoveBadge,
+  useSetTeacherHighlights,
+} from '../../api/teachers';
 import { useAuthStore } from '../../store/auth';
 
 // ── BadgeSheet ────────────────────────────────────────────────────────────────
 
 const PRESET_ICONS = ['⭐', '🏆', '🎓', '🔥', '💎', '🌟', '🎯', '✅', '🚀', '❤️'];
 
+/**
+ * Черты преподавателя для витрины.
+ *
+ * Готовый набор, а не свободный ввод: так они одинаково звучат у всех
+ * преподавателей и их можно сравнивать между профилями. Ставит менеджер —
+ * себе такую оценку не выдают.
+ */
+const PRESET_HIGHLIGHTS = [
+  'Терпеливый',
+  'Структурный',
+  'Мотивирует',
+  'Разговорная практика',
+  'Готовит к экзамену',
+  'Работает с детьми',
+  'Ставит произношение',
+  'Требовательный',
+];
+
+/** Максимум на витрине — больше шести перестают читаться как выделенное. */
+const MAX_HIGHLIGHTS = 6;
+
 function BadgeSheet({ teacherId, onClose }: { teacherId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const { data: profile } = useTeacherProfile(teacherId);
   const award = useAwardBadge();
   const remove = useRemoveBadge();
+  const setHighlights = useSetTeacherHighlights();
   const [title, setTitle] = useState('');
   const [icon, setIcon] = useState('⭐');
   const [desc, setDesc] = useState('');
+  const [picked, setPicked] = useState<string[] | null>(null);
+
+  // null — профиль ещё не загружен; отличаем от «менеджер снял все черты».
+  const current = picked ?? profile?.highlights ?? [];
+  const dirty = picked !== null;
+
+  function toggleHighlight(h: string) {
+    setPicked((prev) => {
+      const base = prev ?? profile?.highlights ?? [];
+      if (base.includes(h)) return base.filter((x) => x !== h);
+      if (base.length >= MAX_HIGHLIGHTS) return base;
+      return [...base, h];
+    });
+  }
+
+  function handleSaveHighlights() {
+    setHighlights.mutate(
+      { teacherId, highlights: current },
+      {
+        onSuccess: () => {
+          WebApp.HapticFeedback.notificationOccurred('success');
+          setPicked(null);
+        },
+        onError: () => WebApp.showAlert(t('admin.teachers.award_error')),
+      },
+    );
+  }
 
   function handleAward() {
     if (!title.trim()) return;
@@ -82,6 +136,37 @@ function BadgeSheet({ teacherId, onClose }: { teacherId: string; onClose: () => 
         ) : (
           <p className="text-faint mb-4 text-xs">{t('admin.teachers.no_badges')}</p>
         )}
+
+        {/* Черты для витрины */}
+        <p className="text-muted mb-2 text-xs font-semibold">
+          {t('admin.teachers.highlights_title')}
+        </p>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {PRESET_HIGHLIGHTS.map((h) => {
+            const active = current.includes(h);
+            return (
+              <button
+                key={h}
+                onClick={() => toggleHighlight(h)}
+                className={`press rounded-xl px-2.5 py-1.5 text-xs font-medium ${
+                  active ? 'bg-brand/30 text-brand-400' : 'bg-surface-2 text-muted'
+                }`}
+              >
+                {h}
+              </button>
+            );
+          })}
+        </div>
+        {dirty && (
+          <button
+            onClick={handleSaveHighlights}
+            disabled={setHighlights.isPending}
+            className="press bg-brand mb-4 w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {setHighlights.isPending ? '...' : t('teacher.save')}
+          </button>
+        )}
+        {!dirty && <div className="mb-4" />}
 
         {/* New badge form */}
         <p className="text-muted mb-2 text-xs font-semibold">{t('admin.teachers.award_badge')}</p>

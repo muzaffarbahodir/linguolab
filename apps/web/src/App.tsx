@@ -108,6 +108,9 @@ const TeacherStudentPage = lazy(() =>
 const TeacherProfilePage = lazy(() =>
   import('./pages/teachers/TeacherProfilePage').then((m) => ({ default: m.TeacherProfilePage })),
 );
+const TeachersPage = lazy(() =>
+  import('./pages/teachers/TeachersPage').then((m) => ({ default: m.TeachersPage })),
+);
 const TeacherStatsPage = lazy(() =>
   import('./pages/teacher/TeacherStats').then((m) => ({ default: m.TeacherStatsPage })),
 );
@@ -472,6 +475,7 @@ function AuthenticatedApp() {
               path="/teacher/lesson/:lessonId/attendance"
               element={<TeacherAttendancePage />}
             />
+            <Route path="/teachers" element={<TeachersPage />} />
             <Route path="/teachers/:teacherId" element={<TeacherProfilePage />} />
             <Route path="/teacher/homework" element={<TeacherPendingHwPage />} />
             <Route

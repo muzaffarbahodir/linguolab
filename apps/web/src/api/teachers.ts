@@ -38,6 +38,25 @@ export interface TeacherProfileClass {
   language: { id: string; flag_emoji: string; name_ru: string; color: string | null };
 }
 
+export interface SpokenLanguage {
+  name: string;
+  level: string;
+}
+
+export interface EducationEntry {
+  title: string;
+  org?: string;
+  year?: number;
+}
+
+export interface TeacherReview {
+  rating: number;
+  comment: string | null;
+  created_at: string | null;
+  class_title: string | null;
+  author: { name: string; avatar_url: string | null } | null;
+}
+
 export interface TeacherProfile {
   id: string;
   bio: string | null;
@@ -45,13 +64,28 @@ export interface TeacherProfile {
   website_url: string | null;
   instagram_url: string | null;
   telegram_url: string | null;
+  /** Строка-специализация под именем. */
+  headline: string | null;
+  intro_video_url: string | null;
+  intro_video_poster: string | null;
+  country: string | null;
+  experience_years: number | null;
+  specializations: string[];
+  /** Черты преподавателя — проставляет менеджер, не сам преподаватель. */
+  highlights: string[];
+  speaks: SpokenLanguage[];
+  education: EducationEntry[];
   avg_rating: number | null;
   ratings_count: number;
   stars_breakdown: { stars: number; count: number }[];
   level: TeacherLevel;
+  /** Проведённые уроки за всё время, включая закрытые курсы. */
+  lessons_conducted: number;
+  /** Сколько учеников занимается сейчас. */
+  students_count: number;
   badges: TeacherBadge[];
   classes: TeacherProfileClass[];
-  recent_reviews?: { rating: number; comment: string | null }[];
+  recent_reviews?: TeacherReview[];
   user: { id: string; first_name: string; last_name: string | null; avatar_url: string | null };
 }
 
@@ -241,21 +275,44 @@ export function useRemoveBadge() {
   });
 }
 
+export interface UpdateTeacherProfileInput {
+  bio?: string;
+  photo_url?: string | null;
+  website_url?: string;
+  instagram_url?: string;
+  telegram_url?: string;
+  headline?: string;
+  intro_video_url?: string | null;
+  intro_video_poster?: string | null;
+  country?: string;
+  experience_years?: number;
+  specializations?: string[];
+  speaks?: SpokenLanguage[];
+  education?: EducationEntry[];
+}
+
 export function useUpdateTeacherProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: {
-      bio?: string;
-      photo_url?: string | null;
-      website_url?: string;
-      instagram_url?: string;
-      telegram_url?: string;
-    }) => {
+    mutationFn: async (data: UpdateTeacherProfileInput) => {
       const res = await apiClient.patch('/teachers/profile', data);
       return res.data;
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['teachers'] });
     },
+  });
+}
+
+/** Черты преподавателя — доступно менеджеру, не самому преподавателю. */
+export function useSetTeacherHighlights() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teacherId, highlights }: { teacherId: string; highlights: string[] }) => {
+      const res = await apiClient.patch(`/teachers/${teacherId}/highlights`, { highlights });
+      return res.data;
+    },
+    onSuccess: (_data, vars) =>
+      void qc.invalidateQueries({ queryKey: ['teachers', vars.teacherId] }),
   });
 }

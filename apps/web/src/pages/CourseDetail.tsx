@@ -18,6 +18,7 @@ import {
   PlayCircle,
   FileText,
   ChevronDown,
+  ChevronRight,
   Trash2,
   EyeOff,
 } from 'lucide-react';
@@ -596,6 +597,7 @@ function TeacherClassCard({
   onEnroll: () => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { fmt, currency } = useCurrency();
   const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
   const levelColor = LEVEL_COLOR[cls.level] ?? accent;
@@ -620,7 +622,16 @@ function TeacherClassCard({
         </div>
       )}
       <div className="p-4">
-        <div className="mb-2 flex items-center gap-2.5">
+        {/*
+          Преподаватель — ссылка на профиль. Курс выбирают не только по цене:
+          прежде чем платить, человек хочет посмотреть, у кого будет учиться,
+          и послушать, как тот говорит.
+        */}
+        <button
+          type="button"
+          onClick={() => navigate(`/teachers/${cls.teacher.id}`)}
+          className="press mb-2 flex w-full items-center gap-2.5 text-left"
+        >
           {cls.teacher.user.avatar_url || cls.teacher.photo_url ? (
             <img
               src={cls.teacher.user.avatar_url ?? cls.teacher.photo_url ?? ''}
@@ -648,13 +659,14 @@ function TeacherClassCard({
               )}
             </div>
           </div>
+          <ChevronRight size={15} className="text-faint flex-none" />
           <span
             className="flex-none rounded-full px-2 py-0.5 text-xs font-bold text-white"
             style={{ backgroundColor: levelColor }}
           >
             {cls.level}
           </span>
-        </div>
+        </button>
 
         <p className="mb-1 text-sm font-semibold">{cls.title}</p>
 

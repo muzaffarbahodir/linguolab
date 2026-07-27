@@ -6,6 +6,73 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { UpdateTeacherProfileDto } from './dto/update-teacher-profile.dto';
+
+/** Язык, которым владеет преподаватель: «English — C2». */
+export interface SpokenLanguage {
+  name: string;
+  level: string;
+}
+
+/** Строка образования: «Магистр филологии, НУУз, 2018». */
+export interface EducationEntry {
+  title: string;
+  org?: string;
+  year?: number;
+}
+
+/**
+ * Разбирает Json-поле в список объектов заданной формы.
+ *
+ * Данные в Json попадают через API и переживают миграции схемы, поэтому
+ * доверять их форме нельзя: кривая запись должна выпасть из выдачи, а не
+ * уронить весь профиль.
+ */
+function parseJsonList<T>(raw: unknown, pick: (item: Record<string, unknown>) => T | null): T[] {
+  if (!Array.isArray(raw)) return [];
+  const out: T[] = [];
+  for (const item of raw.slice(0, 30)) {
+    if (!item || typeof item !== 'object') continue;
+    const value = pick(item as Record<string, unknown>);
+    if (value) out.push(value);
+  }
+  return out;
+}
+
+function parseSpeaks(raw: unknown): SpokenLanguage[] {
+  return parseJsonList(raw, (d) =>
+    typeof d.name === 'string' && d.name.trim()
+      ? {
+          name: d.name.slice(0, 60),
+          level: typeof d.level === 'string' ? d.level.slice(0, 30) : '',
+        }
+      : null,
+  );
+}
+
+function parseEducation(raw: unknown): EducationEntry[] {
+  return parseJsonList(raw, (d) =>
+    typeof d.title === 'string' && d.title.trim()
+      ? {
+          title: d.title.slice(0, 160),
+          org: typeof d.org === 'string' ? d.org.slice(0, 160) : undefined,
+          year: typeof d.year === 'number' && Number.isInteger(d.year) ? d.year : undefined,
+        }
+      : null,
+  );
+}
+
+/**
+ * Имя автора отзыва для публичной страницы: «Азиз К.».
+ *
+ * Профиль открыт без авторизации, и выкладывать фамилии учеников целиком в
+ * открытый доступ незачем — первой буквы хватает, чтобы отзывы не выглядели
+ * анонимными.
+ */
+function reviewerName(first: string, last: string | null): string {
+  const initial = last?.trim()?.[0];
+  return initial ? `${first} ${initial}.` : first;
+}
 
 /** Вычисляет уровень учителя на основе среднего рейтинга и числа оценок */
 function computeTeacherLevel(avgRating: number | null, ratingsCount: number) {
@@ -57,7 +124,73 @@ export class TeachersService {
       },
     });
 
-    return teachers.map((t) => this.formatTeacher(t));
+    const stats = await this.loadStats(teachers.map((t) => t.id));
+    return teachers.map((t) => this.formatTeacher(t, false, stats.get(t.id)));
+  }
+
+  /**
+   * Считает по преподавателям проведённые уроки и число учеников.
+   *
+   * Обе цифры — главный аргумент витрины: «511 уроков» говорит о человеке
+   * больше, чем звёзды, которые легко набрать на пяти отзывах.
+   *
+   * Уроки берутся по всем классам, включая закрытые: курс закончился, а
+   * проведённые занятия из опыта преподавателя никуда не делись. Ученики,
+   * наоборот, считаются только по активным записям — это «сейчас учится
+   * столько-то», а не «когда-либо приходило».
+   */
+  private async loadStats(
+    teacherIds: string[],
+  ): Promise<Map<string, { lessons_conducted: number; students_count: number }>> {
+    const result = new Map<string, { lessons_conducted: number; students_count: number }>();
+    if (teacherIds.length === 0) return result;
+
+    // Классы отдельным запросом: уроки и записи связаны с преподавателем через
+    // класс, и без этой карты пришлось бы делать по запросу на преподавателя.
+    const classes = await this.prisma.class.findMany({
+      where: { teacher_id: { in: teacherIds } },
+      select: { id: true, teacher_id: true },
+    });
+    const classToTeacher = new Map(classes.map((c) => [c.id, c.teacher_id]));
+    const classIds = classes.map((c) => c.id);
+
+    for (const id of teacherIds) result.set(id, { lessons_conducted: 0, students_count: 0 });
+    if (classIds.length === 0) return result;
+
+    const [lessonGroups, enrollments] = await Promise.all([
+      this.prisma.lesson.groupBy({
+        by: ['class_id'],
+        where: { class_id: { in: classIds }, status: 'COMPLETED' },
+        _count: { _all: true },
+      }),
+      // distinct на уровне БД сгруппировал бы по паре (студент, класс), а один
+      // ученик может ходить к преподавателю на два курса. Считаем множеством.
+      this.prisma.enrollment.findMany({
+        where: { class_id: { in: classIds }, status: 'ACTIVE' },
+        select: { student_id: true, class_id: true },
+      }),
+    ]);
+
+    for (const g of lessonGroups) {
+      const teacherId = classToTeacher.get(g.class_id);
+      const row = teacherId && result.get(teacherId);
+      if (row) row.lessons_conducted += g._count._all;
+    }
+
+    const students = new Map<string, Set<string>>();
+    for (const e of enrollments) {
+      const teacherId = classToTeacher.get(e.class_id);
+      if (!teacherId) continue;
+      const set = students.get(teacherId) ?? new Set<string>();
+      set.add(e.student_id);
+      students.set(teacherId, set);
+    }
+    for (const [teacherId, set] of students) {
+      const row = result.get(teacherId);
+      if (row) row.students_count = set.size;
+    }
+
+    return result;
   }
 
   /**
@@ -75,7 +208,18 @@ export class TeachersService {
             avatar_url: true,
           },
         },
-        ratings: { select: { rating: true, comment: true, created_at: true } },
+        ratings: {
+          select: {
+            rating: true,
+            comment: true,
+            created_at: true,
+            // Отзыв без автора и курса читается как выдуманный — а именно
+            // отзывы решают, запишется студент или закроет страницу.
+            student: { select: { first_name: true, last_name: true, avatar_url: true } },
+            class: { select: { title: true } },
+          },
+          orderBy: { created_at: 'desc' },
+        },
         badges: {
           orderBy: { awarded_at: 'desc' },
         },
@@ -107,7 +251,8 @@ export class TeachersService {
 
     if (!teacher) throw new NotFoundException('Teacher not found');
 
-    return this.formatTeacher(teacher, true);
+    const stats = await this.loadStats([teacher.id]);
+    return this.formatTeacher(teacher, true, stats.get(teacher.id));
   }
 
   /**
@@ -131,8 +276,23 @@ export class TeachersService {
       website_url?: string | null;
       instagram_url?: string | null;
       telegram_url?: string | null;
+      headline?: string | null;
+      intro_video_url?: string | null;
+      intro_video_poster?: string | null;
+      country?: string | null;
+      experience_years?: number | null;
+      specializations?: string[];
+      highlights?: string[];
+      speaks?: unknown;
+      education?: unknown;
       user: { id: string; first_name: string; last_name: string | null; avatar_url: string | null };
-      ratings: { rating: number; comment?: string | null; created_at?: Date }[];
+      ratings: {
+        rating: number;
+        comment?: string | null;
+        created_at?: Date;
+        student?: { first_name: string; last_name: string | null; avatar_url: string | null };
+        class?: { title: string };
+      }[];
       badges: {
         id: string;
         title: string;
@@ -156,6 +316,7 @@ export class TeachersService {
       }[];
     },
     includeRecentRatings = false,
+    stats?: { lessons_conducted: number; students_count: number },
   ) {
     const ratingsCount = t.ratings.length;
     const avgRating =
@@ -195,17 +356,39 @@ export class TeachersService {
       website_url: t.website_url,
       instagram_url: t.instagram_url,
       telegram_url: t.telegram_url,
+      headline: t.headline ?? null,
+      intro_video_url: t.intro_video_url ?? null,
+      intro_video_poster: t.intro_video_poster ?? null,
+      country: t.country ?? null,
+      experience_years: t.experience_years ?? null,
+      specializations: t.specializations ?? [],
+      highlights: t.highlights ?? [],
+      speaks: parseSpeaks(t.speaks),
+      education: parseEducation(t.education),
       avg_rating: avgRating,
       ratings_count: ratingsCount,
       stars_breakdown: stars,
       level,
+      lessons_conducted: stats?.lessons_conducted ?? 0,
+      students_count: stats?.students_count ?? 0,
       badges: t.badges,
       classes: classesFormatted,
       recent_reviews: includeRecentRatings
         ? t.ratings
-            .filter((r) => r.comment)
-            .slice(0, 5)
-            .map((r) => ({ rating: r.rating, comment: r.comment }))
+            .filter((r) => r.comment?.trim())
+            .slice(0, 10)
+            .map((r) => ({
+              rating: r.rating,
+              comment: r.comment,
+              created_at: r.created_at ?? null,
+              class_title: r.class?.title ?? null,
+              author: r.student
+                ? {
+                    name: reviewerName(r.student.first_name, r.student.last_name),
+                    avatar_url: r.student.avatar_url,
+                  }
+                : null,
+            }))
         : undefined,
     };
   }
@@ -319,16 +502,7 @@ export class TeachersService {
   /**
    * PATCH /teachers/:teacherId — учитель обновляет свой профиль.
    */
-  async updateProfile(
-    userId: string,
-    data: {
-      bio?: string;
-      photo_url?: string | null;
-      website_url?: string;
-      instagram_url?: string;
-      telegram_url?: string;
-    },
-  ) {
+  async updateProfile(userId: string, data: UpdateTeacherProfileDto) {
     const teacher = await this.prisma.teacher.findUnique({ where: { user_id: userId } });
     if (!teacher) throw new NotFoundException('Teacher profile not found');
 
@@ -340,6 +514,19 @@ export class TeachersService {
         website_url: data.website_url,
         instagram_url: data.instagram_url,
         telegram_url: data.telegram_url,
+        headline: data.headline,
+        intro_video_url: data.intro_video_url,
+        intro_video_poster: data.intro_video_poster,
+        country: data.country,
+        experience_years: data.experience_years,
+        // Массивы и Json перезаписываются целиком: форма редактирования шлёт
+        // полный список, и точечное добавление здесь только запутало бы.
+        specializations: data.specializations,
+        // Раскладываем по полям, а не кладём объекты DTO целиком: в Json должна
+        // попасть ровно описанная форма, а не то, что класс-валидатор оставил
+        // на экземпляре.
+        speaks: data.speaks?.map((s) => ({ name: s.name, level: s.level })),
+        education: data.education?.map((e) => ({ title: e.title, org: e.org, year: e.year })),
       },
       select: {
         id: true,
@@ -348,7 +535,41 @@ export class TeachersService {
         website_url: true,
         instagram_url: true,
         telegram_url: true,
+        headline: true,
+        intro_video_url: true,
+        intro_video_poster: true,
+        country: true,
+        experience_years: true,
+        specializations: true,
+        highlights: true,
+        speaks: true,
+        education: true,
       },
+    });
+  }
+
+  /**
+   * PATCH /teachers/:teacherId/highlights — менеджер задаёт черты преподавателя.
+   *
+   * Отдельно от остального профиля и намеренно недоступно самому
+   * преподавателю: «терпеливый» и «структурный» — это оценка со стороны, и
+   * если её можно поставить себе самому, она перестаёт что-либо значить.
+   */
+  async setHighlights(teacherId: string, highlights: string[]) {
+    const teacher = await this.prisma.teacher.findUnique({ where: { id: teacherId } });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    return this.prisma.teacher.update({
+      where: { id: teacherId },
+      data: {
+        // Чистим до обрезки, иначе пустая строка занимает одно из шести мест
+        // и вытесняет настоящую черту.
+        highlights: highlights
+          .map((h) => h.trim().slice(0, 40))
+          .filter(Boolean)
+          .slice(0, 6),
+      },
+      select: { id: true, highlights: true },
     });
   }
 

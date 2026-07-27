@@ -15,6 +15,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RequestUser } from '../auth/strategies/jwt.strategy';
 import { TeachersService } from './teachers.service';
+import { SetHighlightsDto, UpdateTeacherProfileDto } from './dto/update-teacher-profile.dto';
 
 @Controller('teachers')
 export class TeachersController {
@@ -40,22 +41,24 @@ export class TeachersController {
 
   /**
    * PATCH /teachers/profile — учитель обновляет свой профиль.
-   * Body: { bio?, photo_url?, website_url?, instagram_url?, telegram_url? }
+   *
+   * Черты (highlights) сюда не входят намеренно: их ставит менеджер отдельным
+   * эндпоинтом ниже.
    */
   @Patch('profile')
   @Roles(Role.TEACHER)
-  updateProfile(
-    @CurrentUser() user: RequestUser,
-    @Body()
-    body: {
-      bio?: string;
-      photo_url?: string | null;
-      website_url?: string;
-      instagram_url?: string;
-      telegram_url?: string;
-    },
-  ) {
+  updateProfile(@CurrentUser() user: RequestUser, @Body() body: UpdateTeacherProfileDto) {
     return this.teachersService.updateProfile(user.id, body);
+  }
+
+  /**
+   * PATCH /teachers/:teacherId/highlights — менеджер задаёт черты преподавателя.
+   * Body: { highlights: string[] }
+   */
+  @Patch(':teacherId/highlights')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  setHighlights(@Param('teacherId') teacherId: string, @Body() body: SetHighlightsDto) {
+    return this.teachersService.setHighlights(teacherId, body.highlights);
   }
 
   /**
