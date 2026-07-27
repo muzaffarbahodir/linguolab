@@ -9,6 +9,7 @@ import { useUpcomingLesson } from '../api/lessons';
 import { useLanguages } from '../api/languages';
 import { useProgress, calcProgress } from '../api/users';
 import { QuickActionsSheet } from '../components/QuickActionsSheet';
+import { Button, Card, SectionHeader } from '../components/ui';
 import i18n from '../lib/i18n';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -45,29 +46,24 @@ function ProgressCard() {
   const done = percent >= 100;
 
   return (
-    <div className="glass-card rounded-2xl p-4">
+    <Card>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-tg-text text-sm font-medium">{t('home.progress')}</span>
-        {isLoading ? (
-          <div className="skeleton h-5 w-10 rounded" />
-        ) : (
-          <span className="text-brand-400 text-2xl font-bold tabular-nums leading-none">
-            {percent}
-            <span className="text-base">%</span>
-          </span>
-        )}
+        <span className="text-sm font-medium text-[color:var(--text)]">{t('home.progress')}</span>
+        <span className="text-brand-400 text-2xl font-bold tabular-nums leading-none">
+          {percent}
+          <span className="text-base">%</span>
+        </span>
       </div>
       <div className="bg-hairline h-2.5 w-full overflow-hidden rounded-full">
         <div
-          className="h-2.5 rounded-full transition-[width] duration-700 ease-out"
+          className="bg-brand h-2.5 rounded-full transition-[width] duration-700 ease-out"
           style={{
             width: `${fill}%`,
-            background: 'linear-gradient(90deg,#6366f1,#a5b4fc)',
-            boxShadow: done ? '0 0 12px rgba(129,140,248,0.6)' : 'none',
+            boxShadow: done ? '0 0 12px rgb(var(--brand-rgb)/0.6)' : undefined,
           }}
         />
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -77,10 +73,10 @@ function LessonCard() {
 
   if (isLoading) {
     return (
-      <div className="glass-card rounded-2xl p-4">
+      <Card>
         <div className="skeleton mb-2 h-4 w-1/3 rounded" />
         <div className="skeleton h-4 w-2/3 rounded" />
-      </div>
+      </Card>
     );
   }
 
@@ -88,28 +84,27 @@ function LessonCard() {
     return null;
   }
 
-  const color = lesson.language.color ?? '#6366f1';
+  const color = lesson.language.color ?? 'rgb(var(--brand-rgb))';
 
   return (
-    <div
-      className="rounded-2xl p-4"
-      style={{ backgroundColor: color + '22', borderLeft: `4px solid ${color}` }}
-    >
-      <p className="text-tg-hint text-eyebrow mb-1.5">{t('home.upcoming_lesson')}</p>
+    // Цвет языка остаётся акцентной полосой слева, но подложка теперь плотная:
+    // ближайший урок и так выделен позицией, заливать его цветом не нужно.
+    <Card className="border-l-4" style={{ borderLeftColor: color }}>
+      <p className="text-eyebrow text-muted mb-1.5">{t('home.upcoming_lesson')}</p>
       <div className="flex items-center gap-2">
         <span className="text-2xl">{lesson.language.flag_emoji}</span>
         <div>
           <p className="font-semibold">{lesson.language.name_ru}</p>
-          <p className="text-tg-hint text-sm">
+          <p className="text-muted text-sm">
             {t('home.with_teacher', { name: lesson.teacher.name })}
           </p>
         </div>
       </div>
-      <p className="text-tg-hint mt-2 text-xs">
+      <p className="text-muted mt-2 text-xs">
         <Clock size={13} className="mb-0.5 mr-1 inline" />
         {formatLessonTime(lesson.scheduled_at)} · {t('home.min', { n: lesson.duration_minutes })}
       </p>
-    </div>
+    </Card>
   );
 }
 
@@ -132,7 +127,7 @@ function LanguageScroll() {
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {languages.map((lang) => {
-        const bg = lang.color ?? '#6366f1';
+        const bg = lang.color ?? 'rgb(var(--brand-rgb))';
         const img = lang.image_url ?? null;
         return (
           <button
@@ -176,10 +171,10 @@ export function HomePage() {
 
   return (
     <div className="stagger flex flex-col gap-5 px-4 pt-6">
-      {/* Greeting */}
-      <div className="glass-card relative overflow-hidden rounded-3xl px-5 py-6">
-        <div className="deco-orb" style={{ background: '#818cf8', top: -50, right: -20 }} />
-        <div className="relative flex items-center gap-3.5">
+      {/* Приветствие — единственный блок с брендовой заливкой на экране,
+          поэтому взгляд идёт к нему первым без всяких блюров и орбов. */}
+      <Card padding="lg" className="border-brand/20 bg-brand/10">
+        <div className="flex items-center gap-3.5">
           {photo ? (
             <img
               src={photo}
@@ -192,43 +187,36 @@ export function HomePage() {
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-tg-hint text-eyebrow">{greeting}</p>
-            <h1 className="shimmer-brand-text text-display truncate">{firstName}</h1>
+            <p className="text-eyebrow text-muted">{greeting}</p>
+            <h1 className="text-display truncate">{firstName}</h1>
           </div>
         </div>
-        <p className="text-tg-hint relative mt-3 text-sm">{t('home.subtitle')}</p>
-      </div>
+        <p className="text-muted mt-3 text-sm">{t('home.subtitle')}</p>
+      </Card>
 
-      {/* Progress */}
       <ProgressCard />
 
-      {/* Upcoming lesson */}
       <LessonCard />
 
-      {/* Languages */}
       <div>
-        <h2 className="text-title mb-3">{t('home.available_languages')}</h2>
+        <SectionHeader title={t('home.available_languages')} />
         <LanguageScroll />
       </div>
 
-      {/* CTA buttons */}
       <div className="flex gap-3">
-        <button
-          onClick={() => navigate('/book')}
-          className="glass-btn press flex-1 rounded-2xl py-3.5 font-semibold"
-        >
+        <Button size="lg" onClick={() => navigate('/book')}>
           {t('home.enroll')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() => setSheetOpen(true)}
-          className="glass-card press flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
           aria-label={t('home.quick_actions_label')}
+          className="h-12 w-12 shrink-0 px-0 py-0"
         >
-          <Zap size={20} style={{ color: 'var(--brand)' }} />
-        </button>
+          <Zap size={20} className="text-brand-400" />
+        </Button>
       </div>
 
-      {/* Quick actions sheet */}
       <QuickActionsSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
     </div>
   );
