@@ -11,6 +11,7 @@
 export { Badge, type BadgeProps } from './Badge';
 export { Button, type ButtonProps } from './Button';
 export { Card, type CardProps } from './Card';
+export { ChoiceCard, type ChoiceCardProps } from './ChoiceCard';
 export { ListGroup, ListRow, type ListRowProps } from './ListRow';
 export { SectionHeader, type SectionHeaderProps } from './SectionHeader';
 export { cx } from './cx';

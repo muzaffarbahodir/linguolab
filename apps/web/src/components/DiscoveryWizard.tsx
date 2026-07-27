@@ -1,24 +1,19 @@
 /**
- * DiscoveryWizard — опрос подбора курса (показывается новому клиенту 1 раз).
- * Шаг 1: онлайн/очно (обязательно). Шаг 2: категория (можно пропустить).
- * Шаг 3: индивидуально/группа (можно пропустить, рекомендуем индивид).
+ * DiscoveryWizard — подбор курса для нового клиента (показывается один раз).
+ *
+ * Не карусель «полистай про наши преимущества», а воронка выбора: на каждом
+ * экране нужно что-то выбрать. Так человек вовлекается, а мы попутно узнаём
+ * формат, направление и предпочтения — вместо того чтобы спрашивать это потом.
+ *
+ * Шаг 1: онлайн/очно (обязательно)
+ * Шаг 2: категория (можно пропустить)
+ * Шаг 3: индивидуально/группа (можно пропустить)
+ * Шаг 4: что будет на первом занятии — снимает главный страх новичка
+ *
  * По завершении сохраняет преференсы (PATCH /users/me/discovery) → onDone().
  */
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import WebApp from '@twa-dev/sdk';
-import {
-  Globe,
-  School,
-  User,
-  Users,
-  TrendingUp,
-  Languages as LanguagesIcon,
-  GraduationCap,
-  Ruler,
-  BookOpen,
-  Landmark,
-  Award,
-} from 'lucide-react';
 
 import { useLanguages, CATEGORY_ORDER, type LanguageCategory } from '../api/languages';
 import {
@@ -27,16 +22,7 @@ import {
   type StudyMode,
   type DiscoveryInput,
 } from '../api/users';
-
-/** Иконка категории (lucide). */
-const CATEGORY_ICON: Record<LanguageCategory, ReactNode> = {
-  LANGUAGES: <LanguagesIcon size={22} />,
-  IELTS: <GraduationCap size={22} />,
-  SAT: <Ruler size={22} />,
-  CEFR: <BookOpen size={22} />,
-  DTM: <Landmark size={22} />,
-  MILLIY_SERTIFIKAT: <Award size={22} />,
-};
+import { Button, ChoiceCard } from './ui';
 
 const CATEGORY_FULL: Record<LanguageCategory, string> = {
   LANGUAGES: 'Языки',
@@ -47,6 +33,38 @@ const CATEGORY_FULL: Record<LanguageCategory, string> = {
   MILLIY_SERTIFIKAT: 'Milliy sertifikat',
 };
 
+const CATEGORY_DESC: Record<LanguageCategory, string> = {
+  LANGUAGES: 'Английский, французский, китайский и другие',
+  IELTS: 'Подготовка к международному экзамену',
+  SAT: 'Для поступления в зарубежные вузы',
+  CEFR: 'Общеевропейские уровни A1–C2',
+  DTM: 'Подготовка к государственному тестированию',
+  MILLIY_SERTIFIKAT: 'Национальный сертификат по языку',
+};
+
+const CATEGORY_ART: Record<LanguageCategory, string> = {
+  LANGUAGES: '🌍',
+  IELTS: '🎓',
+  SAT: '📐',
+  CEFR: '📘',
+  DTM: '🏛️',
+  MILLIY_SERTIFIKAT: '🏅',
+};
+
+/**
+ * Цвет закреплён за смыслом, а не выбирается на глаз при вёрстке. Одна
+ * категория — один оттенок во всём приложении: так цвет помогает узнавать
+ * раздел, а не превращает экран в витрину красок.
+ */
+const CATEGORY_TINT: Record<LanguageCategory, string> = {
+  LANGUAGES: '#6C5CE7',
+  IELTS: '#0EA5E9',
+  SAT: '#F59E0B',
+  CEFR: '#10B981',
+  DTM: '#EC4899',
+  MILLIY_SERTIFIKAT: '#8B5CF6',
+};
+
 export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
   const { data: languages } = useLanguages();
   const save = useSaveDiscovery();
@@ -54,6 +72,7 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
   const [format, setFormat] = useState<StudyFormat | null>(null);
   const [category, setCategory] = useState<LanguageCategory | null>(null);
+  const [mode, setMode] = useState<StudyMode | null>(null);
 
   // Категории, у которых есть хотя бы одно направление.
   const categories = useMemo(() => {
@@ -63,45 +82,46 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
 
   const tap = () => WebApp.HapticFeedback?.selectionChanged?.();
 
-  const finish = (mode: StudyMode | null) => {
+  /** Выбор сохраняется на последнем шаге — до него человек может передумать. */
+  const finish = () => {
     if (!format || save.isPending) return;
     const dto: DiscoveryInput = {
       study_format: format,
       study_mode: mode,
       preferred_category: category,
     };
+    WebApp.HapticFeedback?.notificationOccurred?.('success');
     save.mutate(dto, { onSuccess: onDone, onError: onDone });
   };
 
+  const TOTAL = 4;
+
   return (
-    <div className="glass-fade-in flex min-h-[80vh] flex-col px-4 pt-6">
-      {/* Прогресс */}
-      <div className="mb-6 flex gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className={`h-1.5 flex-1 rounded-full ${i <= step ? 'bg-brand' : 'bg-hairline'}`}
-          />
+    <div className="flex min-h-[85vh] flex-col px-4 pb-8 pt-6">
+      <div className="mb-7 flex gap-1.5">
+        {Array.from({ length: TOTAL }, (_, i) => (
+          <div key={i} className={cxProgress(i <= step)} />
         ))}
       </div>
 
-      {/* Шаг 1 — формат (обязательно) */}
       {step === 0 && (
         <Step title="Как удобнее учиться?" subtitle="Выберите формат занятий">
-          <BigOption
-            icon={<Globe size={22} />}
+          <ChoiceCard
             title="Онлайн"
-            desc="Из дома, по видеосвязи"
+            description="Из дома, по видеосвязи. Не нужно никуда ехать."
+            art="💻"
+            tint="#0EA5E9"
             onClick={() => {
               tap();
               setFormat('ONLINE');
               setStep(1);
             }}
           />
-          <BigOption
-            icon={<School size={22} />}
+          <ChoiceCard
             title="Очно"
-            desc="В учебном центре"
+            description="В учебном центре, рядом с преподавателем и группой."
+            art="🏫"
+            tint="#6C5CE7"
             onClick={() => {
               tap();
               setFormat('OFFLINE');
@@ -111,23 +131,22 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
         </Step>
       )}
 
-      {/* Шаг 2 — категория (можно пропустить) */}
       {step === 1 && (
         <Step title="Что хотите изучать?" subtitle="Поможем подобрать направление">
-          <div className="flex flex-col gap-2.5">
-            {categories.map((c) => (
-              <BigOption
-                key={c}
-                icon={CATEGORY_ICON[c]}
-                title={CATEGORY_FULL[c]}
-                onClick={() => {
-                  tap();
-                  setCategory(c);
-                  setStep(2);
-                }}
-              />
-            ))}
-          </div>
+          {categories.map((c) => (
+            <ChoiceCard
+              key={c}
+              title={CATEGORY_FULL[c]}
+              description={CATEGORY_DESC[c]}
+              art={CATEGORY_ART[c]}
+              tint={CATEGORY_TINT[c]}
+              onClick={() => {
+                tap();
+                setCategory(c);
+                setStep(2);
+              }}
+            />
+          ))}
           <SkipLink
             onClick={() => {
               tap();
@@ -138,44 +157,75 @@ export function DiscoveryWizard({ onDone }: { onDone: () => void }) {
         </Step>
       )}
 
-      {/* Шаг 3 — индивид/группа (можно пропустить, рекомендуем индивид) */}
       {step === 2 && (
-        <Step title="Индивидуально или в группе?" subtitle="Можно изменить позже">
-          <div className="bg-brand/10 border-brand/20 mb-3 rounded-2xl border p-3">
-            <p className="flex items-center gap-2 text-sm font-semibold">
-              <TrendingUp size={16} style={{ color: 'var(--brand)' }} />
-              Индивидуально — эффективнее
-            </p>
-            <p className="text-muted mt-1 text-xs">
-              По нашей статистике до 98% учеников на индивидуальных занятиях достигают цели быстрее.
-            </p>
-          </div>
-          <BigOption
-            icon={<User size={22} />}
+        <Step title="Индивидуально или в группе?" subtitle="Это можно изменить позже">
+          <ChoiceCard
             title="Индивидуально"
-            desc="Рекомендуем · максимум результата"
-            recommended
+            description="Программа под вас и максимум внимания преподавателя."
+            art="🎯"
+            tint="#10B981"
+            ribbon="рекомендуем"
             onClick={() => {
               tap();
-              finish('INDIVIDUAL');
+              setMode('INDIVIDUAL');
+              setStep(3);
             }}
           />
-          <BigOption
-            icon={<Users size={22} />}
+          <ChoiceCard
             title="В группе"
-            desc="Дешевле, учимся вместе"
+            description="Дешевле, и учиться вместе с другими интереснее."
+            art="👥"
+            tint="#6C5CE7"
             onClick={() => {
               tap();
-              finish('GROUP');
+              setMode('GROUP');
+              setStep(3);
             }}
           />
-          <SkipLink label="Пропустить и показать всё" onClick={() => finish(null)} />
+          <SkipLink
+            label="Пропустить и показать всё"
+            onClick={() => {
+              tap();
+              setMode(null);
+              setStep(3);
+            }}
+          />
         </Step>
       )}
 
-      {save.isPending && <p className="text-muted mt-4 text-center text-sm">Сохраняем…</p>}
+      {/* Последний экран отвечает на вопрос, который держит новичка сильнее
+          цены: «а что вообще будет происходить?». Конкретика тут работает
+          лучше любых обещаний. */}
+      {step === 3 && (
+        <Step title="Что будет на первом занятии?" subtitle="Три шага, всё займёт около часа">
+          <ol className="border-hairline bg-surface flex flex-col gap-4 rounded-3xl border p-5">
+            {[
+              'Определим ваш уровень и цели — без оценок и экзаменов.',
+              'Покажем, как проходит занятие и как пользоваться приложением.',
+              'Подберём преподавателя и составим программу под вас.',
+            ].map((text, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="bg-brand/15 text-brand-400 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold">
+                  {i + 1}
+                </span>
+                <span className="pt-0.5 text-sm leading-snug text-[color:var(--text)]">{text}</span>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-auto pt-6">
+            <Button size="lg" onClick={finish} loading={save.isPending}>
+              Подобрать курс
+            </Button>
+          </div>
+        </Step>
+      )}
     </div>
   );
+}
+
+function cxProgress(filled: boolean): string {
+  return `h-1.5 flex-1 rounded-full ${filled ? 'bg-brand' : 'bg-hairline'}`;
 }
 
 function Step({
@@ -185,55 +235,24 @@ function Step({
 }: {
   title: string;
   subtitle: string;
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="glass-fade-in flex flex-col gap-3">
-      <div>
-        <h1 className="text-xl font-bold">{title}</h1>
-        <p className="text-muted mt-1 text-sm">{subtitle}</p>
+    <div className="flex flex-1 flex-col gap-3">
+      <div className="mb-2">
+        {/* Заголовок крупный: на экране выбора он единственная точка входа
+            в смысл, и мелкий кегль превращает шаг в анкету. */}
+        <h1 className="text-3xl font-bold leading-tight text-[color:var(--text)]">{title}</h1>
+        <p className="text-muted mt-2 text-base">{subtitle}</p>
       </div>
-      <div className="mt-2 flex flex-col gap-2.5">{children}</div>
+      <div className="flex flex-1 flex-col gap-3">{children}</div>
     </div>
-  );
-}
-
-function BigOption({
-  icon,
-  title,
-  desc,
-  recommended,
-  onClick,
-}: {
-  icon?: ReactNode;
-  title: string;
-  desc?: string;
-  recommended?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`press flex w-full items-center gap-3 rounded-2xl p-4 text-left ${
-        recommended ? 'border-brand bg-brand/10 border-2' : 'glass-card'
-      }`}
-    >
-      {icon && (
-        <span className="shrink-0" style={{ color: 'var(--brand)' }}>
-          {icon}
-        </span>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold">{title}</p>
-        {desc && <p className="text-muted truncate text-xs">{desc}</p>}
-      </div>
-    </button>
   );
 }
 
 function SkipLink({ label = 'Пропустить', onClick }: { label?: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="text-muted press mx-auto mt-4 py-2 text-sm font-medium">
+    <button onClick={onClick} className="press text-muted mx-auto mt-2 py-2 text-sm font-medium">
       {label} →
     </button>
   );
