@@ -16,6 +16,7 @@ import {
   useAdminUser,
   useActivateUser,
   useChangeUserRole,
+  useResetOnboarding,
   type Role,
   type AdminUser,
   type AdminUserDetail,
@@ -327,6 +328,7 @@ function UserDetailSheet({
 }) {
   const { t, i18n } = useTranslation();
   const { data: u, isLoading } = useAdminUser(id);
+  const isSuperAdmin = useAuthStore((s) => s.user?.role) === 'SUPER_ADMIN';
 
   const fmtDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString(i18n.language) : null;
@@ -399,6 +401,12 @@ function UserDetailSheet({
               >
                 {t('admin.users.role_btn')}
               </button>
+            )}
+
+            {/* Себе сбросить нельзя: действие снимает is_active, а супер-админ
+                потеряет доступ к панели — в том числе к кнопке отмены. */}
+            {isSuperAdmin && u.role !== 'SUPER_ADMIN' && (
+              <ResetOnboardingButton userId={u.id} name={u.first_name} />
             )}
           </>
         )}
@@ -489,6 +497,66 @@ function UserCard({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Сброс онбординга — возвращает пользователя к первому запуску, чтобы можно
+ * было проверить выбор роли и мастер подбора на живом приложении.
+ *
+ * С подтверждением: человек, которого сбросили, при следующем открытии
+ * попадёт не в свой кабинет, а на экран выбора роли. Для чужого аккаунта это
+ * неожиданно, поэтому случайное нажатие должно стоить одного лишнего шага.
+ */
+function ResetOnboardingButton({ userId, name }: { userId: string; name: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const reset = useResetOnboarding();
+
+  if (reset.isSuccess) {
+    return (
+      <p className="text-ok py-3 text-center text-sm font-semibold">
+        Онбординг сброшен — {name} пройдёт его заново при следующем входе
+      </p>
+    );
+  }
+
+  if (!confirming) {
+    return (
+      <button
+        onClick={() => setConfirming(true)}
+        className="border-hairline text-muted press w-full rounded-2xl border py-3 text-sm font-semibold"
+      >
+        Сбросить онбординг
+      </button>
+    );
+  }
+
+  return (
+    <div className="border-warn/30 bg-warn/10 flex flex-col gap-2 rounded-2xl border p-3">
+      <p className="text-xs leading-snug">
+        <b>{name}</b> при следующем входе снова увидит выбор роли и подбор курса. Записи на курсы,
+        платежи и посещаемость останутся на месте.
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setConfirming(false)}
+          className="bg-surface-2 press flex-1 rounded-xl py-2 text-xs font-semibold"
+        >
+          Отмена
+        </button>
+        <button
+          onClick={() => {
+            WebApp.HapticFeedback?.notificationOccurred?.('warning');
+            reset.mutate(userId);
+          }}
+          disabled={reset.isPending}
+          className="bg-warn/20 text-warn press flex-1 rounded-xl py-2 text-xs font-semibold disabled:opacity-60"
+        >
+          {reset.isPending ? 'Сбрасываем…' : 'Сбросить'}
+        </button>
+      </div>
+      {reset.isError && <p className="text-danger text-xs">Не получилось — попробуйте ещё раз</p>}
     </div>
   );
 }

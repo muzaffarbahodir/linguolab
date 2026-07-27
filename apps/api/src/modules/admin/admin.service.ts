@@ -532,6 +532,49 @@ export class AdminService {
     return updated;
   }
 
+  /**
+   * Возвращает пользователя в состояние «зашёл впервые»: снова покажутся выбор
+   * роли и мастер подбора курса. Нужно, чтобы проверять онбординг на живом
+   * приложении — иначе увидеть его можно только с нового аккаунта.
+   *
+   * Трогает исключительно онбординг. Записи на курсы, платежи, посещаемость и
+   * баллы остаются на месте: это инструмент для проверки первого экрана, а не
+   * удаление человека.
+   */
+  async resetOnboarding(targetId: string, requesterId: string) {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, role: true, first_name: true, discovery_done_at: true },
+    });
+    if (!target) throw new NotFoundException('User not found');
+
+    // Сброс снимает is_active, а для SUPER_ADMIN это означает потерю доступа к
+    // панели — в том числе возможности отменить собственное действие.
+    if (target.role === Role.SUPER_ADMIN) {
+      throw new ForbiddenException('Нельзя сбросить онбординг супер-администратору');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetId },
+      data: {
+        discovery_done_at: null,
+        study_format: null,
+        study_mode: null,
+        preferred_category: null,
+        // Возвращает экран выбора роли. Он же сразу активирует аккаунт обратно,
+        // как только человек выберет роль, — тупика «ждите подтверждения» нет.
+        is_active: false,
+      },
+      select: { id: true, first_name: true, is_active: true, discovery_done_at: true },
+    });
+
+    void this.audit.log(requesterId, 'onboarding_reset', 'user', targetId, {
+      previous_discovery_done_at: target.discovery_done_at?.toISOString() ?? null,
+    });
+
+    return updated;
+  }
+
   // ─── Broadcast TG ───────────────────────────────────────────────────────────
 
   /**

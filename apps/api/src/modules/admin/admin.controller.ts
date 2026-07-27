@@ -223,6 +223,21 @@ export class AdminController {
     return this.adminService.changeRole(targetId, role, requester.id, requester.role);
   }
 
+  /**
+   * POST /admin/users/:id/reset-onboarding — SUPER_ADMIN.
+   *
+   * Возвращает пользователя к первому запуску: выбор роли + мастер подбора
+   * курса. Нужно, чтобы проверять онбординг на живом приложении.
+   *
+   * Только супер-админ: действие делает чужой аккаунт неактивным до следующего
+   * входа, и раздавать такое менеджерам незачем.
+   */
+  @Post('users/:id/reset-onboarding')
+  @Roles(Role.SUPER_ADMIN)
+  resetOnboarding(@CurrentUser() requester: RequestUser, @Param('id') targetId: string) {
+    return this.adminService.resetOnboarding(targetId, requester.id);
+  }
+
   // ─── Broadcast TG ───────────────────────────────────────────────────────────
 
   /**

@@ -181,6 +181,24 @@ export function useChangeUserRole() {
   });
 }
 
+/**
+ * Возвращает пользователя к первому запуску: выбор роли + мастер подбора курса.
+ * Учебные данные не трогает — нужно, чтобы проверять онбординг на живом
+ * приложении, а не заводить под каждую проверку новый аккаунт. SUPER_ADMIN.
+ */
+export function useResetOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.post(`/admin/users/${id}/reset-onboarding`);
+      return res.data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+}
+
 // ─── Students (MANAGER+) ─────────────────────────────────────────────────────
 
 export function useAdminStudents(page = 1, search?: string) {
