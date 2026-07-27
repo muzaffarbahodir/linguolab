@@ -5,6 +5,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TelegramModule } from '../telegram/telegram.module';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
+import { TeacherApplicationsService } from './teacher-applications.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { AdminService } from './admin.service';
     TelegramModule, // TelegramService (уже в NotificationsModule, но на всякий случай)
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [AdminService, TeacherApplicationsService],
 })
 export class AdminModule {}

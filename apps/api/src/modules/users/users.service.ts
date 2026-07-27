@@ -5,10 +5,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
-import type { StudyFormat, StudyMode, LanguageCategory } from '@prisma/client';
+import type { StudyFormat, StudyMode, LanguageCategory, TeacherWorkFormat } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DOCUMENT_LABEL, missingDocuments, sanitizeDocuments } from './teacher-documents';
 
 /** Roles that cannot be self-assigned through the admin activate endpoint */
 const PROTECTED_ROLES: Role[] = [Role.SUPER_ADMIN];
@@ -474,6 +475,8 @@ export class UsersService {
     userId: string,
     dto: {
       subject: string;
+      work_format?: TeacherWorkFormat;
+      documents?: unknown;
       age?: number | null;
       experience_years?: number | null;
       certificates?: string | null;
@@ -482,6 +485,19 @@ export class UsersService {
   ) {
     const subject = dto.subject?.trim();
     if (!subject) throw new BadRequestException('Укажите, что готовы преподавать');
+
+    const workFormat: TeacherWorkFormat = dto.work_format === 'OFFLINE' ? 'OFFLINE' : 'ONLINE';
+    const documents = sanitizeDocuments(dto.documents, userId);
+
+    // Комплектность проверяем здесь, а не на клиенте: набор зависит от формата
+    // работы, и заявка без нужных бумаг создаст менеджеру работу вместо того,
+    // чтобы её сократить.
+    const missing = missingDocuments(workFormat, documents);
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `Не хватает документов: ${missing.map((k) => DOCUMENT_LABEL[k]).join(', ')}`,
+      );
+    }
 
     const existing = await this.prisma.teacherApplication.findFirst({
       where: { user_id: userId, status: 'PENDING' },
@@ -499,6 +515,8 @@ export class UsersService {
         experience_years: dto.experience_years ?? null,
         certificates: dto.certificates?.trim() || null,
         about: dto.about?.trim() || null,
+        work_format: workFormat,
+        documents: documents as unknown as Prisma.InputJsonValue,
       },
       select: { id: true, status: true, created_at: true },
     });
@@ -514,6 +532,8 @@ export class UsersService {
     void this.notifications.notifyStaffNewRequest(
       '👨‍🏫 Заявка в преподаватели',
       `<b>${who}</b>${uname}\n` +
+        `Формат: <b>${workFormat === 'ONLINE' ? 'онлайн' : 'очно'}</b>, документов: ${documents.length}
+` +
         `Предмет: <b>${subject}</b>\n` +
         (dto.age ? `Возраст: ${dto.age}\n` : '') +
         (dto.experience_years ? `Опыт: ${dto.experience_years} г.\n` : '') +

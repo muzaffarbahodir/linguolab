@@ -49,6 +49,8 @@ export enum NotificationType {
   BROADCAST = 'broadcast',
   /** Новая заявка — менеджерам/админам (пробный, курс, перевод, тикет, запись) */
   STAFF_NEW_REQUEST = 'staff_new_request',
+  /** Кандидату в преподаватели: назначен созвон, принят или отказ */
+  TEACHER_APPLICATION = 'teacher_application',
   // ─── Статусные ────────────────────────────────────────────────────────────
   /** Зачисление подтверждено менеджером */
   ENROLLMENT_CONFIRMED = 'enrollment_confirmed',
@@ -114,6 +116,9 @@ export const DEDUP_TTL = {
   SUPPORT_TICKET_UPDATED: 3_600,
   CERTIFICATE_ISSUED: 86_400 * 30, // 30 дней — сертификат выдаётся один раз
   STAFF_NEW_REQUEST: 86_400, // 24ч — одна заявка = одно уведомление staff
+  // Решение по заявке приходит один раз, но переназначение созвона — новое
+  // событие, поэтому дедуп короткий и ключ включает саму новость.
+  TEACHER_APPLICATION: 3_600,
 } as const;
 
 // ─── Имя очереди для retention-джобов ─────────────────────────────────────────

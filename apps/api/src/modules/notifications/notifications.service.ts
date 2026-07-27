@@ -490,6 +490,29 @@ export class NotificationsService {
   // ─── Статусные уведомления ───────────────────────────────────────────────
 
   /** Зачисление подтверждено менеджером */
+  /**
+   * Кандидату в преподаватели: назначен созвон, принят или отказ.
+   * Текст задаёт вызывающий — формулировка решения принадлежит центру, а не
+   * очереди уведомлений.
+   */
+  async scheduleTeacherApplicationUpdate(
+    userId: string,
+    title: string,
+    body: string,
+    applicationId: string,
+    event: string,
+  ) {
+    await this.enqueue({
+      type: NotificationType.TEACHER_APPLICATION,
+      userId,
+      title,
+      body,
+      dedupKey: `notif:dedup:teacher_application:${applicationId}:${event}`,
+      dedupTtlSec: DEDUP_TTL.TEACHER_APPLICATION,
+      payload: { applicationId, event },
+    });
+  }
+
   async scheduleEnrollmentConfirmed(userId: string, classTitle: string, enrollmentId: string) {
     await this.enqueue({
       type: NotificationType.ENROLLMENT_CONFIRMED,

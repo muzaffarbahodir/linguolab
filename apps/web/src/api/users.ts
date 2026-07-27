@@ -219,8 +219,12 @@ export function useTeacherStatus() {
   });
 }
 
+export type TeacherWorkFormat = 'ONLINE' | 'OFFLINE';
+
 export interface TeacherApplicationInput {
   subject: string;
+  work_format: TeacherWorkFormat;
+  documents: { kind: string; key: string; url: string; filename: string }[];
   age?: number | null;
   experience_years?: number | null;
   certificates?: string | null;

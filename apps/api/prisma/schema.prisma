@@ -370,9 +370,19 @@ model Teacher {
 }
 
 enum TeacherApplicationStatus {
+  /// Подана, документы ещё не смотрели.
   PENDING
+  /// Документы приняты, назначен созвон.
+  INTERVIEW
   APPROVED
   REJECTED
+}
+
+/// Как кандидат собирается работать. От этого зависит набор документов:
+/// онлайн-преподаватель в офис не приедет, поэтому присылает всё цифрой.
+enum TeacherWorkFormat {
+  ONLINE
+  OFFLINE
 }
 
 /// Заявка «хочу преподавать» от человека, которого ещё нет среди учителей.
@@ -394,11 +404,23 @@ model TeacherApplication {
   certificates String?
   /// О себе: чем занимался, где преподавал, чего хочет.
   about        String?
+  /// Онлайн или очно. Определяет, что можно прислать файлом, а что придётся
+  /// привезти в офис.
+  work_format  TeacherWorkFormat        @default(ONLINE)
+  /// Загруженные документы: [{ kind, key, url, filename }].
+  /// JSON, а не отдельная таблица: набор документов меняется по мере того, как
+  /// центр уточняет требования, и переживать это миграциями на каждый чих
+  /// дороже, чем хранить список.
+  documents    Json?
   status       TeacherApplicationStatus @default(PENDING)
   /// Ответ менеджера — виден кандидату при отказе.
   admin_note   String?
+  /// Назначенный созвон. Решение принимается после него — либо раньше, отказом.
+  interview_at DateTime?
   created_at   DateTime                 @default(now())
   reviewed_at  DateTime?
+  /// Кто принял решение — для аудита.
+  reviewed_by  String?
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 

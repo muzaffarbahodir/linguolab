@@ -13,11 +13,13 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { CEFR, ClassStatus, Role } from '@prisma/client';
+import type { TeacherApplicationStatus } from '@prisma/client';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RequestUser } from '../auth/strategies/jwt.strategy';
 import { AdminService } from './admin.service';
+import { TeacherApplicationsService } from './teacher-applications.service';
 import { AuditService } from '../audit/audit.service';
 
 @Controller('admin')
@@ -25,6 +27,7 @@ import { AuditService } from '../audit/audit.service';
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly teacherApplications: TeacherApplicationsService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -236,6 +239,50 @@ export class AdminController {
   @Roles(Role.SUPER_ADMIN)
   resetOnboarding(@CurrentUser() requester: RequestUser, @Param('id') targetId: string) {
     return this.adminService.resetOnboarding(targetId, requester.id);
+  }
+
+  // ─── Заявки в преподаватели ─────────────────────────────────────────────────
+
+  /**
+   * GET /admin/teacher-applications?status=PENDING
+   * Без фильтра — только требующие решения (новые и с назначенным созвоном).
+   */
+  @Get('teacher-applications')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  listTeacherApplications(@Query('status') status?: TeacherApplicationStatus) {
+    return this.teacherApplications.list(status);
+  }
+
+  /** POST /admin/teacher-applications/:id/interview — назначить созвон */
+  @Post('teacher-applications/:id/interview')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  scheduleTeacherInterview(
+    @CurrentUser() requester: RequestUser,
+    @Param('id') id: string,
+    @Body('interview_at') interviewAt: string,
+  ) {
+    return this.teacherApplications.scheduleInterview(id, interviewAt, requester.id);
+  }
+
+  /**
+   * POST /admin/teacher-applications/:id/approve — принять на работу.
+   * ADMIN+: выдаёт роль преподавателя и доступ к чужим группам и оценкам.
+   */
+  @Post('teacher-applications/:id/approve')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  approveTeacher(@CurrentUser() requester: RequestUser, @Param('id') id: string) {
+    return this.teacherApplications.approve(id, requester.id);
+  }
+
+  /** POST /admin/teacher-applications/:id/reject — отказать с причиной */
+  @Post('teacher-applications/:id/reject')
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  rejectTeacher(
+    @CurrentUser() requester: RequestUser,
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+  ) {
+    return this.teacherApplications.reject(id, reason, requester.id);
   }
 
   // ─── Broadcast TG ───────────────────────────────────────────────────────────

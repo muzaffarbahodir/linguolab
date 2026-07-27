@@ -23,7 +23,12 @@ import {
 } from '../api/users';
 import { useAuthStore } from '../store/auth';
 import { LANGUAGES, applyLocale, useLanguage } from '../hooks/useLanguage';
-import { Button, Card, ChoiceCard } from '../components/ui';
+import { Button, Card, ChoiceCard, cx } from '../components/ui';
+import {
+  TeacherDocumentUpload,
+  type DocumentKind,
+  type UploadedDocument,
+} from '../components/TeacherDocumentUpload';
 
 type Step = 'language' | 'role' | 'teacher';
 
@@ -198,6 +203,11 @@ function TeacherStep({
   const [experience, setExperience] = useState('');
   const [certificates, setCertificates] = useState('');
   const [about, setAbout] = useState('');
+  const [format, setFormat] = useState<'ONLINE' | 'OFFLINE' | null>(null);
+  const [docs, setDocs] = useState<Partial<Record<DocumentKind, UploadedDocument>>>({});
+
+  const setDoc = (kind: DocumentKind) => (doc: UploadedDocument | null) =>
+    setDocs((prev) => ({ ...prev, [kind]: doc ?? undefined }));
 
   if (status?.state === 'pending') {
     return (
@@ -215,7 +225,13 @@ function TeacherStep({
     );
   }
 
-  const canSubmit = subject.trim().length > 1 && !submit.isPending;
+  // Онлайн-преподаватель в офис не приедет — удостоверение личности он тоже
+  // присылает файлом. Очному паспорт проще показать при встрече.
+  const requiredDocs: DocumentKind[] =
+    format === 'ONLINE' ? ['PASSPORT', 'DIPLOMA', 'PHOTO'] : ['DIPLOMA', 'PHOTO'];
+
+  const docsReady = format !== null && requiredDocs.every((k) => docs[k]);
+  const canSubmit = subject.trim().length > 1 && docsReady && !submit.isPending;
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -233,6 +249,36 @@ function TeacherStep({
           </p>
         </Card>
       )}
+
+      {/* Формат спрашиваем первым: от него зависит, какие документы понадобятся,
+          и показывать список до ответа бессмысленно. */}
+      <div>
+        <span className="text-muted mb-1.5 block text-xs font-semibold">
+          Как планируете работать<span className="text-danger"> *</span>
+        </span>
+        <div className="flex gap-2">
+          {(
+            [
+              ['ONLINE', '💻 Онлайн'],
+              ['OFFLINE', '🏫 Очно'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setFormat(value)}
+              className={cx(
+                'press flex-1 rounded-xl border py-2.5 text-sm font-semibold',
+                format === value
+                  ? 'border-brand/40 bg-brand/15 text-brand-400'
+                  : 'border-hairline bg-surface-2 text-muted',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <Field label="Что готовы преподавать" required>
         <input
@@ -284,6 +330,49 @@ function TeacherStep({
         />
       </Field>
 
+      {format && (
+        <div className="border-hairline bg-surface flex flex-col gap-3 rounded-2xl border p-4">
+          <p className="text-sm font-semibold">Документы</p>
+
+          <TeacherDocumentUpload
+            kind="DIPLOMA"
+            label="Диплом об образовании"
+            required
+            value={docs.DIPLOMA}
+            onChange={setDoc('DIPLOMA')}
+          />
+          <TeacherDocumentUpload
+            kind="PHOTO"
+            label="Фото для профиля"
+            required
+            value={docs.PHOTO}
+            onChange={setDoc('PHOTO')}
+          />
+          {format === 'ONLINE' && (
+            <TeacherDocumentUpload
+              kind="PASSPORT"
+              label="Паспорт или ID"
+              required
+              value={docs.PASSPORT}
+              onChange={setDoc('PASSPORT')}
+            />
+          )}
+          <TeacherDocumentUpload
+            kind="CERTIFICATE"
+            label="Сертификаты"
+            value={docs.CERTIFICATE}
+            onChange={setDoc('CERTIFICATE')}
+          />
+
+          {format === 'OFFLINE' && (
+            <p className="bg-warn/10 text-warn rounded-xl p-3 text-xs leading-snug">
+              Оригиналы паспорта и диплома привезите в офис — покажете их на встрече. Загружать их
+              сюда не нужно.
+            </p>
+          )}
+        </div>
+      )}
+
       {submit.isError && (
         <p className="text-danger text-xs">Не получилось отправить — попробуйте ещё раз</p>
       )}
@@ -296,6 +385,8 @@ function TeacherStep({
           submit.mutate(
             {
               subject: subject.trim(),
+              work_format: format ?? 'ONLINE',
+              documents: Object.values(docs).filter(Boolean) as UploadedDocument[],
               age: age ? Number(age) : null,
               experience_years: experience ? Number(experience) : null,
               certificates: certificates.trim() || null,
