@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { LanguageCategory } from './languages';
+import type { UpdateTeacherProfileInput } from './teachers';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -313,22 +314,34 @@ export function useCreateTeacher() {
   });
 }
 
+/**
+ * Менеджер правит карточку преподавателя, включая витрину.
+ *
+ * Витрина здесь потому, что заведённый через админку преподаватель в Telegram
+ * не заходит — своей формы он не увидит, и заполнить видео и языки может
+ * только менеджер.
+ */
 export function useUpdateTeacher() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
       id,
       ...dto
-    }: {
+    }: UpdateTeacherProfileInput & {
       id: string;
-      bio?: string;
       first_name?: string;
       last_name?: string;
+      highlights?: string[];
     }) => {
       const res = await apiClient.patch(`/admin/teachers/${id}`, dto);
       return res.data;
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['admin', 'teachers'] }),
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'teachers'] });
+      // Публичный профиль читается другим ключом — без этого менеджер
+      // сохранит видео и не увидит его на витрине до перезагрузки.
+      void qc.invalidateQueries({ queryKey: ['teachers', vars.id] });
+    },
   });
 }
 

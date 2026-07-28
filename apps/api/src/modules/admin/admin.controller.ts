@@ -21,6 +21,7 @@ import { RequestUser } from '../auth/strategies/jwt.strategy';
 import { AdminService } from './admin.service';
 import { TeacherApplicationsService } from './teacher-applications.service';
 import { AuditService } from '../audit/audit.service';
+import { AdminUpdateTeacherDto } from '../teachers/dto/update-teacher-profile.dto';
 
 @Controller('admin')
 @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
@@ -114,12 +115,9 @@ export class AdminController {
     return this.adminService.createTeacher(dto, user.id);
   }
 
-  /** PATCH /admin/teachers/:id */
+  /** PATCH /admin/teachers/:id — карточка преподавателя вместе с витриной. */
   @Patch('teachers/:id')
-  updateTeacher(
-    @Param('id') id: string,
-    @Body() dto: { bio?: string; photo_url?: string; first_name?: string; last_name?: string },
-  ) {
+  updateTeacher(@Param('id') id: string, @Body() dto: AdminUpdateTeacherDto) {
     return this.adminService.updateTeacher(id, dto);
   }
 

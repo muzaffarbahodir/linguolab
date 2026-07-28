@@ -11,6 +11,7 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.types';
 import { assertClassTransition } from '../classes/class-status.machine';
+import { AdminUpdateTeacherDto } from '../teachers/dto/update-teacher-profile.dto';
 
 @Injectable()
 export class AdminService {
@@ -233,21 +234,48 @@ export class AdminService {
     return teacher;
   }
 
-  async updateTeacher(
-    teacherId: string,
-    dto: { bio?: string; photo_url?: string; first_name?: string; last_name?: string },
-  ) {
+  /**
+   * Менеджер редактирует карточку преподавателя, включая витрину.
+   *
+   * Заведённый через админку преподаватель в Telegram не заходит — у него
+   * placeholder вместо telegram_user_id, — так что заполнить видео,
+   * специализации и языки за него может только менеджер.
+   */
+  async updateTeacher(teacherId: string, dto: AdminUpdateTeacherDto) {
     const teacher = await this.prisma.teacher.findUnique({ where: { id: teacherId } });
     if (!teacher) throw new NotFoundException('Teacher not found');
 
-    const { bio, photo_url, first_name, last_name } = dto;
+    const { first_name, last_name, speaks, education, ...profile } = dto;
+
+    // Каждое поле пишется только если оно пришло: PATCH не должен обнулять то,
+    // чего не было в теле запроса.
+    const set = <K extends string, V>(key: K, value: V | undefined) =>
+      value !== undefined ? ({ [key]: value } as Record<K, V>) : {};
 
     const [updatedTeacher] = await Promise.all([
       this.prisma.teacher.update({
         where: { id: teacherId },
         data: {
-          ...(bio !== undefined ? { bio } : {}),
-          ...(photo_url !== undefined ? { photo_url } : {}),
+          ...set('bio', profile.bio),
+          ...set('photo_url', profile.photo_url),
+          ...set('website_url', profile.website_url),
+          ...set('instagram_url', profile.instagram_url),
+          ...set('telegram_url', profile.telegram_url),
+          ...set('headline', profile.headline),
+          ...set('intro_video_url', profile.intro_video_url),
+          ...set('intro_video_poster', profile.intro_video_poster),
+          ...set('country', profile.country),
+          ...set('experience_years', profile.experience_years),
+          ...set('specializations', profile.specializations),
+          ...set('highlights', profile.highlights),
+          ...set(
+            'speaks',
+            speaks?.map((s) => ({ name: s.name, level: s.level })),
+          ),
+          ...set(
+            'education',
+            education?.map((e) => ({ title: e.title, org: e.org, year: e.year })),
+          ),
         },
         include: { user: { select: { id: true, first_name: true, last_name: true } } },
       }),

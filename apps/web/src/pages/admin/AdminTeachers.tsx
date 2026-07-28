@@ -2,7 +2,7 @@
  * AdminTeachers — список учителей, создание и редактирование.
  * Route: /admin/teachers
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
@@ -22,6 +22,13 @@ import {
   useSetTeacherHighlights,
 } from '../../api/teachers';
 import { useAuthStore } from '../../store/auth';
+import { TeacherShowcaseFields } from '../../components/TeacherShowcaseFields';
+import {
+  emptyShowcase,
+  showcaseFromProfile,
+  showcaseToPayload,
+  type ShowcaseDraft,
+} from '../../components/teacher-showcase-draft';
 
 // ── BadgeSheet ────────────────────────────────────────────────────────────────
 
@@ -33,16 +40,20 @@ const PRESET_ICONS = ['⭐', '🏆', '🎓', '🔥', '💎', '🌟', '🎯', '�
  * Готовый набор, а не свободный ввод: так они одинаково звучат у всех
  * преподавателей и их можно сравнивать между профилями. Ставит менеджер —
  * себе такую оценку не выдают.
+ *
+ * Формулировки безличные («Терпеливо объясняет», а не «Терпеливый») —
+ * прилагательное в русском требует рода, и один и тот же набор не подошёл бы
+ * и преподавателю, и преподавательнице.
  */
 const PRESET_HIGHLIGHTS = [
-  'Терпеливый',
-  'Структурный',
+  'Терпеливо объясняет',
+  'Структурные занятия',
   'Мотивирует',
   'Разговорная практика',
-  'Готовит к экзамену',
+  'Готовит к экзаменам',
   'Работает с детьми',
   'Ставит произношение',
-  'Требовательный',
+  'Держит дисциплину',
 ];
 
 /** Максимум на витрине — больше шести перестают читаться как выделенное. */
@@ -236,6 +247,14 @@ function TeacherForm({
   const [lastName, setLastName] = useState(initial?.user.last_name ?? '');
   const [email, setEmail] = useState('');
   const [bio, setBio] = useState(initial?.bio ?? '');
+  const [showcase, setShowcase] = useState<ShowcaseDraft>(emptyShowcase);
+
+  // Витрина лежит в профиле преподавателя, а не в админском списке — тянем её
+  // отдельно, когда сheet открыт на редактирование.
+  const { data: profile } = useTeacherProfile(isEdit && initial ? initial.id : '');
+  useEffect(() => {
+    if (profile) setShowcase(showcaseFromProfile(profile));
+  }, [profile]);
 
   const isPending = create.isPending || update.isPending;
 
@@ -245,6 +264,7 @@ function TeacherForm({
       update.mutate(
         {
           id: initial.id,
+          ...showcaseToPayload(showcase),
           first_name: firstName.trim(),
           last_name: lastName.trim() || undefined,
           bio: bio.trim() || undefined,
@@ -337,10 +357,23 @@ function TeacherForm({
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           placeholder={t('admin.teachers.bio_ph')}
-          rows={2}
+          rows={3}
+          maxLength={2000}
           className="mb-4 w-full resize-none rounded-xl px-3 py-2.5 text-sm outline-none"
           style={inputStyle}
         />
+
+        {/*
+          Витрина — только при редактировании: у ещё не созданного
+          преподавателя нет id, а без него некуда грузить видео.
+          Заполняет её менеджер, потому что заведённый через админку
+          преподаватель в Telegram не заходит и своей формы не увидит.
+        */}
+        {isEdit && (
+          <div className="mb-4">
+            <TeacherShowcaseFields value={showcase} onChange={setShowcase} />
+          </div>
+        )}
 
         <button
           onClick={handleSave}

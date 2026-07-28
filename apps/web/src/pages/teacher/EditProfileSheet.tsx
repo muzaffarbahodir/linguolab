@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
-import { Plus, Trash2, Video } from 'lucide-react';
 
 import { useTeacherProfileByUserId, useUpdateTeacherProfile } from '../../api/teachers';
-import type { SpokenLanguage } from '../../api/teachers';
-import { MAX_VIDEO_BYTES, uploadImage, uploadVideo } from '../../api/uploads';
+import { uploadImage } from '../../api/uploads';
 import { toast } from '../../store/toast';
+import { TeacherShowcaseFields } from '../../components/TeacherShowcaseFields';
+import {
+  emptyShowcase,
+  showcaseFromProfile,
+  showcaseToPayload,
+  type ShowcaseDraft,
+} from '../../components/teacher-showcase-draft';
 import { Button, cx } from '../../components/ui';
 
 const FIELD =
@@ -22,8 +27,8 @@ function Label({ children }: { children: React.ReactNode }) {
  * Вынесен из TeacherHome отдельным файлом: с появлением витрины (видео,
  * языки, направления) форма стала больше самой страницы кабинета.
  *
- * Черт (highlights) здесь намеренно нет — их ставит менеджер. Оценку «терпеливый»
- * человек не выдаёт себе сам, иначе она ничего не стоит.
+ * Черт (highlights) здесь намеренно нет — их ставит менеджер. Оценку
+ * «терпеливо объясняет» человек не выдаёт себе сам, иначе она ничего не стоит.
  */
 export function EditProfileSheet({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { t } = useTranslation();
@@ -33,13 +38,7 @@ export function EditProfileSheet({ userId, onClose }: { userId: string; onClose:
   const [bio, setBio] = useState('');
   const [photo, setPhoto] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [videoUploading, setVideoUploading] = useState(false);
-  const [video, setVideo] = useState('');
-  const [headline, setHeadline] = useState('');
-  const [country, setCountry] = useState('');
-  const [experience, setExperience] = useState('');
-  const [specializations, setSpecializations] = useState('');
-  const [speaks, setSpeaks] = useState<SpokenLanguage[]>([]);
+  const [showcase, setShowcase] = useState<ShowcaseDraft>(emptyShowcase);
   const [website, setWebsite] = useState('');
   const [instagram, setInstagram] = useState('');
   const [telegram, setTelegram] = useState('');
@@ -50,12 +49,7 @@ export function EditProfileSheet({ userId, onClose }: { userId: string; onClose:
     if (!profile) return;
     setBio(profile.bio ?? '');
     setPhoto(profile.photo_url ?? '');
-    setVideo(profile.intro_video_url ?? '');
-    setHeadline(profile.headline ?? '');
-    setCountry(profile.country ?? '');
-    setExperience(profile.experience_years !== null ? String(profile.experience_years) : '');
-    setSpecializations(profile.specializations.join(', '));
-    setSpeaks(profile.speaks);
+    setShowcase(showcaseFromProfile(profile));
     setWebsite(profile.website_url ?? '');
     setInstagram(profile.instagram_url ?? '');
     setTelegram(profile.telegram_url ?? '');
@@ -76,46 +70,12 @@ export function EditProfileSheet({ userId, onClose }: { userId: string; onClose:
     }
   }
 
-  async function handleVideoPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    // Проверяем до запроса: presign всё равно откажет, но человек к тому
-    // моменту уже потратит время на ожидание.
-    if (file.size > MAX_VIDEO_BYTES) {
-      toast.error(t('teacher.video_too_big'));
-      return;
-    }
-    setVideoUploading(true);
-    try {
-      setVideo(await uploadVideo(file));
-      WebApp.HapticFeedback.notificationOccurred('success');
-    } catch {
-      toast.error(t('teacher.video_failed'));
-    } finally {
-      setVideoUploading(false);
-    }
-  }
-
   function handleSave() {
-    const years = parseInt(experience, 10);
-
     update.mutate(
       {
+        ...showcaseToPayload(showcase),
         bio: bio.trim() || undefined,
         photo_url: photo.trim() ? photo.trim() : null,
-        // Пустая строка — это «убрать видео», поэтому null, а не undefined:
-        // undefined бэк пропустит мимо и старая ссылка останется.
-        intro_video_url: video.trim() ? video.trim() : null,
-        headline: headline.trim() || undefined,
-        country: country.trim() || undefined,
-        experience_years: Number.isFinite(years) && years >= 0 ? years : undefined,
-        specializations: specializations
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .slice(0, 8),
-        speaks: speaks.filter((s) => s.name.trim()),
         website_url: website.trim() || undefined,
         instagram_url: instagram.trim() || undefined,
         telegram_url: telegram.trim() || undefined,
@@ -183,77 +143,7 @@ export function EditProfileSheet({ userId, onClose }: { userId: string; onClose:
               </div>
             </div>
 
-            {/* Видео-визитка */}
-            <Label>{t('teacher.video_label')}</Label>
-            <p className="text-faint mb-2 text-[11px] leading-snug">{t('teacher.video_hint')}</p>
-            {video ? (
-              <div className="border-hairline bg-surface-2 mb-1 flex items-center gap-2 rounded-2xl border px-3 py-2.5">
-                <Video size={16} className="text-ok shrink-0" />
-                <span className="text-muted min-w-0 flex-1 truncate text-xs">
-                  {t('teacher.video_label')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setVideo('')}
-                  className="press text-danger shrink-0"
-                  aria-label={t('teacher.video_remove')}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ) : (
-              <label
-                className={cx(
-                  'press border-hairline bg-surface-2 text-muted mb-1 flex w-full cursor-pointer',
-                  'items-center justify-center gap-2 rounded-2xl border border-dashed px-3 py-3 text-sm font-medium',
-                  videoUploading && 'opacity-60',
-                )}
-              >
-                <Video size={16} />
-                {videoUploading ? t('teacher.video_uploading') : t('teacher.video_upload')}
-                <input
-                  type="file"
-                  accept="video/mp4,video/webm,video/quicktime"
-                  onChange={(e) => void handleVideoPick(e)}
-                  disabled={videoUploading}
-                  className="hidden"
-                />
-              </label>
-            )}
-
-            {/* Специализация */}
-            <Label>{t('teacher.headline_label')}</Label>
-            <input
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-              placeholder={t('teacher.headline_ph')}
-              maxLength={120}
-              className={FIELD}
-            />
-
-            {/* Страна и опыт */}
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label>{t('teacher.country_label')}</Label>
-                <input
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder={t('teacher.country_ph')}
-                  maxLength={60}
-                  className={FIELD}
-                />
-              </div>
-              <div className="w-28">
-                <Label>{t('teacher.experience_label')}</Label>
-                <input
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                  inputMode="numeric"
-                  placeholder="5"
-                  className={FIELD}
-                />
-              </div>
-            </div>
+            <TeacherShowcaseFields value={showcase} onChange={setShowcase} />
 
             {/* О себе */}
             <Label>{t('admin.teachers.bio_label')}</Label>
@@ -265,64 +155,6 @@ export function EditProfileSheet({ userId, onClose }: { userId: string; onClose:
               maxLength={2000}
               className={cx(FIELD, 'resize-none')}
             />
-
-            {/* Направления */}
-            <Label>{t('teacher.specializations_label')}</Label>
-            <input
-              value={specializations}
-              onChange={(e) => setSpecializations(e.target.value)}
-              placeholder={t('teacher.specializations_ph')}
-              className={FIELD}
-            />
-
-            {/* Языки владения */}
-            <Label>{t('teacher.speaks_label')}</Label>
-            <div className="space-y-2">
-              {speaks.map((s, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    value={s.name}
-                    onChange={(e) =>
-                      setSpeaks((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
-                      )
-                    }
-                    placeholder={t('teacher.speaks_ph_name')}
-                    maxLength={60}
-                    className={cx(FIELD, 'flex-1')}
-                  />
-                  <input
-                    value={s.level}
-                    onChange={(e) =>
-                      setSpeaks((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, level: e.target.value } : x)),
-                      )
-                    }
-                    placeholder={t('teacher.speaks_ph_level')}
-                    maxLength={30}
-                    className={cx(FIELD, 'w-24')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setSpeaks((prev) => prev.filter((_, j) => j !== i))}
-                    className="press text-faint shrink-0 px-1"
-                    aria-label="—"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-              {speaks.length < 10 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  leftIcon={<Plus size={14} />}
-                  onClick={() => setSpeaks((prev) => [...prev, { name: '', level: '' }])}
-                >
-                  {t('teacher.speaks_add')}
-                </Button>
-              )}
-            </div>
 
             {/* Ссылки */}
             <Label>{t('teacher.website_label')}</Label>

@@ -126,6 +126,36 @@ export class UpdateTeacherProfileDto {
   education?: EducationEntryDto[];
 }
 
+/**
+ * То же самое, но от лица менеджера.
+ *
+ * Нужен потому, что преподаватель, заведённый через админку, в Telegram не
+ * заходит вовсе: createTeacher ставит ему placeholder вместо telegram_user_id.
+ * Без этого DTO витрину таким преподавателям заполнить было бы некому — а их
+ * большинство, пока центр не перевёл всех на самостоятельную регистрацию.
+ *
+ * Черты здесь есть, в отличие от преподавательского DTO: менеджеру их ставить
+ * как раз можно.
+ */
+export class AdminUpdateTeacherDto extends UpdateTeacherProfileDto {
+  @IsOptional()
+  @IsString()
+  @Length(1, 80)
+  first_name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  last_name?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(6)
+  @IsString({ each: true })
+  @MaxLength(40, { each: true })
+  highlights?: string[];
+}
+
 /** Черты преподавателя проставляет менеджер — отдельным эндпоинтом. */
 export class SetHighlightsDto {
   @IsArray()
