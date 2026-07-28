@@ -1,6 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
@@ -43,6 +48,20 @@ export class StorageService {
   /** Публичный CDN URL по object key */
   publicUrl(key: string): string {
     return `${this.cdnUrl}/${key}`;
+  }
+
+  /**
+   * Читает объект из R2 в память.
+   *
+   * Нужен, чтобы отдавать файл через API, а не ссылкой на хранилище: клиент
+   * тогда не видит ни домена CDN, ни ключа объекта. Годится для документов
+   * вроде сертификатов — на файлы в десятки мегабайт так делать не стоит,
+   * они целиком лягут в память процесса.
+   */
+  async getObject(key: string): Promise<Buffer> {
+    const res = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    if (!res.Body) throw new InternalServerErrorException('Empty object body');
+    return Buffer.from(await res.Body.transformToByteArray());
   }
 
   /** Удаляет объект из R2 */

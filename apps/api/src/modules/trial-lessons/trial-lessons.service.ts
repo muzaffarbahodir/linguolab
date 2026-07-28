@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { AchievementsService } from '../achievements/achievements.service';
 
 /** Сколько дней действует бесплатный онлайн-пробный доступ */
 const TRIAL_DAYS = 7;
@@ -26,6 +27,7 @@ export class TrialLessonsService {
     private readonly notifications: NotificationsService,
     private readonly telegram: TelegramService,
     private readonly analytics: AnalyticsService,
+    private readonly achievements: AchievementsService,
   ) {}
 
   /**
@@ -154,6 +156,11 @@ export class TrialLessonsService {
 
     void this.sendTrialAccess(studentId, openClass);
     void this.notifications.scheduleTrialConfirmed(studentId, created.language.name_ru, created.id);
+    // Бесплатный онлайн-пробный подтверждается сам, без менеджера, — значит
+    // и достижение выдаётся здесь, а не только в updateStatus.
+    void this.achievements.onTrialCompleted(studentId).catch(() => {
+      // Награда вторична: сбой в ней не должен отменять выдачу доступа.
+    });
     this.trackTrialRequest(studentId, languageId, TrialType.ONLINE, created.id, openClass.id);
 
     return { ...created, needs_payment: false };
@@ -199,6 +206,11 @@ export class TrialLessonsService {
     const langName = req.language?.name_ru ?? 'выбранному языку';
     if (status === 'CONFIRMED') {
       void this.notifications.scheduleTrialConfirmed(req.student_id, langName, id);
+      // Достижение за пробный урок. Метод существовал, но не вызывался —
+      // выдать награду было некому.
+      void this.achievements.onTrialCompleted(req.student_id).catch(() => {
+        // Награда вторична: сбой в ней не должен отменять подтверждение.
+      });
     } else {
       void this.notifications.scheduleTrialCancelled(req.student_id, langName, id);
     }

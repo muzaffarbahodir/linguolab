@@ -13,6 +13,7 @@ import { RedisService } from '../../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { schedulesOverlap } from '../../common/schedule';
 import { rankClasses } from './recommend';
+import { AchievementsService } from '../achievements/achievements.service';
 
 const CLASSES_CACHE_TTL = 300; // 5 минут
 
@@ -72,6 +73,7 @@ export class ClassesService {
     private readonly telegram: TelegramService,
     private readonly redis: RedisService,
     private readonly notifications: NotificationsService,
+    private readonly achievements: AchievementsService,
   ) {}
 
   /** GET /classes — список активных классов с фильтром */
@@ -591,6 +593,12 @@ export class ClassesService {
     void this.sendEnrollmentNotification(classId, studentId);
     // Уведомляем персонал о новой заявке на запись
     void this.notifyStaffOfEnrollment(classId, studentId, enrollment.id);
+    // «Первый шаг». Метод существовал с самого начала, но его никто не вызывал:
+    // достижение за запись в класс не выдавалось никому и никогда.
+    void this.achievements.onEnrollment(studentId).catch(() => {
+      // Награда не должна ронять запись на курс — она вторична по отношению
+      // к тому, ради чего человек пришёл.
+    });
 
     return enrollment;
   }

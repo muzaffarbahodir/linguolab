@@ -9,7 +9,7 @@ import { useAuthStore } from '../store/auth';
 import { useLanguage } from '../hooks/useLanguage';
 import { useMe, usePatchMe, useSetStudyFormat } from '../api/users';
 import { toast } from '../store/toast';
-import { ThemeRow, CurrencyRow, MenuRow, type MenuItem } from './Profile';
+import { CurrencyRow, MenuRow, type MenuItem } from './Profile';
 
 /** Личные данные с явной кнопкой «Сохранить» (раньше авто-сейв терял дату). */
 function PersonalData() {
@@ -167,8 +167,6 @@ export function SettingsPage() {
         {isStudent && <PersonalData />}
 
         <div className="glass-section overflow-hidden rounded-2xl">
-          <ThemeRow />
-          <div className="bg-hairline mx-4 h-px" />
           <CurrencyRow />
           <div className="bg-hairline mx-4 h-px" />
           {items.map((item, idx) => (

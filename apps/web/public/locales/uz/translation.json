@@ -87,11 +87,14 @@
     "transfer_error": "So'rov yuborishda xato",
     "time_at": "da",
     "comment_ph": "Izoh (ixtiyoriy)",
-    "class_id_ph": "Sinf ID sini kiriting",
     "reason_ph": "Masalan: boshqa jadval",
-    "new_class_id_label": "Yangi sinf ID *",
     "reason_label": "Sabab (ixtiyoriy)",
-    "transfer_fee_info": "ℹ️ Agar yangi sinf o'qituvchisi yuqori reytingga ega bo'lsa, ko'chirish pullik bo'lishi mumkin (sinf narxining 10%)."
+    "pick_class_label": "Qayerga o‘tish",
+    "no_transfer_options": "Bu til bo‘yicha boshqa guruhlar hozircha yo‘q",
+    "transfer_fee": "qo‘shimcha {{amount}}",
+    "transfer_free": "qo‘shimchasiz",
+    "transfer_fee_selected": "O‘tish pullik: {{amount}}. Menejer bog‘lanadi.",
+    "transfer_needs_approval": "Arizani menejer ko‘rib chiqadi va bog‘lanadi."
   },
   "courses": {
     "title": "Kurslar",
@@ -382,9 +385,6 @@
     "payment": "To'lov",
     "language": "Til / Language / Язык",
     "currency": "Valyuta",
-    "theme": "Mavzu",
-    "theme_dark": "Tungi",
-    "theme_light": "Kunduzgi",
     "logout": "Chiqish",
     "confirm_logout": "Hisobdan chiqishni istaysizmi?",
     "coming_soon": "\"{{label}}\" tez orada qo'shiladi.",
@@ -642,9 +642,7 @@
     "subtitle": "Menejer bilan bog'laning",
     "write_btn": "+ Yozish",
     "new_ticket": "Yangi murojaat",
-    "subject_label": "MAVZU",
     "message_label": "XABAR",
-    "subject_ph": "Muammoni qisqacha tasvirlab bering",
     "message_ph": "Vaziyatni batafsil tasvirlab bering...",
     "send_btn": "📩 Yuborish",
     "sending": "...",
@@ -652,12 +650,19 @@
     "sent_sub": "Menejer tez orada javob beradi",
     "empty_title": "Murojaatlar yo'q",
     "empty_subtitle": "Savollar bo'lsa — \"Yozish\" tugmasini bosing",
-    "write_manager": "Menejerga yozish",
     "load_error": "Murojaatlar yuklanmadi",
     "read_more": "ko'proq...",
     "status_OPEN": "Ochiq",
     "status_IN_PROGRESS": "Ko'rib chiqilmoqda",
-    "status_CLOSED": "Yopildi"
+    "status_CLOSED": "Yopildi",
+    "category_label": "Nima bo‘yicha yordam kerak?",
+    "category": {
+      "PAYMENT": "To‘lov",
+      "SCHEDULE": "Dars jadvali",
+      "TEACHER": "O‘qituvchi",
+      "TECHNICAL": "Ilova ishlamayapti",
+      "OTHER": "Boshqa"
+    }
   },
   "attendance": {
     "title": "Qatnashish",
@@ -693,7 +698,7 @@
     "empty": "Sertifikatlar yo'q",
     "empty_sub": "Sertifikat olish uchun kursni tugatang",
     "issued": "Berildi {{date}}",
-    "download": "Yuklab olish",
+    "download": "Sertifikatni yuklab olish",
     "load_error": "Sertifikatlar yuklanmadi",
     "my_title": "Mening sertifikatlarim",
     "count_1": "sertifikat",
@@ -701,7 +706,10 @@
     "count_many": "sertifikat",
     "issued_date": "📅 Berildi {{date}}",
     "open_pdf": "📄 PDF ochish",
-    "empty_sub2": "Kursni tugatang — menejer bitirish sertifikatini beradi"
+    "empty_sub2": "Kursni tugatang — menejer bitirish sertifikatini beradi",
+    "sent_to_chat": "Fayl bot bilan chatga yuborildi",
+    "start_bot_first": "Avval botga /start yozing — aks holda fayl yubora olmaydi",
+    "send_error": "Yuborib bo‘lmadi"
   },
   "placement": {
     "title": "Daraja testi",

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import { Request } from 'express';
 import { IsString } from 'class-validator';
 import { Role } from '@prisma/client';
@@ -22,6 +22,18 @@ export class CertificatesController {
   my(@Req() req: Request) {
     const user = req.user as { sub: string };
     return this.certificates.myCertificates(user.sub);
+  }
+
+  /**
+   * POST /certificates/:id/send — прислать сертификат файлом в чат с ботом.
+   *
+   * Прямой ссылки на файл в API больше нет: документ уходит через бота, и
+   * откуда он взялся, из приложения не видно.
+   */
+  @Post(':id/send')
+  @HttpCode(HttpStatus.OK)
+  send(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.certificates.sendToTelegram(id, user.id);
   }
 
   /** POST /certificates/issue — учитель своего класса / менеджер+ выдаёт сертификат */

@@ -88,10 +88,10 @@ function ApproveModal({ req, onClose }: { req: ClassRequestItem; onClose: () => 
     >
       <div
         className="w-full rounded-t-3xl px-5 pb-10 pt-5"
-        style={{ background: '#1a2538' }}
+        style={{ background: 'var(--secondary-bg)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
         <h2 className="mb-1 font-bold">{t('admin_cr.approve_title')}</h2>
         <p className="text-muted mb-4 text-sm">
           {req.language.flag_emoji} {req.title} · {req.level}

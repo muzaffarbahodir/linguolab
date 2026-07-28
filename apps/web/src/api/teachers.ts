@@ -151,6 +151,46 @@ export function useTeacherProfileByUserId(userId: string) {
   });
 }
 
+/** Группа, куда можно перевестись, с уже посчитанной ценой перевода. */
+export interface TransferOption {
+  id: string;
+  title: string;
+  level: string;
+  format: 'ONLINE' | 'OFFLINE';
+  price_uzs: number;
+  schedule_days: string[];
+  schedule_time: string | null;
+  spots_left: number;
+  is_full: boolean;
+  fee_uzs: number;
+  teacher: {
+    id: string;
+    first_name: string;
+    last_name: string | null;
+    photo_url: string | null;
+    avg_rating: number | null;
+  };
+}
+
+/**
+ * Куда можно перевестись из этой группы.
+ *
+ * Раньше форма просила вставить ID класса, которого студент нигде не видит.
+ */
+export function useTransferOptions(fromClassId: string) {
+  return useQuery<TransferOption[]>({
+    queryKey: ['transfers', 'options', fromClassId],
+    queryFn: async () =>
+      (
+        await apiClient.get<TransferOption[]>('/enrollments/transfer/options', {
+          params: { fromClassId },
+        })
+      ).data,
+    enabled: !!fromClassId,
+    staleTime: 60_000,
+  });
+}
+
 export function useMyTransfers() {
   return useQuery({
     queryKey: ['transfers', 'my'],

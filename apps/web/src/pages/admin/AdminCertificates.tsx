@@ -382,7 +382,7 @@ export function AdminCertificatesPage() {
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   placeholder={t('admin.certificates.filter_name_ph')}
-                  className="bg-surface-2 border-hairline mb-3 w-full rounded-xl border px-3 py-2 text-sm text-white outline-none"
+                  className="bg-surface-2 border-hairline mb-3 w-full rounded-xl border px-3 py-2 text-sm text-[color:var(--text)] outline-none"
                 />
 
                 <ClassStudentsList
@@ -408,7 +408,7 @@ export function AdminCertificatesPage() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder={t('admin.certificates.search_name_ph')}
-              className="bg-surface-2 border-hairline mb-4 w-full rounded-xl border px-3 py-2.5 text-sm text-white outline-none"
+              className="bg-surface-2 border-hairline mb-4 w-full rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
             />
             <GlobalSearchPanel
               search={filter}

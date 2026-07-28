@@ -348,38 +348,12 @@
 }
 
 /* ── Theme variables ──────────────────────────────────────────────────────────
-   Элегантная тёмная (default) + светлая. Переключение через html.light
-   (см. store/theme.ts). Все семантические токены Tailwind ссылаются сюда. */
+   Одна тема — светлая. Тёмная убрана: держать две означало сверять каждый
+   новый экран в обеих, и расхождения всё равно накапливались — шторки с
+   захардкоженным тёмным фоном чернели поверх светлых страниц.
+   Все семантические токены Tailwind ссылаются сюда. */
 :root {
-  /* Nuar (тёмная, как flowershop) — shadcn чёрно-белый, акцент индиго.
-     brand-rgb / brand-400-rgb — каналы для Tailwind (opacity-модификаторы). */
-  --bg: #09090b;
-  --bg-1: rgba(255, 255, 255, 0.025);
-  --bg-2: rgba(255, 255, 255, 0.015);
-  --bg-3: rgba(255, 255, 255, 0.01);
-  --text: #fafafa;
-  --muted: rgba(250, 250, 250, 0.62);
-  --faint: rgba(250, 250, 250, 0.4);
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-2: rgba(255, 255, 255, 0.07);
-  --secondary-bg: #18181b;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-card-bg: rgba(255, 255, 255, 0.025);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hi: rgba(255, 255, 255, 0.06);
-  --glass-lo: rgba(0, 0, 0, 0.2);
-  --glass-shadow: rgba(0, 0, 0, 0.5);
-  --pill-bg: rgba(9, 9, 11, 0.88);
-  --glass-bright: 1.02;
-  --brand-rgb: 99 102 241;
-  --brand-400-rgb: 129 140 248;
-  --brand: rgb(var(--brand-rgb));
-  --on-brand: #ffffff;
-  --accent2: #818cf8;
-}
-html.light {
-  /* Светлая (как Open Library) — тёплый песочно-бежевый фон, белые карточки. */
+  /* Тёплый песочно-бежевый фон, белые карточки, акцент индиго. */
   --bg: #e7e1ce;
   --bg-1: rgba(99, 102, 241, 0.05);
   --bg-2: rgba(0, 0, 0, 0);
@@ -398,12 +372,12 @@ html.light {
   --glass-lo: rgba(31, 29, 24, 0.02);
   --glass-shadow: rgba(31, 29, 24, 0.1);
   --pill-bg: rgba(251, 249, 243, 0.85);
+  --glass-bright: 0.98;
   --brand-rgb: 79 70 229;
   --brand-400-rgb: 99 102 241;
   --brand: rgb(var(--brand-rgb));
   --on-brand: #ffffff;
   --accent2: #6366f1;
-  --glass-bright: 0.98;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
@@ -644,7 +618,7 @@ html.light {
 
 /* ── Announcement marquee (бегущая строка) ───────────────────────────────────
    3 стиля-пресета: caution (жёлто-чёрная лента), info (синий), promo (фиолет).
-   Для тёмной и светлой темы цвета подобраны отдельно (html.light ниже). */
+   Цвета подобраны под светлую тему — она в приложении единственная. */
 /* Заход справа → уход влево (как новостной тикер). Одна копия, без дублей.
    left (контейнер-относительно) + translateX (своя ширина) = полный проход. */
 @keyframes ll-marquee {
@@ -701,19 +675,13 @@ html.light {
 }
 /* info — синий */
 .ll-ann-info {
-  background: #2563eb;
-  color: #ffffff;
-}
-html.light .ll-ann-info {
   background: #3b82f6;
+  color: #ffffff;
 }
 /* promo — фиолетовый бренд */
 .ll-ann-promo {
-  background: linear-gradient(90deg, #6366f1, #818cf8);
-  color: #ffffff;
-}
-html.light .ll-ann-promo {
   background: linear-gradient(90deg, #6366f1, #a5b4fc);
+  color: #ffffff;
 }
 
 /* ── Form inputs — themed, used in admin forms ───────────────────────────── */

@@ -150,7 +150,7 @@ function TransferCard({ tr, onAction }: { tr: ManagerTransfer; onAction: () => v
               onChange={(e) => setNote(e.target.value)}
               placeholder={t('admin.transfers.note_ph')}
               rows={2}
-              className="bg-surface-2 border-hairline mb-2 w-full resize-none rounded-xl border px-3 py-2 text-xs text-white outline-none"
+              className="bg-surface-2 border-hairline mb-2 w-full resize-none rounded-xl border px-3 py-2 text-xs text-[color:var(--text)] outline-none"
             />
           )}
           <div className="flex gap-2">

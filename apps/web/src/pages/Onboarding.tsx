@@ -56,7 +56,7 @@ export function Onboarding({ onClose }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: '#09090b' }}>
+    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: 'var(--bg)' }}>
       {/* Skip button */}
       <div className="flex justify-end p-4">
         <button onClick={handleSkip} className="text-tg-hint press text-sm">

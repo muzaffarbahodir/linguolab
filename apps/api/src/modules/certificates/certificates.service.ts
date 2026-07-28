@@ -1,6 +1,7 @@
 import {
   Injectable,
   Logger,
+  BadRequestException,
   ConflictException,
   NotFoundException,
   ForbiddenException,
@@ -15,6 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { TelegramService } from '../telegram/telegram.service';
 
 @Injectable()
 export class CertificatesService {
@@ -25,6 +27,7 @@ export class CertificatesService {
     private readonly storage: StorageService,
     private readonly notifications: NotificationsService,
     private readonly analytics: AnalyticsService,
+    private readonly telegram: TelegramService,
   ) {}
 
   /**
@@ -153,15 +156,101 @@ export class CertificatesService {
     return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
   }
 
-  /** Мои сертификаты */
+  /**
+   * Мои сертификаты.
+   *
+   * file_url и file_key наружу не отдаём: по прямой ссылке на CDN видно и
+   * хранилище, и ключ объекта, а сам файл в браузере открывается вместо того,
+   * чтобы скачаться. Забрать сертификат можно только через sendToTelegram.
+   */
   async myCertificates(studentId: string) {
-    return this.prisma.certificate.findMany({
+    const certificates = await this.prisma.certificate.findMany({
       where: { student_id: studentId },
-      include: {
-        class: { include: { language: { select: { name_ru: true, flag_emoji: true } } } },
+      select: {
+        id: true,
+        issued_at: true,
+        class: {
+          select: {
+            id: true,
+            title: true,
+            level: true,
+            language: { select: { name_ru: true, flag_emoji: true } },
+          },
+        },
       },
       orderBy: { issued_at: 'desc' },
     });
+    return certificates;
+  }
+
+  /**
+   * POST /certificates/:id/send — присылает сертификат файлом в чат с ботом.
+   *
+   * Так документ попадает к студенту, не раскрывая, откуда он взялся, и
+   * остаётся в переписке: открыть его снова можно и без приложения.
+   */
+  async sendToTelegram(certificateId: string, studentId: string) {
+    const cert = await this.prisma.certificate.findUnique({
+      where: { id: certificateId },
+      select: {
+        student_id: true,
+        file_key: true,
+        class: { select: { title: true, language: { select: { name_ru: true } } } },
+        student: { select: { telegram_user_id: true } },
+      },
+    });
+    if (!cert) throw new NotFoundException('Certificate not found');
+    // Сертификат — личный документ: выдаём только владельцу.
+    if (cert.student_id !== studentId) {
+      throw new ForbiddenException('Not your certificate');
+    }
+
+    const stored = await this.storage.getObject(cert.file_key);
+    const { file, extension } = await this.unpackCertificate(stored);
+
+    // Имя осмысленное, а не ключ объекта: студент увидит его в переписке.
+    const safeTitle = cert.class.title.replace(/[^\p{L}\p{N}\s-]/gu, '').trim() || 'certificate';
+    const filename = `${safeTitle}.${extension}`;
+
+    const sent = await this.telegram.sendDocument(
+      cert.student.telegram_user_id.toString(),
+      file,
+      filename,
+      `🏆 Ваш сертификат — ${cert.class.title}`,
+    );
+
+    if (!sent) {
+      // Чаще всего это значит, что человек не нажимал /start у бота и тот не
+      // может ему написать. Сообщение должно объяснять, что делать.
+      throw new BadRequestException('TELEGRAM_SEND_FAILED');
+    }
+
+    return { ok: true };
+  }
+
+  /**
+   * Достаёт из бандла сам PDF.
+   *
+   * В R2 лежит ZIP: сертификат плюс папка bonus/ с пока пустыми заглушками.
+   * Присылать студенту архив, в котором один осмысленный файл и три пустых,
+   * — значит заставить его распаковывать ради ничего. PDF открывается на
+   * телефоне сразу.
+   *
+   * Если PDF в бандле не нашёлся, отдаём как есть: лучше архив, чем ошибка.
+   */
+  private async unpackCertificate(
+    stored: Buffer,
+  ): Promise<{ file: Buffer; extension: 'pdf' | 'zip' }> {
+    try {
+      const zip = await JSZip.loadAsync(stored);
+      const entry = zip.file('sertifikat.pdf') ?? zip.file(/\.pdf$/i)[0];
+      if (entry) {
+        return { file: await entry.async('nodebuffer'), extension: 'pdf' };
+      }
+    } catch (err) {
+      this.logger.warn(`Не удалось распаковать бандл сертификата: ${String(err)}`);
+    }
+    return { file: stored, extension: 'zip' };
   }
 
   private generatePdf(studentName: string, classTitle: string, language: string): Promise<Buffer> {

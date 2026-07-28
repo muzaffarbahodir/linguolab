@@ -21,7 +21,6 @@ import {
   Shield,
   Gift,
   Coins,
-  Palette,
   Inbox,
   ScanLine,
   Award,
@@ -45,7 +44,6 @@ import { useTeacherStats } from '../api/teacher';
 import { useUnreadCount } from '../api/notifications';
 import { useMyReferral, useRedeemReferral } from '../api/referrals';
 import { toast } from '../store/toast';
-import { useThemeStore } from '../store/theme';
 
 // ─── menu items ───────────────────────────────────────────────────────────────
 
@@ -472,42 +470,6 @@ export function BirthDateRow() {
         onChange={(e) => patch.mutate({ birth_date: e.target.value || null })}
         className="bg-surface-2 text-faint rounded-xl px-2 py-1 text-xs outline-none"
       />
-    </div>
-  );
-}
-
-export function ThemeRow() {
-  const { t } = useTranslation();
-  const theme = useThemeStore((s) => s.theme);
-  const setTheme = useThemeStore((s) => s.setTheme);
-
-  return (
-    <div className="flex w-full items-center gap-3 px-4 py-3.5">
-      <Palette size={20} strokeWidth={2} className="text-muted" />
-      <span className="flex-1 text-sm font-medium">{t('profile.theme')}</span>
-      <div className="bg-surface-2 flex overflow-hidden rounded-xl">
-        {(
-          [
-            ['dark', '🌙'],
-            ['light', '☀️'],
-          ] as const
-        ).map(([v, icon]) => (
-          <button
-            key={v}
-            onClick={() => {
-              if (theme !== v) {
-                WebApp.HapticFeedback.selectionChanged();
-                setTheme(v);
-              }
-            }}
-            className={`press px-3 py-1 text-xs font-semibold transition-colors ${
-              theme === v ? 'bg-brand text-white' : 'text-faint'
-            }`}
-          >
-            {icon} {t(`profile.theme_${v}`)}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

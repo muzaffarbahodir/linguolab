@@ -1,73 +1,37 @@
 /**
- * Theme store — элегантная тёмная (default) ⇄ светлая.
- * Переключает класс html.light (CSS-переменные в index.css), синхронит
- * Telegram tg-vars + цвет шапки/фона, сохраняет выбор в localStorage.
+ * Тема приложения — одна, светлая.
+ *
+ * Тёмную убрали намеренно. Держать две означало сверять каждый новый экран в
+ * обеих, и расхождения всё равно накапливались: шторки с захардкоженным
+ * тёмным фоном чернели поверх светлых страниц, а часть текста оставалась
+ * белой на белом.
+ *
+ * Модуль остался, потому что Telegram нужно сообщать цвета нативной шапки и
+ * фона — иначе вокруг приложения остаётся тёмная рамка клиента.
  */
-import { create } from 'zustand';
 import WebApp from '@twa-dev/sdk';
 
-export type Theme = 'dark' | 'light';
-
-const KEY = 'll_theme';
-
-// Telegram tg-theme vars per theme — чтобы нативная шапка/фон совпадали с UI.
-const TG_VARS: Record<Theme, Record<string, string>> = {
-  dark: {
-    '--tg-theme-bg-color': '#09090b',
-    '--tg-theme-secondary-bg-color': '#18181b',
-    '--tg-theme-text-color': '#fafafa',
-    '--tg-theme-hint-color': '#71717a',
-    '--tg-theme-header-bg-color': '#09090b',
-  },
-  light: {
-    '--tg-theme-bg-color': '#e7e1ce',
-    '--tg-theme-secondary-bg-color': '#fbf9f3',
-    '--tg-theme-text-color': '#1f1d18',
-    '--tg-theme-hint-color': '#6b6760',
-    '--tg-theme-header-bg-color': '#e7e1ce',
-  },
+/** Цвета для нативных элементов Telegram — совпадают с --bg и --secondary-bg. */
+const TG_VARS: Record<string, string> = {
+  '--tg-theme-bg-color': '#e7e1ce',
+  '--tg-theme-secondary-bg-color': '#fbf9f3',
+  '--tg-theme-text-color': '#1f1d18',
+  '--tg-theme-hint-color': '#6b6760',
+  '--tg-theme-header-bg-color': '#e7e1ce',
 };
 
-const CHROME: Record<Theme, `#${string}`> = { dark: '#09090b', light: '#e7e1ce' };
+const CHROME = '#e7e1ce';
 
-export function applyTheme(theme: Theme): void {
+export function applyTheme(): void {
   const root = document.documentElement;
-  root.classList.toggle('light', theme === 'light');
-  for (const [k, v] of Object.entries(TG_VARS[theme])) root.style.setProperty(k, v);
+  // Класс light мог остаться в localStorage-эпохе двух тем; переменные теперь
+  // лежат в :root, и класс ни на что не влияет — снимаем, чтобы не путал.
+  root.classList.remove('light');
+  for (const [k, v] of Object.entries(TG_VARS)) root.style.setProperty(k, v);
   try {
-    WebApp.setHeaderColor(CHROME[theme]);
-    WebApp.setBackgroundColor(CHROME[theme]);
+    WebApp.setHeaderColor(CHROME);
+    WebApp.setBackgroundColor(CHROME);
   } catch {
     // старый клиент Telegram без методов — не критично
   }
 }
-
-function initialTheme(): Theme {
-  try {
-    const s = localStorage.getItem(KEY);
-    if (s === 'light' || s === 'dark') return s;
-  } catch {
-    /* localStorage недоступен */
-  }
-  return 'dark';
-}
-
-interface ThemeState {
-  theme: Theme;
-  setTheme: (t: Theme) => void;
-  toggle: () => void;
-}
-
-export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: initialTheme(),
-  setTheme: (t) => {
-    try {
-      localStorage.setItem(KEY, t);
-    } catch {
-      /* ignore */
-    }
-    applyTheme(t);
-    set({ theme: t });
-  },
-  toggle: () => get().setTheme(get().theme === 'dark' ? 'light' : 'dark'),
-}));

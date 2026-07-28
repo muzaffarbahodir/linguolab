@@ -36,6 +36,15 @@ export class EnrollmentsController {
     return this.enrollmentsService.findMyTransfers(user.id);
   }
 
+  /**
+   * GET /enrollments/transfer/options?fromClassId=xxx — куда можно перевестись.
+   * Должен стоять до GET /transfer, иначе тот перехватит маршрут.
+   */
+  @Get('transfer/options')
+  transferOptions(@CurrentUser() user: RequestUser, @Query('fromClassId') fromClassId: string) {
+    return this.enrollmentsService.transferOptions(user.id, fromClassId);
+  }
+
   /** GET /enrollments/:id/journey — путь обучения студента в классе. */
   @Get(':id/journey')
   getJourney(@CurrentUser() user: RequestUser, @Param('id') id: string) {

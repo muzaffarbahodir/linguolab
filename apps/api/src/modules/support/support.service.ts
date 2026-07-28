@@ -11,13 +11,20 @@ export class SupportService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  /** POST /support/tickets — студент создаёт тикет */
-  async create(studentId: string, subject: string, message: string) {
+  /**
+   * POST /support/tickets — студент создаёт обращение.
+   *
+   * Тема выбирается из списка, а не пишется от руки: свободный заголовок
+   * превращался в «вопрос» и «помогите», по которым нельзя ни разобрать
+   * очередь, ни понять, на что жалуются чаще.
+   */
+  async create(studentId: string, subject: string, message: string, category?: string) {
     const ticket = await this.prisma.supportTicket.create({
-      data: { student_id: studentId, subject, message },
+      data: { student_id: studentId, subject, message, category: category ?? null },
       select: {
         id: true,
         subject: true,
+        category: true,
         status: true,
         created_at: true,
         student: { select: { first_name: true, last_name: true } },
@@ -38,7 +45,14 @@ export class SupportService {
   findMy(studentId: string) {
     return this.prisma.supportTicket.findMany({
       where: { student_id: studentId },
-      select: { id: true, subject: true, message: true, status: true, created_at: true },
+      select: {
+        id: true,
+        subject: true,
+        category: true,
+        message: true,
+        status: true,
+        created_at: true,
+      },
       orderBy: { created_at: 'desc' },
     });
   }
@@ -50,6 +64,7 @@ export class SupportService {
       select: {
         id: true,
         subject: true,
+        category: true,
         message: true,
         status: true,
         created_at: true,

@@ -316,6 +316,94 @@ export class EnrollmentsService {
   // ─── Transfer requests ───────────────────────────────────────────────────
 
   /**
+   * GET /enrollments/transfer/options — куда можно перевестись из этой группы.
+   *
+   * Раньше форма просила вставить «ID нового класса», которого студент нигде
+   * не видит: перевестись мог только тот, кто заглянет в базу. Здесь возвращаем
+   * готовый список с ценой перевода, чтобы человек выбирал из существующего.
+   */
+  async transferOptions(studentId: string, fromClassId: string) {
+    const from = await this.prisma.class.findUnique({
+      where: { id: fromClassId },
+      select: { id: true, language_id: true },
+    });
+    if (!from) throw new NotFoundException('Class not found');
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { student_id_class_id: { student_id: studentId, class_id: fromClassId } },
+      select: { status: true },
+    });
+    if (!enrollment || enrollment.status !== 'ACTIVE') {
+      throw new BadRequestException('You are not actively enrolled in the source class');
+    }
+
+    // Только тот же язык: перевод — это смена группы, а не смена курса.
+    // Другой язык оформляется отдельной записью и отдельной оплатой.
+    const candidates = await this.prisma.class.findMany({
+      where: {
+        language_id: from.language_id,
+        is_active: true,
+        id: { not: fromClassId },
+        // Группы, где студент уже состоит, предлагать незачем.
+        enrollments: { none: { student_id: studentId } },
+      },
+      select: {
+        id: true,
+        title: true,
+        level: true,
+        format: true,
+        price_uzs: true,
+        max_students: true,
+        schedule_days: true,
+        schedule_time: true,
+        teacher: {
+          select: {
+            id: true,
+            photo_url: true,
+            user: { select: { first_name: true, last_name: true, avatar_url: true } },
+            ratings: { select: { rating: true } },
+          },
+        },
+        _count: { select: { enrollments: { where: { status: { in: ['ACTIVE', 'PENDING'] } } } } },
+      },
+      orderBy: { created_at: 'asc' },
+    });
+
+    // Цена перевода зависит от рейтинга преподавателя, поэтому считается для
+    // каждой пары отдельно. Человек должен видеть её до отправки заявки, а не
+    // узнавать постфактум.
+    return Promise.all(
+      candidates.map(async (c) => {
+        const ratings = c.teacher.ratings;
+        const avg =
+          ratings.length > 0
+            ? Math.round((ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) * 10) / 10
+            : null;
+        const spotsLeft = c.max_students - c._count.enrollments;
+        return {
+          id: c.id,
+          title: c.title,
+          level: c.level,
+          format: c.format,
+          price_uzs: c.price_uzs,
+          schedule_days: c.schedule_days,
+          schedule_time: c.schedule_time,
+          spots_left: spotsLeft,
+          is_full: spotsLeft <= 0,
+          teacher: {
+            id: c.teacher.id,
+            first_name: c.teacher.user.first_name,
+            last_name: c.teacher.user.last_name,
+            photo_url: c.teacher.photo_url ?? c.teacher.user.avatar_url,
+            avg_rating: avg,
+          },
+          fee_uzs: await this.teachers.computeTransferFee(fromClassId, c.id),
+        };
+      }),
+    );
+  }
+
+  /**
    * POST /enrollments/transfer — студент запрашивает перевод из класса в класс.
    * Body: { from_class_id, to_class_id, reason? }
    * Автоматически вычисляет fee (10% if target teacher rated higher).

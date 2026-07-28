@@ -89,7 +89,7 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
   const inputStyle = {
     background: 'var(--surface-2)',
     border: '1px solid var(--hairline)',
-    color: '#fff',
+    color: 'var(--text)',
   };
 
   return (
@@ -100,10 +100,10 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
     >
       <div
         className="w-full rounded-t-3xl px-5 pb-10 pt-5"
-        style={{ background: '#1a2538' }}
+        style={{ background: 'var(--secondary-bg)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
         <h2 className="mb-1 font-bold">{t('admin.classes.schedule_title')}</h2>
         <p className="text-muted mb-4 text-xs">{cls.title}</p>
 
@@ -116,7 +116,9 @@ function ScheduleForm({ cls, onClose }: { cls: AdminClass; onClose: () => void }
               className="press flex-1 rounded-xl py-2 text-xs font-bold"
               style={{
                 background: days.includes(key) ? '#6366f1' : 'var(--surface-2)',
-                color: days.includes(key) ? '#fff' : 'var(--surface-2)',
+                // Было var(--surface-2) — тот же цвет, что и фон кнопки:
+                // невыбранные дни оказывались невидимыми в обеих темах.
+                color: days.includes(key) ? '#fff' : 'var(--muted)',
               }}
             >
               {t(`schedule.day_${key.toLowerCase()}`)}
@@ -263,7 +265,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
   const inputStyle = {
     background: 'var(--surface-2)',
     border: '1px solid var(--hairline)',
-    color: '#fff',
+    color: 'var(--text)',
   };
   const selectStyle = { ...inputStyle, appearance: 'none' as const };
 
@@ -275,10 +277,10 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
     >
       <div
         className="w-full rounded-t-3xl px-5 pb-10 pt-5"
-        style={{ background: '#1a2538' }}
+        style={{ background: 'var(--secondary-bg)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
         <h2 className="mb-4 font-bold">
           {isEdit ? t('admin.classes.edit_title') : t('admin.classes.create_title')}
         </h2>

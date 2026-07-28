@@ -12,10 +12,12 @@ import {
   type AttendanceHistoryItem,
 } from '../api/lessons';
 import { useMyTeacherRating, useTeacherRating, useRateTeacher } from '../api/parents';
-import { useRequestTransfer, useMyTransfers } from '../api/teachers';
+import { useRequestTransfer, useMyTransfers, useTransferOptions } from '../api/teachers';
+import { useCurrency } from '../hooks/useCurrency';
 import { LEVEL_COLOR } from '../lib/status';
 import { toast } from '../store/toast';
 import { EmptyState } from '../components/EmptyState';
+import { Button, cx } from '../components/ui';
 import i18n from '../lib/i18n';
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -340,11 +342,15 @@ function TransferModal({
   const [toClassId, setToClassId] = useState('');
   const [reason, setReason] = useState('');
   const requestTransfer = useRequestTransfer();
+  const { fmt } = useCurrency();
+  const { data: options, isLoading: optionsLoading } = useTransferOptions(fromClassId);
 
   const { data: myTransfers } = useMyTransfers();
   const hasPending = myTransfers?.some(
     (r) => r.from_class.id === fromClassId && r.status === 'PENDING',
   );
+
+  const selected = options?.find((o) => o.id === toClassId);
 
   const handleSubmit = () => {
     if (!toClassId.trim()) return;
@@ -370,12 +376,14 @@ function TransferModal({
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-t-3xl p-6 pb-8" style={{ background: '#1A2535' }}>
+      {/* Фон из темы, а не захардкоженный тёмный: раньше на светлой теме
+          шторка выглядела чёрным прямоугольником поверх светлой страницы. */}
+      <div className="bg-surface border-hairline max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border p-6 pb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-bold text-white">{t('schedule.transfer_title')}</h2>
+          <h2 className="font-bold text-[color:var(--text)]">{t('schedule.transfer_title')}</h2>
           <button
             onClick={onClose}
-            className="bg-hairline flex h-8 w-8 items-center justify-center rounded-full text-lg text-white/60"
+            className="bg-surface-2 text-muted flex h-8 w-8 items-center justify-center rounded-full text-lg"
           >
             ×
           </button>
@@ -383,7 +391,7 @@ function TransferModal({
 
         <p className="text-muted mb-4 text-sm">
           {t('schedule.transfer_from')}{' '}
-          <span className="font-semibold text-white">{fromClassTitle}</span>
+          <span className="font-semibold text-[color:var(--text)]">{fromClassTitle}</span>
         </p>
 
         {hasPending ? (
@@ -392,17 +400,69 @@ function TransferModal({
           </div>
         ) : (
           <>
-            <div className="mb-3">
-              <label className="text-muted mb-1 block text-xs font-semibold">
-                {t('schedule.new_class_id_label')}
-              </label>
-              <input
-                value={toClassId}
-                onChange={(e) => setToClassId(e.target.value)}
-                placeholder={t('schedule.class_id_ph')}
-                className="bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
-              />
+            <label className="text-muted mb-2 block text-xs font-semibold">
+              {t('schedule.pick_class_label')}
+            </label>
+
+            {optionsLoading && <div className="skeleton mb-3 h-20 rounded-2xl" />}
+
+            {!optionsLoading && options?.length === 0 && (
+              <p className="text-muted bg-surface-2 mb-4 rounded-xl p-3 text-center text-sm">
+                {t('schedule.no_transfer_options')}
+              </p>
+            )}
+
+            {/* Выбор из существующих групп вместо ввода ID, который студенту
+                взять неоткуда. Цена перевода показана сразу у каждой. */}
+            <div className="mb-4 flex flex-col gap-2">
+              {options?.map((o) => {
+                const active = toClassId === o.id;
+                const teacherName = `${o.teacher.first_name} ${o.teacher.last_name ?? ''}`.trim();
+                return (
+                  <button
+                    key={o.id}
+                    onClick={() => setToClassId(o.id)}
+                    disabled={o.is_full}
+                    aria-pressed={active}
+                    className={cx(
+                      'press rounded-2xl border p-3 text-left transition-colors',
+                      active ? 'bg-brand/15 border-brand' : 'border-hairline bg-surface-2',
+                      o.is_full && 'opacity-50',
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-semibold text-[color:var(--text)]">
+                        {o.title}
+                      </span>
+                      <span className="text-faint shrink-0 text-xs">{o.level}</span>
+                    </div>
+                    <div className="text-muted mt-1 text-xs">
+                      {teacherName}
+                      {o.teacher.avg_rating !== null && ` · ★ ${o.teacher.avg_rating}`}
+                      {o.schedule_time && ` · ${o.schedule_time}`}
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2 text-xs">
+                      <span className={o.is_full ? 'text-danger' : 'text-ok'}>
+                        {o.is_full
+                          ? t('teacher.no_spots')
+                          : t('booking.spots', { n: o.spots_left })}
+                      </span>
+                      {/* Доплата — самое важное в решении, поэтому у каждой
+                          группы, а не одной строкой мелким шрифтом внизу. */}
+                      {o.fee_uzs > 0 && (
+                        <span className="text-warn font-semibold">
+                          {t('schedule.transfer_fee', { amount: fmt(o.fee_uzs) })}
+                        </span>
+                      )}
+                      {o.fee_uzs === 0 && (
+                        <span className="text-faint">{t('schedule.transfer_free')}</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+
             <div className="mb-4">
               <label className="text-muted mb-1 block text-xs font-semibold">
                 {t('schedule.reason_label')}
@@ -415,15 +475,21 @@ function TransferModal({
                 className="bg-surface-2 border-hairline w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
               />
             </div>
-            <p className="text-faint mb-4 text-xs">{t('schedule.transfer_fee_info')}</p>
-            <button
+
+            <p className="text-faint mb-4 text-xs">
+              {selected && selected.fee_uzs > 0
+                ? t('schedule.transfer_fee_selected', { amount: fmt(selected.fee_uzs) })
+                : t('schedule.transfer_needs_approval')}
+            </p>
+
+            <Button
+              size="lg"
               onClick={handleSubmit}
-              disabled={!toClassId.trim() || requestTransfer.isPending}
-              className="press w-full rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg,#6366f1,#a5b4fc)' }}
+              disabled={!toClassId}
+              loading={requestTransfer.isPending}
             >
-              {requestTransfer.isPending ? '...' : t('schedule.transfer_sending')}
-            </button>
+              {t('schedule.transfer_sending')}
+            </Button>
           </>
         )}
       </div>

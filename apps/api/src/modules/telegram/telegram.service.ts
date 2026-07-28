@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot, InlineKeyboard, InputFile } from 'grammy';
 import type { Update } from 'grammy/types';
 import { Role } from '@prisma/client';
 
@@ -734,6 +734,32 @@ export class TelegramService implements OnModuleInit {
       await this.bot.api.sendMessage(telegramUserId, html, { parse_mode: 'HTML' });
     } catch (err) {
       this.logger.warn(`sendMessage to ${telegramUserId} failed: ${String(err)}`);
+    }
+  }
+
+  /**
+   * Отправляет файл в личный чат с ботом.
+   *
+   * Единственный способ отдать документ в Telegram, не показывая, откуда он
+   * взялся: файл приходит от бота, а не по ссылке на хранилище. Заодно он
+   * остаётся в переписке — открыть его снова можно и без приложения.
+   */
+  async sendDocument(
+    telegramUserId: string,
+    file: Buffer,
+    filename: string,
+    caption?: string,
+  ): Promise<boolean> {
+    if (!this.bot) return false;
+    try {
+      await this.bot.api.sendDocument(telegramUserId, new InputFile(file, filename), {
+        caption,
+        parse_mode: 'HTML',
+      });
+      return true;
+    } catch (err) {
+      this.logger.warn(`sendDocument to ${telegramUserId} failed: ${String(err)}`);
+      return false;
     }
   }
 

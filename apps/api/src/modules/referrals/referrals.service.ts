@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { AchievementsService } from '../achievements/achievements.service';
 
 /** Генерирует короткий уникальный код (6 символов, base36) */
 function generateCode(): string {
@@ -9,7 +10,10 @@ function generateCode(): string {
 
 @Injectable()
 export class ReferralsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly achievements: AchievementsService,
+  ) {}
 
   /**
    * GET /referrals/my
@@ -63,6 +67,12 @@ export class ReferralsService {
         redeemed_at: new Date(),
         used_count: { increment: 1 },
       },
+    });
+
+    // Достижение получает пригласивший, а не тот, кто ввёл код: наградой
+    // отмечается приглашение, а не факт прихода по чужой ссылке.
+    void this.achievements.onReferral(referral.referrer_id).catch(() => {
+      // Награда вторична — сбой в ней не должен отменять активацию кода.
     });
 
     return { success: true, message: 'Код активирован! Менеджер начислит бонус.' };

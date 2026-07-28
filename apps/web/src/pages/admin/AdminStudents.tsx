@@ -183,7 +183,7 @@ export function AdminStudentsPage() {
             style={{ background: 'var(--surface)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+            <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
             <h2 className="mb-1 font-bold">🎁 {t('admin.points_award.title')}</h2>
             <p className="text-muted mb-4 text-xs">{awardFor.name}</p>
             <input

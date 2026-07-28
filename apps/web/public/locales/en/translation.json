@@ -87,11 +87,14 @@
     "transfer_error": "Error sending request",
     "time_at": "at",
     "comment_ph": "Comment (optional)",
-    "class_id_ph": "Paste class ID",
     "reason_ph": "E.g.: different schedule",
-    "new_class_id_label": "New class ID *",
     "reason_label": "Reason (optional)",
-    "transfer_fee_info": "ℹ️ If the new class teacher has a higher rating, the transfer may be paid (10% of class price)."
+    "pick_class_label": "Transfer to",
+    "no_transfer_options": "No other groups for this language right now",
+    "transfer_fee": "extra {{amount}}",
+    "transfer_free": "no extra charge",
+    "transfer_fee_selected": "This transfer costs {{amount}}. A manager will contact you.",
+    "transfer_needs_approval": "A manager will review the request and contact you."
   },
   "courses": {
     "title": "Courses",
@@ -382,9 +385,6 @@
     "payment": "Payment",
     "language": "Language / Til / Язык",
     "currency": "Currency",
-    "theme": "Theme",
-    "theme_dark": "Dark",
-    "theme_light": "Light",
     "logout": "Log out",
     "confirm_logout": "Log out of your account?",
     "coming_soon": "\"{{label}}\" coming soon.",
@@ -642,9 +642,7 @@
     "subtitle": "Contact manager",
     "write_btn": "+ Write",
     "new_ticket": "New request",
-    "subject_label": "SUBJECT",
     "message_label": "MESSAGE",
-    "subject_ph": "Briefly describe the issue",
     "message_ph": "Describe the situation in detail...",
     "send_btn": "📩 Send",
     "sending": "...",
@@ -652,12 +650,19 @@
     "sent_sub": "The manager will respond shortly",
     "empty_title": "No requests",
     "empty_subtitle": "If you have questions — click Write",
-    "write_manager": "Write to manager",
     "load_error": "Failed to load requests",
     "read_more": "read more...",
     "status_OPEN": "Open",
     "status_IN_PROGRESS": "In progress",
-    "status_CLOSED": "Closed"
+    "status_CLOSED": "Closed",
+    "category_label": "What do you need help with?",
+    "category": {
+      "PAYMENT": "Payment",
+      "SCHEDULE": "Schedule",
+      "TEACHER": "Teacher",
+      "TECHNICAL": "App not working",
+      "OTHER": "Other"
+    }
   },
   "attendance": {
     "title": "Attendance",
@@ -693,7 +698,7 @@
     "empty": "No certificates",
     "empty_sub": "Complete a course to get a certificate",
     "issued": "Issued {{date}}",
-    "download": "Download",
+    "download": "Download certificate",
     "load_error": "Failed to load certificates",
     "my_title": "My Certificates",
     "count_1": "certificate",
@@ -701,7 +706,10 @@
     "count_many": "certificates",
     "issued_date": "📅 Issued {{date}}",
     "open_pdf": "📄 Open PDF",
-    "empty_sub2": "Complete a course — the manager will issue a completion certificate"
+    "empty_sub2": "Complete a course — the manager will issue a completion certificate",
+    "sent_to_chat": "Sent the file to your chat with the bot",
+    "start_bot_first": "Send /start to the bot first — otherwise it cannot message you",
+    "send_error": "Could not send"
   },
   "placement": {
     "title": "Level test",

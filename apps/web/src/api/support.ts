@@ -6,9 +6,13 @@ import { apiClient } from './client';
 
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'CLOSED';
 
+/** Тема обращения — из готового списка, а не свободный текст. */
+export type SupportCategory = 'PAYMENT' | 'SCHEDULE' | 'TEACHER' | 'TECHNICAL' | 'OTHER';
+
 export interface SupportTicket {
   id: string;
   subject: string;
+  category: SupportCategory | null;
   message: string;
   status: TicketStatus;
   created_at: string;
@@ -35,7 +39,7 @@ export function useMyTickets() {
 export function useCreateTicket() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { subject: string; message: string }) =>
+    mutationFn: (data: { subject: string; message: string; category?: SupportCategory }) =>
       apiClient.post<SupportTicket>('/support/tickets', data).then((r) => r.data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['support', 'my'] });

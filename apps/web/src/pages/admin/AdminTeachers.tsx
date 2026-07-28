@@ -114,17 +114,17 @@ function BadgeSheet({ teacherId, onClose }: { teacherId: string; onClose: () => 
   const inputStyle = {
     background: 'var(--surface-2)',
     border: '1px solid var(--hairline)',
-    color: '#fff',
+    color: 'var(--text)',
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/65" onClick={onClose}>
       <div
         className="w-full rounded-t-3xl px-5 pb-10 pt-5"
-        style={{ background: '#1a2538' }}
+        style={{ background: 'var(--secondary-bg)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
         <h2 className="mb-4 font-bold">{t('admin.teachers.badges_title')}</h2>
 
         {/* Current badges */}
@@ -300,17 +300,17 @@ function TeacherForm({
   const inputStyle = {
     background: 'var(--surface-2)',
     border: '1px solid var(--hairline)',
-    color: '#fff',
+    color: 'var(--text)',
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/65" onClick={onClose}>
       <div
         className="w-full rounded-t-3xl px-5 pb-10 pt-5"
-        style={{ background: '#1a2538' }}
+        style={{ background: 'var(--secondary-bg)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
         <h2 className="mb-4 font-bold">
           {isEdit ? t('admin.teachers.edit_title') : t('admin.teachers.create_title')}
         </h2>

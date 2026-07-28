@@ -8,9 +8,15 @@ import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
 import { useBackButton } from '../hooks/useBackButton';
 
-import { useMyTickets, useCreateTicket, type SupportTicket } from '../api/support';
+import {
+  useMyTickets,
+  useCreateTicket,
+  type SupportCategory,
+  type SupportTicket,
+} from '../api/support';
 import { SUPPORT_STATUS } from '../lib/status';
 import { EmptyState } from '../components/EmptyState';
+import { Button, cx } from '../components/ui';
 
 // ── TicketCard ─────────────────────────────────────────────────────────────────
 
@@ -26,7 +32,9 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
   return (
     <div className="bg-surface border-surface-2 rounded-2xl border p-4">
       <div className="mb-2 flex items-start justify-between gap-2">
-        <p className="flex-1 text-sm font-semibold">{ticket.subject}</p>
+        <p className="flex-1 text-sm font-semibold">
+          {ticket.category ? t(`support.category.${ticket.category}`) : ticket.subject}
+        </p>
         <span
           className="shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold"
           style={{ background: `${m.color}22`, color: m.color }}
@@ -47,28 +55,50 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
 
 // ── Create form bottom sheet ──────────────────────────────────────────────────
 
+/**
+ * Темы обращений.
+ *
+ * Заголовок студент придумывал сам, и в базе оседали «вопрос» и «помогите» —
+ * по такому полю менеджер не мог ни разобрать очередь, ни увидеть, на что
+ * жалуются чаще. Готовый список решает обе задачи и заодно экономит человеку
+ * одно поле ввода.
+ */
+const CATEGORIES: { key: SupportCategory; art: string }[] = [
+  { key: 'PAYMENT', art: '💳' },
+  { key: 'SCHEDULE', art: '📅' },
+  { key: 'TEACHER', art: '🧑‍🏫' },
+  { key: 'TECHNICAL', art: '⚙️' },
+  { key: 'OTHER', art: '💬' },
+];
+
 function CreateTicketSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const create = useCreateTicket();
-  const [subject, setSubject] = useState('');
+  const [category, setCategory] = useState<SupportCategory | null>(null);
   const [message, setMessage] = useState('');
   const [done, setDone] = useState(false);
 
   if (!open) return null;
 
+  const close = () => {
+    setCategory(null);
+    setMessage('');
+    onClose();
+  };
+
   function handleSend() {
-    if (subject.trim().length < 3 || message.trim().length < 10 || create.isPending) return;
+    if (!category || message.trim().length < 10 || create.isPending) return;
     WebApp.HapticFeedback.impactOccurred('medium');
     create.mutate(
-      { subject: subject.trim(), message: message.trim() },
+      // Заголовок собираем из темы: поле в базе обязательное, а спрашивать
+      // его у человека больше незачем.
+      { subject: t(`support.category.${category}`), message: message.trim(), category },
       {
         onSuccess: () => {
           setDone(true);
           setTimeout(() => {
             setDone(false);
-            setSubject('');
-            setMessage('');
-            onClose();
+            close();
           }, 1400);
         },
       },
@@ -98,42 +128,59 @@ function CreateTicketSheet({ open, onClose }: { open: boolean; onClose: () => vo
           <>
             <h3 className="mb-4 text-base font-bold">{t('support.new_ticket')}</h3>
 
-            <div className="mb-3">
-              <p className="text-muted mb-1.5 text-xs font-semibold">
-                {t('support.subject_label')}
-              </p>
-              <input
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder={t('support.subject_ph')}
-                maxLength={120}
-                className="bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
-              />
-            </div>
-
             <div className="mb-4">
-              <p className="text-muted mb-1.5 text-xs font-semibold">
-                {t('support.message_label')}
-              </p>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder={t('support.message_ph')}
-                rows={4}
-                maxLength={2000}
-                className="bg-surface-2 border-hairline w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
-              />
-              <p className="text-faint mt-1 text-right text-xs">{message.length}/2000</p>
+              <p className="text-muted mb-2 text-xs font-semibold">{t('support.category_label')}</p>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map(({ key, art }) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      WebApp.HapticFeedback.selectionChanged();
+                      setCategory(key);
+                    }}
+                    aria-pressed={category === key}
+                    className={cx(
+                      'press rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
+                      category === key
+                        ? 'bg-brand/20 border-brand text-brand-400'
+                        : 'bg-surface-2 border-hairline text-muted',
+                    )}
+                  >
+                    <span className="mr-1.5">{art}</span>
+                    {t(`support.category.${key}`)}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <button
+            {/* Поле сообщения появляется после выбора темы: так человеку видно,
+                что от него хотят по шагам, а не сразу целая анкета. */}
+            {category && (
+              <div className="mb-4">
+                <p className="text-muted mb-1.5 text-xs font-semibold">
+                  {t('support.message_label')}
+                </p>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={t('support.message_ph')}
+                  rows={4}
+                  maxLength={2000}
+                  autoFocus
+                  className="bg-surface-2 border-hairline w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none"
+                />
+                <p className="text-faint mt-1 text-right text-xs">{message.length}/2000</p>
+              </div>
+            )}
+
+            <Button
+              size="lg"
               onClick={handleSend}
-              disabled={subject.trim().length < 3 || message.trim().length < 10 || create.isPending}
-              className="press flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #a5b4fc)' }}
+              disabled={!category || message.trim().length < 10}
+              loading={create.isPending}
             >
-              {create.isPending ? '...' : t('support.send_btn')}
-            </button>
+              {t('support.send_btn')}
+            </Button>
           </>
         )}
       </div>
@@ -184,12 +231,13 @@ export function SupportPage() {
 
         {isError && <EmptyState emoji="⚠️" title={t('support.load_error')} />}
 
+        {/* Без кнопки: «Написать» уже стоит в шапке и никуда не девается при
+            прокрутке. Две одинаковые кнопки на одном экране только сбивают. */}
         {!isLoading && !isError && (!data || data.length === 0) && (
           <EmptyState
             emoji="🎫"
             title={t('support.empty_title')}
             subtitle={t('support.empty_subtitle')}
-            action={{ label: t('support.write_manager'), onClick: () => setShowCreate(true) }}
           />
         )}
 

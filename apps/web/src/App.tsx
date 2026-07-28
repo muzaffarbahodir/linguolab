@@ -245,7 +245,7 @@ export default function App() {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
-        style={{ background: '#09090b' }}
+        style={{ background: 'var(--bg)' }}
       >
         <div className="floral-float flex flex-col items-center gap-3">
           <div
@@ -268,7 +268,7 @@ export default function App() {
     return (
       <div
         className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
-        style={{ background: '#09090b' }}
+        style={{ background: 'var(--bg)' }}
       >
         <p className="mb-4 text-sm" style={{ color: 'var(--muted)' }}>
           {t('app.server_error')}
@@ -373,7 +373,7 @@ function AuthenticatedApp() {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
-        style={{ background: '#09090b' }}
+        style={{ background: 'var(--bg)' }}
       >
         <div
           className="h-6 w-6 animate-spin rounded-full border-4 border-t-transparent"

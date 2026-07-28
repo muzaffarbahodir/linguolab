@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { TicketStatus, Role } from '@prisma/client';
-import { IsIn, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { Throttle } from '@nestjs/throttler';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -18,6 +18,11 @@ class CreateTicketDto {
   @MinLength(10)
   @MaxLength(2000)
   message!: string;
+
+  /** Тема из готового списка — по ней менеджер разбирает очередь. */
+  @IsOptional()
+  @IsIn(['PAYMENT', 'SCHEDULE', 'TEACHER', 'TECHNICAL', 'OTHER'])
+  category?: string;
 }
 
 class UpdateTicketStatusDto {
@@ -33,7 +38,7 @@ export class SupportController {
   @Post('tickets')
   @Throttle({ short: { limit: 3, ttl: 60_000 }, medium: { limit: 5, ttl: 60_000 } })
   create(@CurrentUser() user: RequestUser, @Body() dto: CreateTicketDto) {
-    return this.service.create(user.id, dto.subject, dto.message);
+    return this.service.create(user.id, dto.subject, dto.message, dto.category);
   }
 
   /** GET /support/tickets/my — мои тикеты (студент) */

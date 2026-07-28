@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
 import { useBackButton } from '../hooks/useBackButton';
 
-import { useMyCertificates, type Certificate } from '../api/certificates';
+import { useMyCertificates, useSendCertificate, type Certificate } from '../api/certificates';
 import { EmptyState } from '../components/EmptyState';
+import { toast } from '../store/toast';
+import { Button } from '../components/ui';
 
 const LEVEL_COLOR: Record<string, string> = {
   A1: '#10B981',
@@ -24,10 +26,24 @@ function CertCard({ cert }: { cert: Certificate }) {
   });
 
   const levelColor = LEVEL_COLOR[cert.class.level] ?? '#6366f1';
+  const send = useSendCertificate();
 
-  function handleOpen() {
+  function handleDownload() {
     WebApp.HapticFeedback.selectionChanged();
-    WebApp.openLink(cert.file_url);
+    send.mutate(cert.id, {
+      onSuccess: () => toast.success(t('certificates.sent_to_chat')),
+      onError: (err) => {
+        // Бот не может написать первым: пока человек не нажал /start, файл
+        // отправить некуда. Об этом и надо сказать, а не «ошибка сети».
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message;
+        toast.error(
+          msg === 'TELEGRAM_SEND_FAILED'
+            ? t('certificates.start_bot_first')
+            : t('certificates.send_error'),
+        );
+      },
+    });
   }
 
   return (
@@ -59,17 +75,10 @@ function CertCard({ cert }: { cert: Certificate }) {
       {/* Date */}
       <p className="text-muted mb-3 text-xs">{t('certificates.issued_date', { date })}</p>
 
-      {/* Download button */}
-      <button
-        onClick={handleOpen}
-        className="press flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white"
-        style={{
-          background: 'linear-gradient(135deg, #6366f1, #a5b4fc)',
-          boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
-        }}
-      >
-        {t('certificates.open_pdf')}
-      </button>
+      {/* Файл приходит в чат с ботом, а не открывается по ссылке. */}
+      <Button size="lg" onClick={handleDownload} loading={send.isPending}>
+        {t('certificates.download')}
+      </Button>
     </div>
   );
 }

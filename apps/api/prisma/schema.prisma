@@ -640,6 +640,12 @@ model SupportTicket {
   status     TicketStatus @default(OPEN)
   created_at DateTime     @default(now())
 
+  /// Тема обращения: PAYMENT / SCHEDULE / TEACHER / TECHNICAL / OTHER.
+  /// Раньше человек придумывал заголовок сам, и получалось «вопрос» и
+  /// «помогите» — по такому полю нельзя ни отсортировать, ни понять загрузку.
+  /// Строка, а не enum: список тем меняется без миграции.
+  category String?
+
   student User @relation(fields: [student_id], references: [id])
 
   @@index([student_id])

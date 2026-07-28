@@ -31,7 +31,7 @@ import '@fontsource-variable/manrope';
 import './styles/index.css';
 import i18n from './lib/i18n'; // инициализация i18next до рендера (initImmediate: false)
 import { useAuthStore } from './store/auth';
-import { useThemeStore, applyTheme } from './store/theme';
+import { applyTheme } from './store/theme';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Telegram WebApp инициализация
@@ -63,9 +63,9 @@ for (const [k, v] of Object.entries(STATIC_TG_VARS)) {
   document.documentElement.style.setProperty(k, v);
 }
 
-applyTheme(useThemeStore.getState().theme);
+applyTheme();
 // Telegram может пере-инжектить vars при смене своей темы — переприменяем нашу.
-WebApp.onEvent('themeChanged', () => applyTheme(useThemeStore.getState().theme));
+WebApp.onEvent('themeChanged', () => applyTheme());
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auto-init авторизации при старте приложения
@@ -129,7 +129,7 @@ function AppCrash() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
-        background: '#09090b',
+        background: 'var(--bg)',
         color: 'rgba(255,255,255,0.7)',
         padding: 24,
         textAlign: 'center',
