@@ -4,12 +4,17 @@ import { apiClient } from './client';
 /** Категория направления — группирует каталог (языки vs экзамены). */
 export type LanguageCategory = 'LANGUAGES' | 'IELTS' | 'SAT' | 'CEFR' | 'DTM' | 'MILLIY_SERTIFIKAT';
 
-/** Порядок категорий в UI (опрос + чипсы каталога). */
+/**
+ * Порядок направлений в каталоге и в опросе.
+ *
+ * CEFR убран: это шкала уровней, а не курс, который центр продаёт. Из
+ * перечисления в базе значение не удалено — старые записи с ним должны
+ * остаться читаемыми, — но выбрать его больше нельзя.
+ */
 export const CATEGORY_ORDER: LanguageCategory[] = [
   'LANGUAGES',
   'IELTS',
   'SAT',
-  'CEFR',
   'DTM',
   'MILLIY_SERTIFIKAT',
 ];

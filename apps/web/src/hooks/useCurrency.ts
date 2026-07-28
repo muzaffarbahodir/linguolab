@@ -1,19 +1,24 @@
 import { useTranslation } from 'react-i18next';
-import { useMe } from '../api/users';
-import { useExchangeRate } from '../api/config';
-import { formatMoney } from '../lib/money';
 
+import { formatUzs } from '../lib/money';
+
+/**
+ * Форматирование цен. Валюта одна — сум.
+ *
+ * Переключатель UZS/USD убран: центр в Узбекистане, цены назначены в сумах,
+ * а долларовая витрина считалась по плавающему курсу. Получалась вторая
+ * цена, на которую нельзя сослаться и которой нельзя заплатить — Click,
+ * Payme и Uzumbank принимают только сумы.
+ *
+ * Хук оставлен на месте: цены форматируются через него по всему приложению,
+ * и если валют когда-нибудь станет две, менять придётся только здесь.
+ */
 export function useCurrency() {
   const { i18n } = useTranslation();
-  const { data: me } = useMe();
-  const { data: rate } = useExchangeRate();
-
-  const currency = me?.preferred_currency ?? 'UZS';
-  const uzsPerUsd = rate?.uzs_per_usd ?? 12500;
 
   function fmt(uzs: number): string {
-    return formatMoney(uzs, currency, uzsPerUsd, i18n.language);
+    return formatUzs(uzs, i18n.language);
   }
 
-  return { fmt, currency, uzsPerUsd };
+  return { fmt, currency: 'UZS' as const };
 }

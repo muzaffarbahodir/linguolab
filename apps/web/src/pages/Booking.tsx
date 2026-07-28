@@ -75,7 +75,7 @@ function StepClass({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: classes, isLoading, isError } = useClasses(language.id);
-  const { fmt, currency } = useCurrency();
+  const { fmt } = useCurrency();
 
   return (
     <div className="flex flex-col gap-4">
@@ -174,9 +174,7 @@ function StepClass({
                 </button>
                 <div className="flex items-center justify-between">
                   <span className="font-bold">
-                    {currency === 'USD' && cls.price_usd > 0
-                      ? `$${cls.price_usd}`
-                      : fmt(cls.price_uzs)}
+                    {fmt(cls.price_uzs)}
                     {t('booking.per_month')}
                   </span>
                   <span className="text-tg-hint text-xs">
@@ -210,11 +208,10 @@ function StepConfirm({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { mutate: enroll, isPending } = useEnrollClass();
-  const { fmt, currency } = useCurrency();
+  const { fmt } = useCurrency();
   const levelColor = LEVEL_COLORS[cls.level] ?? '#6366f1';
   const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
-  const priceDisplay =
-    currency === 'USD' && cls.price_usd > 0 ? `$${cls.price_usd}` : fmt(cls.price_uzs);
+  const priceDisplay = fmt(cls.price_uzs);
 
   function handleConfirm() {
     enroll(cls.id, {

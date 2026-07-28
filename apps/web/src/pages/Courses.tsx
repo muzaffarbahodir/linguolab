@@ -28,7 +28,10 @@ export function CoursesPage() {
 
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<CatFilter>('all');
-  const [sort, setSort] = useState<'popular' | 'rating'>('popular');
+
+  /** Порог, ниже которого поиск бесполезен: столько карточек видно сразу. */
+  const SEARCH_THRESHOLD = 8;
+  const showSearch = (languages?.length ?? 0) > SEARCH_THRESHOLD;
 
   // Категории, у которых есть направления (для чипсов).
   const categories = useMemo(() => {
@@ -42,23 +45,28 @@ export function CoursesPage() {
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (languages ?? [])
-      .filter((l) => {
-        const matchQ =
-          !q ||
-          l.name_ru.toLowerCase().includes(q) ||
-          (l.description ?? '').toLowerCase().includes(q);
-        const matchCat = effectiveCat === 'all' || (l.category ?? 'LANGUAGES') === effectiveCat;
-        return matchQ && matchCat;
-      })
-      .sort((a, b) =>
-        sort === 'rating'
-          ? (b.avg_rating ?? -1) - (a.avg_rating ?? -1) ||
-            (b.reviews_count ?? 0) - (a.reviews_count ?? 0)
-          : // Популярные (больше открытых групп) — выше.
-            (b.groups_count ?? 0) - (a.groups_count ?? 0),
-      );
-  }, [languages, query, effectiveCat, sort]);
+    return (
+      (languages ?? [])
+        .filter((l) => {
+          const matchQ =
+            !q ||
+            l.name_ru.toLowerCase().includes(q) ||
+            (l.description ?? '').toLowerCase().includes(q);
+          const matchCat = effectiveCat === 'all' || (l.category ?? 'LANGUAGES') === effectiveCat;
+          return matchQ && matchCat;
+        })
+        // Один разумный порядок вместо переключателя: сначала где больше
+        // открытых групп, при равенстве — с лучшим рейтингом. Выбор между
+        // «популярные» и «по рейтингу» на десятке курсов ничего не менял, а
+        // занимал строку и требовал решения от человека, который просто зашёл
+        // посмотреть, чему тут учат.
+        .sort(
+          (a, b) =>
+            (b.groups_count ?? 0) - (a.groups_count ?? 0) ||
+            (b.avg_rating ?? -1) - (a.avg_rating ?? -1),
+        )
+    );
+  }, [languages, query, effectiveCat]);
 
   // Бестселлер: курс с наибольшим числом студентов (от 3) — соц-доказательство.
   const bestsellerId = useMemo(() => {
@@ -72,43 +80,40 @@ export function CoursesPage() {
     <div className="glass-fade-in flex flex-col gap-4 px-4 pt-6">
       <h1 className="text-xl font-bold">{t('courses.title')}</h1>
 
-      {/* Поиск */}
-      <div className="bg-surface border-hairline flex items-center gap-2 rounded-2xl border px-3 py-2.5">
-        <Search size={18} className="text-faint shrink-0" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('courses.search_ph')}
-          className="w-full bg-transparent text-sm outline-none"
-        />
-      </div>
-
-      {/* Чипсы категорий */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <Chip active={effectiveCat === 'all'} onClick={() => setCat('all')} label="Все" />
-        {categories.map((c) => (
-          <Chip
-            key={c}
-            active={effectiveCat === c}
-            onClick={() => setCat(c)}
-            label={CATEGORY_LABEL[c]}
+      {/*
+        Поиск нужен, когда список не помещается на экран. На восьми курсах
+        листать быстрее, чем печатать, а поле съедает верх страницы.
+      */}
+      {showSearch && (
+        <div className="bg-surface border-hairline flex items-center gap-2 rounded-2xl border px-3 py-2.5">
+          <Search size={18} className="text-faint shrink-0" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('courses.search_ph')}
+            className="w-full bg-transparent text-sm outline-none"
           />
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Сортировка */}
-      <div className="flex gap-2">
-        <Chip
-          active={sort === 'popular'}
-          onClick={() => setSort('popular')}
-          label={t('courses.sort_popular')}
-        />
-        <Chip
-          active={sort === 'rating'}
-          onClick={() => setSort('rating')}
-          label={t('courses.sort_rating')}
-        />
-      </div>
+      {/* Направления. Одна категория — фильтровать не из чего. */}
+      {categories.length > 1 && (
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Chip
+            active={effectiveCat === 'all'}
+            onClick={() => setCat('all')}
+            label={t('courses.filter_all')}
+          />
+          {categories.map((c) => (
+            <Chip
+              key={c}
+              active={effectiveCat === c}
+              onClick={() => setCat(c)}
+              label={CATEGORY_LABEL[c]}
+            />
+          ))}
+        </div>
+      )}
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3">
@@ -191,11 +196,15 @@ function CourseBanner({
         {lang.image_url ? (
           <img src={lang.image_url} alt={lang.name_ru} className="h-full w-full object-cover" />
         ) : (
+          // Заглушка на случай, когда фото направления ещё не загрузили.
+          // Название, а не флаг-эмодзи: Windows их не рисует и вместо флага
+          // показывает пару букв — «GB», «CN». На телефоне флаг виден, на
+          // десктопе выходило похоже на недогруженную картинку.
           <div
-            className="flex h-full w-full items-center justify-center text-4xl"
+            className="flex h-full w-full items-center justify-center px-3 text-center text-lg font-bold text-white"
             style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }}
           >
-            {lang.flag_emoji}
+            {lang.name_ru}
           </div>
         )}
         {bestseller && (

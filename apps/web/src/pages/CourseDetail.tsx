@@ -327,7 +327,11 @@ function ReviewsSection({
         onError: (e: unknown) => {
           const msg =
             (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? null;
-          toast.error(msg ?? t('app.server_error'));
+          toast.error(
+            msg === 'REVIEW_REQUIRES_ATTENDED_LESSON'
+              ? t('course.review_locked')
+              : (msg ?? t('app.server_error')),
+          );
         },
       },
     );
@@ -357,7 +361,16 @@ function ReviewsSection({
         )}
       </div>
 
-      {/* Своя оценка — только для записанных */}
+      {/*
+        Правило объясняем словами, а не прячем форму молча: без подписи
+        отсутствие оценки читается как поломка. Заодно это ответ на вопрос
+        «почему у курса мало отзывов» — их оставляют только те, кто учился.
+      */}
+      {!canReview && !myReview && (
+        <p className="text-faint mb-3 text-xs leading-snug">{t('course.review_locked')}</p>
+      )}
+
+      {/* Своя оценка — только после посещённого занятия */}
       {canReview && (
         <div className="glass-card mb-3 rounded-2xl p-4">
           <p className="mb-2 text-sm font-semibold">
@@ -598,11 +611,11 @@ function TeacherClassCard({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { fmt, currency } = useCurrency();
+  const { fmt } = useCurrency();
   const teacherName = `${cls.teacher.user.first_name}${cls.teacher.user.last_name ? ' ' + cls.teacher.user.last_name : ''}`;
   const levelColor = LEVEL_COLOR[cls.level] ?? accent;
   const isFull = cls.spots_left <= 0;
-  const price = currency === 'USD' && cls.price_usd > 0 ? `$${cls.price_usd}` : fmt(cls.price_uzs);
+  const price = fmt(cls.price_uzs);
 
   return (
     <div

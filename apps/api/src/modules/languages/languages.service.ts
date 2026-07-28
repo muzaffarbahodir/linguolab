@@ -306,16 +306,7 @@ export class LanguagesService {
           select: { id: true, rating: true, comment: true, is_hidden: true },
         })
       : null;
-    // Оставлять отзыв может тот, кто записан/был записан (ACTIVE/DROPPED).
-    const canReview = userId
-      ? (await this.prisma.enrollment.count({
-          where: {
-            student_id: userId,
-            status: { in: ['ACTIVE', 'DROPPED'] },
-            class: { language_id: id },
-          },
-        })) > 0
-      : false;
+    const canReview = userId ? await this.hasAttendedLesson(userId, id) : false;
 
     const reviews = reviewsRaw.map((r) => ({
       id: r.id,
@@ -346,21 +337,39 @@ export class LanguagesService {
 
   // ─── Отзывы на курс (CourseReview) ─────────────────────────────────────────────
 
+  /**
+   * Побывал ли студент хотя бы на одном занятии этого направления.
+   *
+   * Условие для отзыва. Одной записи на курс мало: записаться можно утром и в
+   * тот же час поставить звезду, ничего не увидев. Такие оценки обесценивают
+   * все остальные, а по ним выбирают, куда нести деньги.
+   *
+   * Метод один на два вызова — проверку перед сохранением и признак
+   * can_review для интерфейса. Разъехавшись, они дали бы худшее: кнопка
+   * есть, нажатие отказывает.
+   */
+  private async hasAttendedLesson(userId: string, languageId: string): Promise<boolean> {
+    const attended = await this.prisma.lessonAttendance.count({
+      where: {
+        student_id: userId,
+        // EXCUSED и ABSENT не считаются: на занятии человек не был.
+        status: { in: ['PRESENT', 'LATE'] },
+        lesson: {
+          status: 'COMPLETED',
+          class: { language_id: languageId },
+        },
+      },
+    });
+    return attended > 0;
+  }
+
   async upsertReview(userId: string, languageId: string, rating: number, comment?: string | null) {
     const r = Math.round(rating);
     if (!Number.isFinite(r) || r < 1 || r > 5) {
       throw new BadRequestException('Rating must be 1..5');
     }
-    const canReview =
-      (await this.prisma.enrollment.count({
-        where: {
-          student_id: userId,
-          status: { in: ['ACTIVE', 'DROPPED'] },
-          class: { language_id: languageId },
-        },
-      })) > 0;
-    if (!canReview) {
-      throw new ForbiddenException('Отзыв можно оставить только после записи на курс');
+    if (!(await this.hasAttendedLesson(userId, languageId))) {
+      throw new ForbiddenException('REVIEW_REQUIRES_ATTENDED_LESSON');
     }
     return this.prisma.courseReview.upsert({
       where: { language_id_student_id: { language_id: languageId, student_id: userId } },

@@ -16,7 +16,7 @@
     "upcoming_lesson": "Upcoming lesson",
     "with_teacher": "with {{name}}",
     "min": "{{n}} min",
-    "available_languages": "Available languages",
+    "available_languages": "Courses",
     "enroll": "Enroll in a class",
     "quick_actions_label": "Quick actions",
     "trial_section": "Trial lesson",
@@ -100,8 +100,6 @@
     "title": "Courses",
     "search_ph": "Search a course...",
     "filter_open": "Enrollment open",
-    "sort_popular": "Popular",
-    "sort_rating": "Top rated",
     "bestseller": "🔥 Bestseller",
     "students_n": "{{n}} students",
     "groups_open": "{{n}} groups",
@@ -132,7 +130,8 @@
     "semester_ends_in": "Semester ends in",
     "closed": "Enrollment closed",
     "waitlist": "Waitlist",
-    "waitlist_btn": "Waitlist"
+    "waitlist_btn": "Waitlist",
+    "filter_all": "All"
   },
   "course": {
     "includes_title": "What's included",
@@ -161,7 +160,8 @@
     "review_submit": "Submit review",
     "review_saved": "Thanks for your review!",
     "review_deleted": "Review deleted",
-    "review_hide": "Hide review"
+    "review_hide": "Hide review",
+    "review_locked": "You can rate the course after your first lesson — so reviews come from people who actually studied."
   },
   "myclass": {
     "trial": "trial",

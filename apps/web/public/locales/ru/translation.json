@@ -16,7 +16,7 @@
     "upcoming_lesson": "Ближайший урок",
     "with_teacher": "с {{name}}",
     "min": "{{n}} мин",
-    "available_languages": "Доступные языки",
+    "available_languages": "Курсы",
     "enroll": "Записаться в класс",
     "quick_actions_label": "Быстрые действия",
     "trial_section": "Пробный урок",
@@ -100,8 +100,6 @@
     "title": "Курсы",
     "search_ph": "Поиск курса...",
     "filter_open": "С открытой записью",
-    "sort_popular": "Популярные",
-    "sort_rating": "По рейтингу",
     "bestseller": "🔥 Хит",
     "students_n": "{{n}} учеников",
     "groups_open": "{{n}} групп",
@@ -132,7 +130,8 @@
     "semester_ends_in": "Семестр заканчивается через",
     "closed": "Запись закрыта",
     "waitlist": "Лист ожидания",
-    "waitlist_btn": "Вейтлист"
+    "waitlist_btn": "Вейтлист",
+    "filter_all": "Все"
   },
   "course": {
     "includes_title": "Что входит в курс",
@@ -161,7 +160,8 @@
     "review_submit": "Отправить отзыв",
     "review_saved": "Спасибо за отзыв!",
     "review_deleted": "Отзыв удалён",
-    "review_hide": "Скрыть отзыв"
+    "review_hide": "Скрыть отзыв",
+    "review_locked": "Оценить курс можно после первого проведённого занятия — так отзывы пишут те, кто действительно учился."
   },
   "myclass": {
     "trial": "пробный",
