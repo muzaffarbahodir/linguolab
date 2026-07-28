@@ -204,6 +204,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
   const [priceUsd, setPriceUsd] = useState(initial ? String(initial.price_usd) : '');
   const [maxStudents, setMaxStudents] = useState(initial ? String(initial.max_students) : '10');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [format, setFormat] = useState<'ONLINE' | 'OFFLINE'>(initial?.format ?? 'OFFLINE');
 
   const isEdit = !!initial;
   const isPending = create.isPending || update.isPending;
@@ -224,6 +225,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
           price_usd: priceUsdNum,
           max_students: parseInt(maxStudents, 10) || 10,
           description: description.trim() || undefined,
+          format,
         },
         {
           onSuccess: () => {
@@ -245,6 +247,7 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
           price_usd: priceUsdNum,
           max_students: parseInt(maxStudents, 10) || 10,
           description: description.trim() || undefined,
+          format,
         },
         {
           onSuccess: () => {
@@ -378,6 +381,28 @@ function ClassForm({ initial, onClose }: { initial?: AdminClass; onClose: () => 
             className="w-full rounded-xl px-3 py-2.5 text-sm outline-none"
             style={inputStyle}
           />
+        </div>
+
+        {/*
+          Формат обязателен для подбора: студенту, выбравшему онлайн,
+          онлайн-курсы показываются первыми. Не отмеченный курс считается
+          очным и к таким студентам вперёд не выйдет.
+        */}
+        <div className="mb-3">
+          <p className="text-muted mb-1 text-xs">Формат занятий</p>
+          <div className="flex gap-2">
+            {(['OFFLINE', 'ONLINE'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFormat(f)}
+                className={`press flex-1 rounded-xl py-2.5 text-sm font-semibold ${
+                  format === f ? 'bg-brand text-white' : 'bg-surface-2 text-muted'
+                }`}
+              >
+                {f === 'ONLINE' ? '💻 Онлайн' : '🏫 Очно'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <p className="text-muted mb-1 text-xs">{t('admin.classes.desc_label')}</p>

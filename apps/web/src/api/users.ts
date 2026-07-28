@@ -4,6 +4,9 @@ import type { LanguageCategory } from './languages';
 
 export type StudyFormat = 'ONLINE' | 'OFFLINE';
 export type StudyMode = 'INDIVIDUAL' | 'GROUP';
+export type Weekday = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
+export type TimeSlot = 'MORNING' | 'AFTERNOON' | 'EVENING';
+export type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
 export interface UserMe {
   id: string;
@@ -22,6 +25,12 @@ export interface UserMe {
   study_format: StudyFormat | null;
   study_mode: StudyMode | null;
   preferred_category: LanguageCategory | null;
+  /** Зачем учит — ключ из набора своего направления. */
+  learning_goal: string | null;
+  /** Уровень со слов студента, до теста. */
+  self_level: CEFRLevel | null;
+  available_days: Weekday[];
+  available_slots: TimeSlot[];
   /** Прошёл опрос подбора — null если ещё нет. */
   discovery_done_at: string | null;
   last_active_at: string;
@@ -33,6 +42,10 @@ export interface DiscoveryInput {
   study_format: StudyFormat;
   study_mode?: StudyMode | null;
   preferred_category?: LanguageCategory | null;
+  learning_goal?: string | null;
+  self_level?: CEFRLevel | null;
+  available_days?: Weekday[];
+  available_slots?: TimeSlot[];
 }
 
 export interface StudentStats {
@@ -237,6 +250,28 @@ export function useSubmitTeacherApplication() {
     mutationFn: async (dto: TeacherApplicationInput) => {
       const res = await apiClient.post('/users/me/teacher-application', dto);
       return res.data as { id: string; status: string };
+    },
+  });
+}
+
+/**
+ * Сменить формат обучения, не проходя опрос заново.
+ *
+ * Отдельно от useSaveDiscovery: тот перетирает все ответы и переставляет
+ * отметку о пройденном опросе, а здесь человек всего лишь передумал.
+ */
+export function useSetStudyFormat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (study_format: StudyFormat) => {
+      const res = await apiClient.patch('/users/me/study-format', { study_format });
+      return res.data as { study_format: StudyFormat };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['users', 'me'] });
+      // Выдача рекомендаций считается от формата — без сброса студент
+      // переключит очно и увидит прежний онлайн-список.
+      void qc.invalidateQueries({ queryKey: ['classes', 'recommended'] });
     },
   });
 }

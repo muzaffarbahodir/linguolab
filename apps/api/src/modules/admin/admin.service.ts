@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { CEFR, ClassStatus, Role } from '@prisma/client';
+import type { StudyFormat } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -346,6 +347,7 @@ export class AdminService {
       price_usd?: number;
       max_students?: number;
       description?: string;
+      format?: StudyFormat;
     },
     actorId: string,
   ) {
@@ -359,6 +361,9 @@ export class AdminService {
         price_usd: dto.price_usd ?? 0,
         max_students: dto.max_students ?? 10,
         description: dto.description,
+        // Очно по умолчанию: ошибиться в эту сторону безопаснее — курс просто
+        // не выйдет вперёд у тех, кто выбрал онлайн.
+        format: dto.format ?? 'OFFLINE',
       },
       include: {
         language: { select: { name_ru: true, flag_emoji: true } },
@@ -384,6 +389,7 @@ export class AdminService {
       max_students?: number;
       description?: string;
       is_active?: boolean;
+      format?: StudyFormat;
     },
   ) {
     const cls = await this.prisma.class.findUnique({ where: { id: classId } });

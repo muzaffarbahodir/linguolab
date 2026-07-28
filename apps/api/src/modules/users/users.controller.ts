@@ -89,9 +89,27 @@ export class UsersController {
       study_format?: 'ONLINE' | 'OFFLINE';
       study_mode?: 'INDIVIDUAL' | 'GROUP' | null;
       preferred_category?: string | null;
+      learning_goal?: string | null;
+      self_level?: string | null;
+      available_days?: string[];
+      available_slots?: string[];
     },
   ) {
     return this.usersService.saveDiscovery(user.id, dto as never);
+  }
+
+  /**
+   * PATCH /users/me/study-format — переключить онлайн/очно.
+   *
+   * Отдельно от опроса: человек передумал насчёт формата, и гонять его по
+   * всем шагам заново незачем.
+   */
+  @Patch('me/study-format')
+  studyFormat(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: { study_format?: 'ONLINE' | 'OFFLINE' },
+  ) {
+    return this.usersService.setStudyFormat(user.id, dto.study_format as never);
   }
 
   /** GET /users/me/progress */

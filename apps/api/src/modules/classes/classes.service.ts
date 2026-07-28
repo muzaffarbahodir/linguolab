@@ -12,6 +12,7 @@ import { TelegramService } from '../telegram/telegram.service';
 import { RedisService } from '../../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { schedulesOverlap } from '../../common/schedule';
+import { rankClasses } from './recommend';
 
 const CLASSES_CACHE_TTL = 300; // 5 минут
 
@@ -41,6 +42,7 @@ const classListSelect = {
   schedule_days: true,
   schedule_time: true,
   schedule_duration: true,
+  format: true,
   created_at: true,
   language: {
     select: {
@@ -98,6 +100,94 @@ export class ClassesService {
 
     void this.redis.setex(cacheKey, CLASSES_CACHE_TTL, JSON.stringify(result));
     return result;
+  }
+
+  /**
+   * GET /classes/recommended — курсы в порядке пригодности для этого студента.
+   *
+   * Ответы стартового опроса до сих пор никуда не влияли: формат, направление
+   * и режим сохранялись и не читались ни одним экраном. Здесь они наконец
+   * определяют, что человек видит первым.
+   *
+   * Кэша нет намеренно: выдача зависит от предпочтений конкретного человека,
+   * и общий ключ отдал бы одному студенту порядок, посчитанный для другого.
+   */
+  async findRecommended(userId: string, limit = 10) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        study_format: true,
+        self_level: true,
+        available_days: true,
+        available_slots: true,
+        preferred_category: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const classes = await this.prisma.class.findMany({
+      where: {
+        is_active: true,
+        // Направление сужаем, только если студент его назвал: иначе выбравший
+        // IELTS увидел бы вперемешку весь каталог центра.
+        ...(user.preferred_category ? { language: { category: user.preferred_category } } : {}),
+      },
+      select: {
+        ...classListSelect,
+        teacher: {
+          select: { ...teacherSelect, ratings: { select: { rating: true } } },
+        },
+      },
+    });
+
+    const prefs = {
+      study_format: user.study_format,
+      self_level: user.self_level,
+      available_days: user.available_days,
+      available_slots: user.available_slots,
+    };
+
+    const candidates = classes.map((c) => {
+      const ratings = c.teacher.ratings;
+      const avg =
+        ratings.length > 0 ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : null;
+      return {
+        id: c.id,
+        format: c.format,
+        level: c.level,
+        schedule_days: c.schedule_days,
+        schedule_time: c.schedule_time,
+        spots_left: c.max_students - c._count.enrollments,
+        teacher_rating: avg,
+      };
+    });
+
+    const byId = new Map(classes.map((c) => [c.id, c]));
+
+    return rankClasses(candidates, prefs)
+      .slice(0, limit)
+      .map(({ id, score, reasons, cls }) => {
+        const full = byId.get(id)!;
+        const { _count, teacher, ...rest } = full;
+        const ratings = teacher.ratings;
+        return {
+          ...rest,
+          teacher: {
+            ...teacher,
+            ratings: undefined,
+            avg_rating:
+              ratings.length > 0
+                ? Math.round((ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) * 10) / 10
+                : null,
+            ratings_count: ratings.length,
+          },
+          enrolled_count: _count.enrollments,
+          spots_left: cls.spots_left,
+          is_full: cls.spots_left <= 0,
+          match_score: score,
+          match_reasons: reasons,
+        };
+      });
   }
 
   /**

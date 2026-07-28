@@ -381,6 +381,8 @@ export interface AdminClass {
   ends_at: string | null;
   description: string | null;
   enrolled_count: number;
+  /** Онлайн или очно — по этому полю курс ранжируется в выдаче студенту. */
+  format: 'ONLINE' | 'OFFLINE';
   schedule_days?: string[];
   schedule_time?: string | null;
   schedule_duration?: number | null;
@@ -442,6 +444,7 @@ export function useCreateClass() {
       price_usd?: number;
       max_students?: number;
       description?: string;
+      format?: 'ONLINE' | 'OFFLINE';
     }) => {
       const res = await apiClient.post('/admin/classes', dto);
       return res.data;
@@ -465,6 +468,7 @@ export function useUpdateClass() {
       max_students?: number;
       description?: string;
       is_active?: boolean;
+      format?: 'ONLINE' | 'OFFLINE';
     }) => {
       const res = await apiClient.patch(`/admin/classes/${id}`, dto);
       return res.data;

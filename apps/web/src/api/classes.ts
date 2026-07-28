@@ -52,6 +52,42 @@ export interface EnrollResult {
   enrolled_at: string;
 }
 
+/** Почему курс попал в рекомендации — показываем студенту как есть. */
+export type MatchReason =
+  | 'FORMAT'
+  | 'LEVEL_EXACT'
+  | 'LEVEL_NEAR'
+  | 'DAYS_ALL'
+  | 'DAYS_SOME'
+  | 'TIME'
+  | 'SPOTS';
+
+export interface RecommendedClass extends Omit<ClassItem, 'teacher' | 'price_usd' | 'status'> {
+  format: 'ONLINE' | 'OFFLINE';
+  schedule_days: string[];
+  schedule_time: string | null;
+  schedule_duration: number | null;
+  is_full: boolean;
+  match_score: number;
+  match_reasons: MatchReason[];
+  teacher: ClassTeacher & { avg_rating: number | null; ratings_count: number };
+}
+
+/**
+ * Курсы в порядке пригодности для этого студента.
+ *
+ * Ключ без параметров: выдача считается от предпочтений текущего
+ * пользователя, а они меняются переключателем формата — тот и сбрасывает кэш.
+ */
+export function useRecommendedClasses(enabled = true) {
+  return useQuery<RecommendedClass[]>({
+    queryKey: ['classes', 'recommended'],
+    queryFn: async () => (await apiClient.get<RecommendedClass[]>('/classes/recommended')).data,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 async function fetchClasses(languageId?: string, level?: string): Promise<ClassItem[]> {
   const params: Record<string, string> = {};
   if (languageId) params.languageId = languageId;

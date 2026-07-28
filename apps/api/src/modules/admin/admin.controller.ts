@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { CEFR, ClassStatus, Role } from '@prisma/client';
-import type { TeacherApplicationStatus } from '@prisma/client';
+import type { StudyFormat, TeacherApplicationStatus } from '@prisma/client';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -153,6 +153,7 @@ export class AdminController {
       price_usd?: number;
       max_students?: number;
       description?: string;
+      format?: StudyFormat;
     },
   ) {
     return this.adminService.createClass(dto, user.id);
@@ -171,6 +172,7 @@ export class AdminController {
       max_students?: number;
       description?: string;
       is_active?: boolean;
+      format?: StudyFormat;
     },
   ) {
     return this.adminService.updateClass(id, dto);

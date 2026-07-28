@@ -29,6 +29,20 @@ export class ClassesController {
   }
 
   /**
+   * GET /classes/recommended — курсы в порядке пригодности для студента.
+   *
+   * Учитывает ответы стартового опроса: формат, направление, уровень и
+   * удобное время. Должен стоять ДО :id, иначе маршрут перехватится как
+   * идентификатор класса.
+   */
+  @Get('recommended')
+  findRecommended(@CurrentUser() user: RequestUser, @Query('limit') limit?: string) {
+    const parsed = Number(limit);
+    const take = Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, 30) : 10;
+    return this.classesService.findRecommended(user.id, take);
+  }
+
+  /**
    * GET /classes/my — классы текущего учителя (или все для MANAGER+).
    * Должен быть ДО :id чтобы не перехватываться как параметр.
    */

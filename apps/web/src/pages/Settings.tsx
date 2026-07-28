@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
-import { Globe, CreditCard, UserPlus, UserRound, Cake } from 'lucide-react';
+import { Globe, CreditCard, UserPlus, UserRound, Cake, Laptop, MapPin } from 'lucide-react';
 
 import { useBackButton } from '../hooks/useBackButton';
 import { useAuthStore } from '../store/auth';
 import { useLanguage } from '../hooks/useLanguage';
-import { useMe, usePatchMe } from '../api/users';
+import { useMe, usePatchMe, useSetStudyFormat } from '../api/users';
 import { toast } from '../store/toast';
 import { ThemeRow, CurrencyRow, MenuRow, type MenuItem } from './Profile';
 
@@ -102,6 +102,9 @@ export function SettingsPage() {
   const previewRole = useAuthStore((s) => s.previewRole);
   const role = previewRole ?? realRole;
   const { current: currentLang } = useLanguage();
+  const { data: me } = useMe();
+  const setFormat = useSetStudyFormat();
+  const studyFormat = me?.study_format ?? 'OFFLINE';
 
   useBackButton(() => navigate(-1));
 
@@ -117,9 +120,32 @@ export function SettingsPage() {
     onClick: () => navigate('/language'),
   };
 
+  /**
+   * Формат обучения — здесь, а не только кнопкой на главной.
+   *
+   * Это предпочтение, а не фильтр каталога: оно определяет, что человек
+   * видит первым на всех экранах, и искать его логично там же, где язык
+   * интерфейса и валюта.
+   */
+  const formatItem: MenuItem = {
+    Icon: studyFormat === 'ONLINE' ? Laptop : MapPin,
+    label: 'Формат обучения',
+    hint: studyFormat === 'ONLINE' ? 'Онлайн' : 'Очно',
+    onClick: () => {
+      if (setFormat.isPending) return;
+      const next = studyFormat === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
+      setFormat.mutate(next, {
+        onSuccess: () =>
+          toast.success(next === 'ONLINE' ? 'Сначала онлайн-курсы' : 'Сначала очные курсы'),
+        onError: () => toast.error(t('teacher.save_error')),
+      });
+    },
+  };
+
   // Тест уровня переехал в «Мой кабинет» — здесь его больше нет.
   const items: MenuItem[] = isStudent
     ? [
+        formatItem,
         { Icon: CreditCard, label: t('profile.payment'), onClick: () => navigate('/payment') },
         {
           Icon: UserPlus,

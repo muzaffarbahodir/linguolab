@@ -5,11 +5,18 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
-import type { StudyFormat, StudyMode, LanguageCategory, TeacherWorkFormat } from '@prisma/client';
+import type {
+  CEFR,
+  StudyFormat,
+  StudyMode,
+  LanguageCategory,
+  TeacherWorkFormat,
+} from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DOCUMENT_LABEL, missingDocuments, sanitizeDocuments } from './teacher-documents';
+import { isValidGoal, sanitizeDays, sanitizeSlots } from './learning-goals';
 
 /** Roles that cannot be self-assigned through the admin activate endpoint */
 const PROTECTED_ROLES: Role[] = [Role.SUPER_ADMIN];
@@ -41,6 +48,10 @@ export class UsersService {
         study_format: true,
         study_mode: true,
         preferred_category: true,
+        learning_goal: true,
+        self_level: true,
+        available_days: true,
+        available_slots: true,
         discovery_done_at: true,
         last_active_at: true,
         created_at: true,
@@ -556,6 +567,10 @@ export class UsersService {
       study_format?: StudyFormat;
       study_mode?: StudyMode | null;
       preferred_category?: LanguageCategory | null;
+      learning_goal?: string | null;
+      self_level?: CEFR | null;
+      available_days?: unknown;
+      available_slots?: unknown;
     },
   ) {
     const fmt = dto.study_format;
@@ -570,20 +585,54 @@ export class UsersService {
         ? dto.preferred_category
         : null;
 
+    // Цель сверяем со списком её направления. Иначе в базе осело бы
+    // «для путешествий» у абитуриента DTM — цифра, которой нельзя пользоваться.
+    const goal = isValidGoal(dto.learning_goal, category) ? dto.learning_goal : null;
+
+    const LEVELS: CEFR[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    const level = dto.self_level && LEVELS.includes(dto.self_level) ? dto.self_level : null;
+
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         study_format: fmt,
         study_mode: mode,
         preferred_category: category,
+        learning_goal: goal,
+        self_level: level,
+        available_days: sanitizeDays(dto.available_days),
+        available_slots: sanitizeSlots(dto.available_slots),
         discovery_done_at: new Date(),
       },
       select: {
         study_format: true,
         study_mode: true,
         preferred_category: true,
+        learning_goal: true,
+        self_level: true,
+        available_days: true,
+        available_slots: true,
         discovery_done_at: true,
       },
+    });
+  }
+
+  /**
+   * PATCH /users/me/study-format — сменить формат обучения.
+   *
+   * Отдельно от saveDiscovery намеренно: тот проставляет discovery_done_at и
+   * перетирает остальные ответы. Здесь же человек всего лишь передумал
+   * насчёт формата, и заново проходить опрос его заставлять незачем.
+   */
+  async setStudyFormat(userId: string, format: StudyFormat) {
+    if (format !== 'ONLINE' && format !== 'OFFLINE') {
+      throw new BadRequestException('study_format must be ONLINE or OFFLINE');
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { study_format: format },
+      select: { study_format: true },
     });
   }
 

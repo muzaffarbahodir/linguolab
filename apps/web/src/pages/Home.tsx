@@ -9,6 +9,7 @@ import { useUpcomingLesson } from '../api/lessons';
 import { useLanguages } from '../api/languages';
 import { useProgress, calcProgress } from '../api/users';
 import { QuickActionsSheet } from '../components/QuickActionsSheet';
+import { RecommendedClasses } from '../components/RecommendedClasses';
 import { Button, Card, SectionHeader } from '../components/ui';
 import i18n from '../lib/i18n';
 
@@ -197,6 +198,10 @@ export function HomePage() {
       <ProgressCard />
 
       <LessonCard />
+
+      {/* Подбор идёт до общего каталога: человек уже ответил, что ему нужно,
+          и показывать сначала всё подряд — значит обесценить его ответы. */}
+      <RecommendedClasses />
 
       <div>
         <SectionHeader title={t('home.available_languages')} />
