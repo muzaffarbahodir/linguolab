@@ -44,8 +44,13 @@ export default {
         danger: '#EF4444',
         info: '#3B82F6',
       },
+      // Manrope — единственный шрифт приложения. Системный оставлен запасным:
+      // пока переменный файл едет по мобильной сети, текст рисуется им, и
+      // подмена происходит без прыжка вёрстки (font-display: swap).
       fontFamily: {
         sans: [
+          'Manrope Variable',
+          'Manrope',
           '-apple-system',
           'BlinkMacSystemFont',
           'system-ui',

@@ -1,6 +1,20 @@
 @import 'tailwindcss';
 @import '../styles/glass.css';
 
+/*
+ * Manrope — общий шрифт всех приложений LinguoLab.
+ *
+ * Tailwind v4 настраивается через @theme, а не конфиг-файлом: подмена
+ * --font-sans меняет и утилиту font-sans, и шрифт по умолчанию у body.
+ * Системный оставлен запасным — пока переменный файл едет по сети, текст
+ * рисуется им и не прыгает при подмене.
+ */
+@theme {
+  --font-sans:
+    'Manrope Variable', Manrope, -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto,
+    sans-serif;
+}
+
 /* Nuar (dark) theme defaults — SSR-safe, no flash */
 :root {
   --glass-body-bg: #09120e;

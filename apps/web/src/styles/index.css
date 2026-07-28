@@ -422,7 +422,17 @@ html.light {
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+    /* Список повторяет fontFamily.sans из tailwind.config.js — правку нужно
+       вносить в оба места, иначе body и утилита font-sans разъедутся. */
+    font-family:
+      'Manrope Variable',
+      Manrope,
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
     font-size: clamp(15px, 4vw, 16px);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

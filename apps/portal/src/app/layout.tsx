@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+// Manrope — тот же пакет, что в мини-приложении, а не next/font/google.
+// next/font скачивает файлы из сети во время сборки, и недоступность Google
+// Fonts ломала бы деплой; здесь шрифт лежит в зависимостях.
+import '@fontsource-variable/manrope';
 import './globals.css';
 import { Providers } from './providers';
 import { TwaGuard } from '../components/TwaGuard';

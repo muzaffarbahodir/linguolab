@@ -19,6 +19,15 @@ Sentry.init({
 import { I18nextProvider } from 'react-i18next';
 
 import App from './App';
+// Manrope — переменный шрифт: одно начертание покрывает вес от 200 до 800.
+// Ставим пакетом, а не ссылкой на Google Fonts: лишний запрос к внешнему CDN
+// на мобильном интернете стоит дороже самого шрифта, а приложение открывают
+// почти всегда с телефона.
+//
+// Подключается весь набор подмножеств, но у каждого прописан unicode-range —
+// браузер скачивает только латиницу и кириллицу и не трогает греческое с
+// вьетнамским.
+import '@fontsource-variable/manrope';
 import './styles/index.css';
 import i18n from './lib/i18n'; // инициализация i18next до рендера (initImmediate: false)
 import { useAuthStore } from './store/auth';
