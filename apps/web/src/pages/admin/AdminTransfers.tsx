@@ -86,7 +86,7 @@ function TransferCard({ tr, onAction }: { tr: ManagerTransfer; onAction: () => v
   return (
     <div
       className={`rounded-2xl border p-4 ${
-        tr.status === 'PENDING' ? 'bg-warn/5 border-warn/20' : 'border-surface-2 bg-white/[0.03]'
+        tr.status === 'PENDING' ? 'bg-warn/5 border-warn/20' : 'border-surface-2 bg-surface-2'
       }`}
     >
       {/* Status badge + time */}
@@ -117,9 +117,9 @@ function TransferCard({ tr, onAction }: { tr: ManagerTransfer; onAction: () => v
 
       {/* Classes */}
       <div className="bg-surface mb-2 flex items-center gap-2 rounded-xl px-3 py-2 text-xs">
-        <span className="font-medium text-white/60">{tr.from_class.title}</span>
+        <span className="text-muted font-medium">{tr.from_class.title}</span>
         <span className="text-faint">→</span>
-        <span className="font-semibold text-white">{tr.to_class.title}</span>
+        <span className="font-semibold text-[color:var(--text)]">{tr.to_class.title}</span>
         <span
           className="ml-auto"
           style={{ color: spotsLeft > 0 ? '#10B981' : '#EF4444', fontSize: 10 }}

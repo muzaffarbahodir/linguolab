@@ -104,7 +104,7 @@ export function AdminBroadcastPage() {
       {/* Tips */}
       <div className="bg-warn/10 border-warn/20 mb-5 rounded-2xl border p-4">
         <p className="text-warn mb-1 text-xs font-semibold">{t('admin.broadcast.warn_title')}</p>
-        <ul className="space-y-1 text-xs text-white/60">
+        <ul className="text-muted space-y-1 text-xs">
           <li>• {t('admin.broadcast.warn_1')}</li>
           <li>• {t('admin.broadcast.warn_2')}</li>
           <li>• {t('admin.broadcast.warn_3')}</li>

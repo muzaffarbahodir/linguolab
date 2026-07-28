@@ -206,7 +206,7 @@ export function AdminLanguagesPage() {
               background: 'var(--secondary-bg)',
             }}
           >
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+            <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
             <h3 className="mb-4 text-base font-bold">
               {draft.id ? t('admin.languages.edit') : t('admin.languages.add')}
             </h3>

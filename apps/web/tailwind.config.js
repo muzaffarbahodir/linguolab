@@ -6,10 +6,10 @@ export default {
       // Telegram theme cssvars — заполняются автоматически через WebApp.themeParams
       // Используем как `bg-tg-bg`, `text-tg-text` и т.д.
       colors: {
-        // Fallback'и тёмные — приложение брендово-тёмное (vars форсятся в main.tsx).
-        // Если CSS-var вдруг не задан, получаем тёмную палитру, не светлую.
+        // Значения форсятся в main.tsx — цвета Telegram не должны пробиваться
+        // сквозь наши: тема в приложении одна, светлая.
         tg: {
-          // Привязаны к переменным темы (см. index.css :root / html.light)
+          // Привязаны к переменным темы (см. index.css :root)
           bg: 'var(--bg)',
           'secondary-bg': 'var(--secondary-bg)',
           text: 'var(--text)',

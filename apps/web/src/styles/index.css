@@ -315,13 +315,15 @@
   pointer-events: none;
 }
 
-/* Shimmer skeleton — premium loading. Replaces flat pulse. */
+/* Заглушка загрузки. Тёмная по светлому: белый градиент, оставшийся от
+   тёмной темы, на бежевом фоне не виден вовсе — вместо скелетона человек
+   смотрел на пустоту и не понимал, грузится что-то или сломалось. */
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.09) 37%,
-    rgba(255, 255, 255, 0.04) 63%
+    rgba(31, 29, 24, 0.06) 25%,
+    rgba(31, 29, 24, 0.13) 37%,
+    rgba(31, 29, 24, 0.06) 63%
   );
   background-size: 400% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;

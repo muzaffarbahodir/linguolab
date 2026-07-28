@@ -107,9 +107,7 @@ function TicketCard({ ticket, onAction }: { ticket: SupportTicketManager; onActi
 
       {/* Message preview / expand */}
       <button onClick={() => setExpanded((v) => !v)} className="mb-3 w-full text-left">
-        <p className={`text-xs text-white/55 ${expanded ? '' : 'line-clamp-2'}`}>
-          {ticket.message}
-        </p>
+        <p className={`text-muted text-xs ${expanded ? '' : 'line-clamp-2'}`}>{ticket.message}</p>
         {!expanded && ticket.message.length > 80 && (
           <span className="text-brand-400 text-xs">{t('admin.support.read_more')}</span>
         )}

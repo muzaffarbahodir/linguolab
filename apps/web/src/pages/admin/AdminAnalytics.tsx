@@ -68,7 +68,7 @@ function BarChart({
                   x={`${i * (100 / data.length) + barW / 2}%`}
                   y={height - barH - 4}
                   textAnchor="middle"
-                  fill="rgba(255,255,255,0.7)"
+                  fill="var(--muted)"
                   fontSize={9}
                 >
                   {formatValue(d.value)}
@@ -79,7 +79,7 @@ function BarChart({
                 x={`${i * (100 / data.length) + barW / 2}%`}
                 y={height + 18}
                 textAnchor="middle"
-                fill="rgba(255,255,255,0.35)"
+                fill="var(--faint)"
                 fontSize={9}
               >
                 {d.label}

@@ -62,7 +62,7 @@ function NotificationCard({ notif }: { notif: NotificationItem }) {
     <div
       onClick={handleTap}
       className={`press flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 ${
-        isRead ? 'border-surface-2 bg-white/[0.03]' : 'bg-brand/10 border-brand/25'
+        isRead ? 'border-surface-2 bg-surface-2' : 'bg-brand/10 border-brand/25'
       }`}
     >
       {/* Icon */}
@@ -83,7 +83,7 @@ function NotificationCard({ notif }: { notif: NotificationItem }) {
         {/* Текст, а НЕ innerHTML: React экранирует → защита от stored XSS
             (в body сервер подставляет имена/названия). HTML-теги форматирования
             Telegram (<b> и т.п.) вырезаем, переносы строк — через CSS. */}
-        <p className="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-white/70">
+        <p className="text-muted mt-0.5 whitespace-pre-line text-xs leading-relaxed">
           {notif.body.replace(/<[^>]*>/g, '')}
         </p>
         <p className="text-tg-hint mt-1 text-[10px]">{timeAgo(notif.created_at, t)}</p>

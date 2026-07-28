@@ -88,7 +88,7 @@ function DonutChart({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          stroke="var(--hairline)"
           strokeWidth={stroke}
         />
         <circle
@@ -144,7 +144,7 @@ function RankMedal({ rank }: { rank: number }) {
   if (rank === 1) return <span className="text-2xl">🥇</span>;
   if (rank === 2) return <span className="text-2xl">🥈</span>;
   if (rank === 3) return <span className="text-2xl">🥉</span>;
-  return <span className="text-lg font-bold text-white/60">#{rank}</span>;
+  return <span className="text-muted text-lg font-bold">#{rank}</span>;
 }
 
 function StarRating({ value, max = 5 }: { value: number | null; max?: number }) {
@@ -491,7 +491,7 @@ export function OverviewContent({ data }: { data: ChildOverview }) {
             </div>
             <div>
               <p className="font-semibold">{upcoming_lesson.class_title}</p>
-              <p className="text-sm text-white/55">
+              <p className="text-muted text-sm">
                 {fmtDateTime(upcoming_lesson.scheduled_at)} ·{' '}
                 {tl('schedule.min', { n: upcoming_lesson.duration_min })}
               </p>
@@ -563,7 +563,7 @@ export function AttendanceContent({ data }: { data: ChildAttendanceItem[] }) {
     <div className="py-4">
       <div className="bg-surface border-hairline mb-4 rounded-2xl border p-4">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-medium text-white/60">
+          <p className="text-muted text-sm font-medium">
             {tl('parent.attendance_last_n', { n: total })}
           </p>
           <span className="text-lg font-bold" style={{ color: pctColor }}>

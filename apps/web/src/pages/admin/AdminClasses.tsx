@@ -522,7 +522,7 @@ function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) 
     <>
       <div
         className={`overflow-hidden rounded-2xl border ${
-          cls.is_active ? 'bg-surface border-hairline' : 'border-white/[0.04] bg-white/[0.02]'
+          cls.is_active ? 'bg-surface border-hairline' : 'border-hairline bg-surface-2'
         } ${cls.status === 'CANCELLED' ? 'opacity-50' : ''}`}
       >
         <div className="h-1 w-full" style={{ background: color }} />
@@ -573,7 +573,7 @@ function ClassCard({ cls, canDelete }: { cls: AdminClass; canDelete: boolean }) 
           {/* Prices + count */}
           <div className="mb-3 flex items-center justify-between">
             <div className="text-muted text-xs">
-              <span className="font-bold text-white">{formatUzs(cls.price_uzs)}</span>
+              <span className="font-bold text-[color:var(--text)]">{formatUzs(cls.price_uzs)}</span>
               {cls.price_usd > 0 && <span className="text-faint"> / ${cls.price_usd}</span>}
               {' · '}
               <span style={{ color: enrolled >= cls.max_students ? '#EF4444' : '#10B981' }}>

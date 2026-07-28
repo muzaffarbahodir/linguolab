@@ -25,9 +25,9 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const inputCls =
-  'bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2.5 text-sm text-white outline-none';
+  'bg-surface-2 border-hairline w-full rounded-xl border px-3 py-2.5 text-sm text-[color:var(--text)] outline-none';
 const dtCls =
-  'bg-surface-2 border-hairline w-full rounded-xl border px-2 py-2 text-xs text-white outline-none';
+  'bg-surface-2 border-hairline w-full rounded-xl border px-2 py-2 text-xs text-[color:var(--text)] outline-none';
 
 // ── Approve Modal ─────────────────────────────────────────────────────────────
 

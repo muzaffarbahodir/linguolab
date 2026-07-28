@@ -124,7 +124,7 @@ export function PlacementTestPage() {
         </div>
 
         <div className="glass-violet mb-5 rounded-2xl p-4">
-          <p className="text-sm text-white/85">{t('placement.intro_tip')}</p>
+          <p className="text-sm text-[color:var(--text)]">{t('placement.intro_tip')}</p>
         </div>
 
         <h2 className="text-tg-hint mb-3 text-sm font-semibold uppercase tracking-wide">

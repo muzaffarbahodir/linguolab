@@ -246,7 +246,7 @@ export function AdminUsersPage() {
               background: 'var(--secondary-bg)',
             }}
           >
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+            <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
             <h3 className="mb-1 text-base font-bold">{t('admin.users.change_role_title')}</h3>
             <p className="text-tg-hint mb-4 text-sm">
               {selectedUser.first_name} {selectedUser.last_name ?? ''}
@@ -349,7 +349,7 @@ function UserDetailSheet({
           background: 'var(--secondary-bg)',
         }}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
 
         {isLoading || !u ? (
           <div className="flex justify-center py-10">
@@ -477,7 +477,7 @@ function UserCard({
 
       {/* Actions */}
       {(!user.is_active || canManageRoles) && (
-        <div className="mt-3 flex gap-2 border-t border-white/[0.06] pt-3">
+        <div className="border-hairline mt-3 flex gap-2 border-t pt-3">
           {!user.is_active && (
             <button
               onClick={onActivate}

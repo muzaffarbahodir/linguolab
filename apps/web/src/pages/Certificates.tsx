@@ -58,7 +58,7 @@ function CertCard({ cert }: { cert: Certificate }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-base">{cert.class.language.flag_emoji}</span>
-            <span className="font-bold text-white">{cert.class.title}</span>
+            <span className="font-bold text-[color:var(--text)]">{cert.class.title}</span>
           </div>
           <div className="mt-0.5 flex items-center gap-2">
             <span

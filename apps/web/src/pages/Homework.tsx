@@ -14,13 +14,13 @@ function statusBadge(submission: MyHomework['my_submission'], due: string | null
     return isOverdue
       ? {
           label: t('homework.overdue'),
-          cls: 'text-white',
+          cls: 'text-danger',
           bg: 'rgba(239,68,68,0.25)',
           border: 'rgba(239,68,68,0.4)',
         }
       : {
           label: t('homework.status_pending'),
-          cls: 'text-white',
+          cls: 'text-muted',
           bg: 'var(--surface-2)',
           border: 'var(--surface-2)',
         };
@@ -29,21 +29,21 @@ function statusBadge(submission: MyHomework['my_submission'], due: string | null
     case 'GRADED':
       return {
         label: t('homework.status_graded'),
-        cls: 'text-white',
+        cls: 'text-ok',
         bg: 'rgba(16,185,129,0.25)',
         border: 'rgba(16,185,129,0.4)',
       };
     case 'LATE':
       return {
         label: t('homework.status_late'),
-        cls: 'text-white',
+        cls: 'text-warn',
         bg: 'rgba(245,158,11,0.25)',
         border: 'rgba(245,158,11,0.4)',
       };
     default:
       return {
         label: t('homework.status_submitted'),
-        cls: 'text-white',
+        cls: 'text-info',
         bg: 'rgba(59,130,246,0.25)',
         border: 'rgba(59,130,246,0.4)',
       };
@@ -101,7 +101,7 @@ function SubmitSheet({ hw, onClose }: { hw: MyHomework; onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <div className="bg-surface-2 mx-auto mb-4 h-1 w-10 rounded-full" />
 
         <h3 className="mb-4 text-base font-semibold">
           {t('homework.submit_title', { title: hw.title })}
@@ -119,9 +119,9 @@ function SubmitSheet({ hw, onClose }: { hw: MyHomework; onClose: () => void }) {
 
         {/* Or divider */}
         <div className="text-muted mb-3 flex items-center gap-2 text-xs">
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="bg-hairline h-px flex-1" />
           {t('homework.or')}
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="bg-hairline h-px flex-1" />
         </div>
 
         {/* File picker */}
@@ -135,7 +135,7 @@ function SubmitSheet({ hw, onClose }: { hw: MyHomework; onClose: () => void }) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="text-muted press mb-4 flex w-full items-center justify-center gap-2 rounded-xl border-[1.5px] border-dashed border-white/20 py-2.5 text-sm"
+          className="text-muted press border-hairline mb-4 flex w-full items-center justify-center gap-2 rounded-xl border-[1.5px] border-dashed py-2.5 text-sm"
           disabled={busy}
         >
           {file ? (
@@ -315,14 +315,16 @@ export function HomeworkPage() {
                   className="press flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                   style={{
                     background: active ? (tab.color ?? '#6366f1') : 'var(--surface-2)',
-                    color: active ? '#fff' : 'var(--surface-2)',
+                    // Было var(--surface-2) — цвет текста совпадал с фоном
+                    // кнопки, и неактивные вкладки читались как пустые.
+                    color: active ? '#fff' : 'var(--muted)',
                   }}
                 >
                   {tab.label}
                   {cnt > 0 && (
                     <span
                       className={`rounded-full px-1.5 text-[10px] font-bold ${
-                        active ? 'bg-white/25' : 'bg-white/15'
+                        active ? 'bg-white/25 text-white' : 'bg-hairline text-muted'
                       }`}
                     >
                       {cnt}

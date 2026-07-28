@@ -127,14 +127,14 @@ export function AdminFinancePage() {
       {/* Revenue table */}
       {revenue && revenue.length > 0 && (
         <div className="glass-card mb-4 overflow-hidden rounded-2xl">
-          <div className="border-b border-white/[0.06] px-4 py-3">
+          <div className="border-hairline border-b px-4 py-3">
             <p className="text-sm font-semibold">{t('admin.finance.detail_by_month')}</p>
           </div>
           {[...revenue].reverse().map((r, i) => (
             <div
               key={r.month}
               className={`flex items-center justify-between px-4 py-3 ${
-                i < revenue.length - 1 ? 'border-b border-white/[0.04]' : ''
+                i < revenue.length - 1 ? 'border-hairline border-b' : ''
               }`}
             >
               <span className="text-sm">{formatMonth(r.month)}</span>
@@ -239,7 +239,7 @@ function PaymentsSection() {
 
   return (
     <div className="glass-card mt-4 overflow-hidden rounded-2xl">
-      <div className="border-b border-white/[0.06] px-4 py-3">
+      <div className="border-hairline border-b px-4 py-3">
         <p className="text-sm font-semibold">{t('admin.finance.payments')}</p>
       </div>
       {isLoading ? (
@@ -257,7 +257,7 @@ function PaymentsSection() {
             return (
               <div
                 key={p.id}
-                className={`px-4 py-3 ${i < data.items.length - 1 ? 'border-b border-white/[0.04]' : ''}`}
+                className={`px-4 py-3 ${i < data.items.length - 1 ? 'border-hairline border-b' : ''}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">

@@ -68,7 +68,7 @@ function InviteModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-white/20" />
+        <div className="bg-surface-2 mx-auto mb-6 h-1 w-10 rounded-full" />
 
         <p className="text-muted mb-2 text-center text-xs font-semibold uppercase tracking-widest">
           {t('parent.invite_code_label')}
@@ -145,7 +145,7 @@ function ChildCard({ item }: { item: ChildListItem }) {
           {child.first_name} {child.last_name ?? ''}
         </p>
         {child.active_classes.length > 0 ? (
-          <p className="mt-0.5 text-sm text-white/55">
+          <p className="text-muted mt-0.5 text-sm">
             {flags}{' '}
             {child.active_classes.map((c) => (c.language.flag_emoji ? '' : c.title)).join(', ')}
             {child.active_classes.length}{' '}

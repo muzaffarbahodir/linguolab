@@ -100,9 +100,7 @@ function TrialCard({ trial, onAction }: { trial: TrialRequestManager; onAction: 
 
       {/* Note */}
       {trial.note && (
-        <p className="bg-surface mb-2 rounded-xl px-3 py-2 text-xs text-white/60">
-          💬 {trial.note}
-        </p>
+        <p className="bg-surface text-muted mb-2 rounded-xl px-3 py-2 text-xs">💬 {trial.note}</p>
       )}
 
       {/* Date */}

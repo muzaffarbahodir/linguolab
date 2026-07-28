@@ -27,8 +27,8 @@ export function DiscoBurst({ level, label }: { level: number; label?: string }) 
     <div className="disco-overlay pointer-events-none fixed inset-0 z-40 flex items-center justify-center overflow-hidden">
       <div className="disco-rays" />
       <div className="disco-core relative text-center">
-        <div className="text-[10px] tracking-[3px] text-white/70">{label ?? 'УРОВЕНЬ'}</div>
-        <div className="disco-level text-6xl font-bold text-white">{shown}</div>
+        <div className="text-muted text-[10px] tracking-[3px]">{label ?? 'УРОВЕНЬ'}</div>
+        <div className="disco-level text-6xl font-bold text-[color:var(--text)]">{shown}</div>
       </div>
     </div>
   );

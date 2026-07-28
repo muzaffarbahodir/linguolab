@@ -53,11 +53,13 @@ if (typeof WebApp.disableVerticalSwipes === 'function') {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATIC_TG_VARS: Record<string, string> = {
-  '--tg-theme-link-color': '#818cf8',
-  '--tg-theme-button-color': '#6366f1',
+  // Ссылки и акценты — насыщенный индиго, а не светлый #818cf8: тот был
+  // подобран под тёмный фон и на светлом читается едва-едва.
+  '--tg-theme-link-color': '#4f46e5',
+  '--tg-theme-button-color': '#4f46e5',
   '--tg-theme-button-text-color': '#ffffff',
-  '--tg-theme-destructive-text-color': '#ff453a',
-  '--tg-theme-accent-text-color': '#818cf8',
+  '--tg-theme-destructive-text-color': '#dc2626',
+  '--tg-theme-accent-text-color': '#4f46e5',
 };
 for (const [k, v] of Object.entries(STATIC_TG_VARS)) {
   document.documentElement.style.setProperty(k, v);
@@ -130,7 +132,9 @@ function AppCrash() {
         justifyContent: 'center',
         gap: 12,
         background: 'var(--bg)',
-        color: 'rgba(255,255,255,0.7)',
+        // Экран падения — именно то место, где текст обязан читаться. Был
+        // белый: на светлом фоне человек видел пустоту вместо объяснения.
+        color: 'var(--text)',
         padding: 24,
         textAlign: 'center',
       }}

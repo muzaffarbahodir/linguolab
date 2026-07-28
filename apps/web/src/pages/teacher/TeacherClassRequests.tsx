@@ -111,7 +111,7 @@ function NewRequestForm({ onClose }: { onClose: () => void }) {
               key={l.id}
               onClick={() => setLangId(l.id)}
               className={`press rounded-xl px-3 py-1.5 text-sm font-medium ${
-                langId === l.id ? 'text-white' : 'bg-surface-2 text-white/60'
+                langId === l.id ? 'text-white' : 'bg-surface-2 text-muted'
               }`}
               style={langId === l.id ? { background: l.color ?? '#6366f1' } : undefined}
             >

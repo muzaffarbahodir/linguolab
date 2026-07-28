@@ -779,9 +779,12 @@ function SetupCard({ setup, onOpen }: { setup: ClassSetup; onOpen: () => void })
 
       <button
         onClick={onOpen}
-        className="press w-full rounded-xl py-2.5 text-xs font-bold text-white"
+        className="press w-full rounded-xl py-2.5 text-xs font-bold"
         style={{
-          background: ready ? 'rgba(255,255,255,0.10)' : 'linear-gradient(135deg,#f59e0b,#fbbf24)',
+          // Настроенный курс — спокойная вторичная кнопка. Была белая с
+          // прозрачностью 10%: на светлом фоне пропадала и она, и текст на ней.
+          background: ready ? 'var(--surface-2)' : 'linear-gradient(135deg,#f59e0b,#fbbf24)',
+          color: ready ? 'var(--text)' : '#fff',
         }}
       >
         {ready ? t('teacher.setup_edit') : t('teacher.setup_btn')}

@@ -70,7 +70,7 @@ export function Onboarding({ onClose }: OnboardingProps) {
         <div
           className="floral-bloom-pulse mb-8 flex h-28 w-28 items-center justify-center rounded-full text-5xl"
           style={{
-            background: `radial-gradient(circle, ${slide.glow} 0%, rgba(255,255,255,0.04) 100%)`,
+            background: `radial-gradient(circle, ${slide.glow} 0%, transparent 100%)`,
             border: `1.5px solid ${slide.color}44`,
             boxShadow: `0 0 40px ${slide.glow}`,
           }}

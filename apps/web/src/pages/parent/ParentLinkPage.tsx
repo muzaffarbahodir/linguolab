@@ -69,7 +69,7 @@ export function ParentLinkPage() {
           onChange={(e) => setCode(e.target.value)}
           placeholder={t('parent.link_parent_ph')}
           maxLength={50}
-          className="w-full bg-transparent px-4 py-4 text-center font-mono text-lg font-bold tracking-widest outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-white/30"
+          className="placeholder:text-faint w-full bg-transparent px-4 py-4 text-center font-mono text-lg font-bold tracking-widest outline-none placeholder:font-normal placeholder:tracking-normal"
           autoComplete="off"
           autoCapitalize="none"
           autoCorrect="off"
